@@ -32,7 +32,7 @@ A modern, personal cookbook web application built with Next.js and shadcn/ui tha
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Next.js 14+ (App Router) |
+| Framework | Next.js 16+ (App Router) |
 | UI Components | shadcn/ui |
 | Styling | Tailwind CSS |
 | Database | PostgreSQL with Prisma ORM |
