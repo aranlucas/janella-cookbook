@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+model Recipe {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Core fields
+  title       String
+  slug        String  @unique
+  description String?
+
+  // Recipe content
+  ingredients  Ingredient[]
+  instructions Instruction[]
+
+  // Metadata
+  prepTime   Int?       // minutes
+  cookTime   Int?       // minutes
+  totalTime  Int?       // minutes
+  servings   String?
+  difficulty Difficulty @default(MEDIUM)
+
+  // Categorization
+  cuisine String?
+  course  Course?
+  tags    Tag[]
+
+  // Source tracking
+  sourceUrl  String?
+  sourceType SourceType
+
+  // Media
+  imageUrl String?
+  images   RecipeImage[]
+
+  // Search
+  embedding  Unsupported("vector(1536)")?
+  searchText String? // Concatenated searchable text
+
+  // User interaction
+  notes      String?
+  rating     Int?     // 1-5
+  isFavorite Boolean  @default(false)
+  cookCount  Int      @default(0)
+  lastCooked DateTime?
+
+  @@index([slug])
+  @@index([cuisine])
+  @@index([course])
+  @@index([isFavorite])
+}
+
+model Ingredient {
+  id       String @id @default(cuid())
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  quantity  String?
+  unit      String?
+  name      String
+  notes     String? // "finely diced", "optional"
+  group     String? // "For the sauce", "For the crust"
+  sortOrder Int     @default(0)
+
+  @@index([recipeId])
+}
+
+model Instruction {
+  id       String @id @default(cuid())
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  stepNumber Int
+  text       String
+  duration   Int?    // minutes for this step
+  imageUrl   String?
+
+  @@index([recipeId])
+}
+
+model Tag {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  recipes Recipe[]
+}
+
+model RecipeImage {
+  id        String  @id @default(cuid())
+  recipeId  String
+  recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  isPrimary Boolean @default(false)
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+enum Course {
+  BREAKFAST
+  LUNCH
+  DINNER
+  APPETIZER
+  SIDE
+  DESSERT
+  SNACK
+  DRINK
+  SAUCE
+  BREAD
+}
+
+enum SourceType {
+  URL_IMPORT      // Imported from external URL
+  MANUAL          // Manually entered
+  NATURAL_LANGUAGE // Parsed from text/AI
+  PHOTO           // OCR from photo
+  API             // External recipe API
+}
