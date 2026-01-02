@@ -39,29 +39,29 @@ export function RecipeMeta({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3 md:space-y-4", className)}>
       {/* Time info */}
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
         {prepTime && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-muted-foreground">Prep:</span>
             <span className="font-medium">{prepTime} min</span>
           </div>
         )}
         {cookTime && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-muted-foreground">Cook:</span>
             <span className="font-medium">{cookTime} min</span>
           </div>
         )}
         {totalTime && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-muted-foreground">Total:</span>
             <span className="font-medium">{totalTime} min</span>
           </div>
         )}
         {servings && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-muted-foreground">Servings:</span>
             <span className="font-medium">{servings}</span>
           </div>

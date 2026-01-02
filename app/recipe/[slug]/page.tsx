@@ -74,10 +74,10 @@ export default async function RecipePage({ params }: PageProps) {
         </div>
 
         {/* Recipe Header */}
-        <section className="container pb-8">
-          <div className="grid gap-8 lg:grid-cols-2">
+        <section className="container pb-6 md:pb-8">
+          <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
             {/* Image */}
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-butter/30">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-lg md:rounded-xl bg-butter/30">
               {recipe.imageUrl ? (
                 <Image
                   src={recipe.imageUrl}
@@ -88,19 +88,19 @@ export default async function RecipePage({ params }: PageProps) {
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <span className="text-8xl opacity-30">🍽️</span>
+                  <span className="text-6xl md:text-8xl opacity-30">🍽️</span>
                 </div>
               )}
             </div>
 
             {/* Info */}
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <div>
-                <h1 className="font-serif text-3xl font-bold text-charcoal md:text-4xl">
+                <h1 className="font-serif text-2xl font-bold text-charcoal sm:text-3xl md:text-4xl">
                   {recipe.title}
                 </h1>
                 {recipe.description && (
-                  <p className="mt-3 text-lg text-muted-foreground">
+                  <p className="mt-2 md:mt-3 text-base md:text-lg text-muted-foreground">
                     {recipe.description}
                   </p>
                 )}
@@ -138,24 +138,24 @@ export default async function RecipePage({ params }: PageProps) {
         <Separator className="container" />
 
         {/* Recipe Content */}
-        <section className="container py-8">
-          <div className="grid gap-8 lg:grid-cols-[1fr_2fr]">
+        <section className="container py-6 md:py-8">
+          <div className="grid gap-6 md:gap-8 lg:grid-cols-[1fr_2fr]">
             {/* Ingredients */}
             <div className="lg:sticky lg:top-24 lg:self-start">
-              <h2 className="font-serif text-2xl font-semibold mb-4">
+              <h2 className="font-serif text-xl md:text-2xl font-semibold mb-3 md:mb-4">
                 Ingredients
               </h2>
-              <div className="rounded-lg bg-warm-white p-6 shadow-sm recipe-content">
+              <div className="rounded-lg bg-warm-white p-4 md:p-6 shadow-sm recipe-content">
                 <IngredientList ingredients={recipe.ingredients} />
               </div>
             </div>
 
             {/* Instructions */}
             <div>
-              <h2 className="font-serif text-2xl font-semibold mb-4">
+              <h2 className="font-serif text-xl md:text-2xl font-semibold mb-3 md:mb-4">
                 Instructions
               </h2>
-              <div className="rounded-lg bg-warm-white p-6 shadow-sm recipe-content">
+              <div className="rounded-lg bg-warm-white p-4 md:p-6 shadow-sm recipe-content">
                 <InstructionSteps instructions={recipe.instructions} />
               </div>
             </div>
@@ -166,14 +166,14 @@ export default async function RecipePage({ params }: PageProps) {
         {(recipe.notes || recipe.sourceUrl) && (
           <>
             <Separator className="container" />
-            <section className="container py-8">
-              <div className="max-w-2xl space-y-6">
+            <section className="container py-6 md:py-8">
+              <div className="max-w-2xl space-y-4 md:space-y-6">
                 {recipe.notes && (
                   <div>
-                    <h3 className="font-serif text-xl font-semibold mb-2">
+                    <h3 className="font-serif text-lg md:text-xl font-semibold mb-2">
                       Notes
                     </h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">
+                    <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap">
                       {recipe.notes}
                     </p>
                   </div>
@@ -181,14 +181,14 @@ export default async function RecipePage({ params }: PageProps) {
 
                 {recipe.sourceUrl && (
                   <div>
-                    <h3 className="font-serif text-xl font-semibold mb-2">
+                    <h3 className="font-serif text-lg md:text-xl font-semibold mb-2">
                       Source
                     </h3>
                     <a
                       href={recipe.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-terracotta hover:underline break-all"
+                      className="text-sm md:text-base text-terracotta hover:underline break-all"
                     >
                       {recipe.sourceUrl}
                     </a>

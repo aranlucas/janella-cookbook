@@ -15,24 +15,24 @@ export default function AddRecipePage() {
     <div className="min-h-screen flex flex-col bg-cream">
       <Header />
 
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container py-6 sm:py-8 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-serif text-3xl font-bold text-charcoal mb-2">
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal mb-2">
             Add a Recipe
           </h1>
-          <p className="text-muted-foreground mb-8">
+          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
             Import from a website, paste text, or create from scratch.
           </p>
 
-          <Tabs defaultValue="url" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-butter/50">
-              <TabsTrigger value="url" className="data-[state=active]:bg-warm-white">
+          <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
+            <TabsList className="grid w-full grid-cols-3 bg-butter/50 h-auto">
+              <TabsTrigger value="url" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
                 From URL
               </TabsTrigger>
-              <TabsTrigger value="text" className="data-[state=active]:bg-warm-white">
+              <TabsTrigger value="text" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
                 Paste Text
               </TabsTrigger>
-              <TabsTrigger value="manual" className="data-[state=active]:bg-warm-white">
+              <TabsTrigger value="manual" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
                 Manual
               </TabsTrigger>
             </TabsList>

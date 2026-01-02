@@ -46,18 +46,18 @@ export default async function SearchPage({ searchParams }: PageProps) {
     <div className="min-h-screen flex flex-col bg-cream">
       <Header />
 
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container py-6 sm:py-8 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          <h1 className="font-serif text-3xl font-bold text-charcoal mb-6">
+          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal mb-4 sm:mb-6">
             Search Recipes
           </h1>
 
-          <Suspense fallback={<div className="h-14 mb-8" />}>
+          <Suspense fallback={<div className="h-12 sm:h-14 mb-6 sm:mb-8" />}>
             <SearchBar
               size="large"
-              placeholder="Search for recipes... try 'quick chicken dinner' or 'healthy breakfast'"
+              placeholder="Search for recipes..."
               autoFocus
-              className="mb-8"
+              className="mb-6 sm:mb-8"
             />
           </Suspense>
 

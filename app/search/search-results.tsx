@@ -40,15 +40,15 @@ export async function SearchResults({ query }: SearchResultsProps) {
         Found {total} recipe{total !== 1 ? "s" : ""}
       </p>
 
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {results.map(({ recipe, score, highlights }) => (
           <Link
             key={recipe.id}
             href={`/recipe/${recipe.slug}`}
-            className="flex gap-4 p-4 bg-warm-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-warm-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
           >
             {/* Thumbnail */}
-            <div className="relative w-32 h-24 shrink-0 rounded-md overflow-hidden bg-butter/30">
+            <div className="relative w-20 h-16 sm:w-32 sm:h-24 shrink-0 rounded-md overflow-hidden bg-butter/30">
               {recipe.imageUrl ? (
                 <Image
                   src={recipe.imageUrl}
@@ -58,7 +58,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <span className="text-3xl opacity-30">🍽️</span>
+                  <span className="text-2xl sm:text-3xl opacity-30">🍽️</span>
                 </div>
               )}
             </div>
@@ -66,31 +66,31 @@ export async function SearchResults({ query }: SearchResultsProps) {
             {/* Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-serif text-lg font-semibold text-charcoal line-clamp-1">
+                <h3 className="font-serif text-base sm:text-lg font-semibold text-charcoal line-clamp-2 sm:line-clamp-1">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (
-                  <Badge variant="secondary" className="shrink-0 text-xs">
+                  <Badge variant="secondary" className="shrink-0 text-xs hidden sm:inline-flex">
                     {Math.round(score * 100)}% match
                   </Badge>
                 )}
               </div>
 
               {recipe.description && (
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1 hidden sm:block">
                   {recipe.description}
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
                 {recipe.totalTime && (
-                  <span>⏱️ {recipe.totalTime} min</span>
+                  <span className="flex items-center gap-0.5">⏱️ {recipe.totalTime} min</span>
                 )}
                 {recipe.cuisine && (
                   <span>• {recipe.cuisine}</span>
                 )}
                 {recipe.difficulty && (
-                  <span>• {recipe.difficulty.toLowerCase()}</span>
+                  <span className="hidden sm:inline">• {recipe.difficulty.toLowerCase()}</span>
                 )}
                 {recipe.isFavorite && (
                   <span>❤️</span>
@@ -99,7 +99,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
               {/* Highlights */}
               {highlights && highlights.length > 0 && (
-                <div className="mt-2 text-xs text-muted-foreground">
+                <div className="mt-1.5 sm:mt-2 text-xs text-muted-foreground hidden sm:block">
                   {highlights.slice(0, 2).map((h, i) => (
                     <p key={i} className="line-clamp-1">
                       ...{h}...

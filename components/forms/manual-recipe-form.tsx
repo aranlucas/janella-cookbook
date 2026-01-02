@@ -308,43 +308,47 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {ingredients.map((ing, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <Input
-                    value={ing.quantity || ""}
-                    onChange={(e) => updateIngredient(index, "quantity", e.target.value)}
-                    placeholder="Qty"
-                    className="w-20 bg-cream border-butter"
-                  />
-                  <Input
-                    value={ing.unit || ""}
-                    onChange={(e) => updateIngredient(index, "unit", e.target.value)}
-                    placeholder="Unit"
-                    className="w-24 bg-cream border-butter"
-                  />
-                  <Input
-                    value={ing.name}
-                    onChange={(e) => updateIngredient(index, "name", e.target.value)}
-                    placeholder="Ingredient name"
-                    className="flex-1 bg-cream border-butter"
-                  />
+                <div key={index} className="space-y-2 p-3 rounded-lg border border-butter bg-cream/30">
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <Input
+                        value={ing.quantity || ""}
+                        onChange={(e) => updateIngredient(index, "quantity", e.target.value)}
+                        placeholder="Qty"
+                        className="bg-cream border-butter"
+                      />
+                      <Input
+                        value={ing.unit || ""}
+                        onChange={(e) => updateIngredient(index, "unit", e.target.value)}
+                        placeholder="Unit"
+                        className="bg-cream border-butter"
+                      />
+                      <Input
+                        value={ing.name}
+                        onChange={(e) => updateIngredient(index, "name", e.target.value)}
+                        placeholder="Ingredient name"
+                        className="col-span-2 sm:col-span-2 bg-cream border-butter"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeIngredient(index)}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                      disabled={ingredients.length === 1}
+                    >
+                      ✕
+                    </Button>
+                  </div>
                   <Input
                     value={ing.notes || ""}
                     onChange={(e) => updateIngredient(index, "notes", e.target.value)}
-                    placeholder="Notes"
-                    className="w-32 bg-cream border-butter"
+                    placeholder="Notes (optional)"
+                    className="bg-cream border-butter"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeIngredient(index)}
-                    className="text-muted-foreground hover:text-destructive"
-                    disabled={ingredients.length === 1}
-                  >
-                    ✕
-                  </Button>
                 </div>
               ))}
             </div>
