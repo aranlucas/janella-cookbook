@@ -68,28 +68,28 @@ export default async function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-butter/30 to-cream py-16 md:py-24">
+        <section className="relative overflow-hidden bg-gradient-to-b from-butter/30 to-cream py-12 sm:py-16 md:py-24">
           <div className="container relative z-10">
             <div className="mx-auto max-w-3xl text-center">
-              <h1 className="font-serif text-4xl font-bold tracking-tight text-charcoal md:text-5xl lg:text-6xl">
+              <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-charcoal md:text-5xl lg:text-6xl">
                 Your Personal
                 <span className="text-terracotta"> Cookbook</span>
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground md:text-xl">
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground md:text-xl">
                 Collect, organize, and discover recipes with intelligent search.
                 Find what you&apos;re craving in seconds.
               </p>
-              <div className="mt-8">
-                <Suspense fallback={<div className="h-14" />}>
+              <div className="mt-6 sm:mt-8">
+                <Suspense fallback={<div className="h-12 sm:h-14" />}>
                   <SearchBar
                     size="large"
-                    placeholder="Search for recipes... try 'quick pasta dinner' or 'chocolate dessert'"
+                    placeholder="Search for recipes..."
                     className="mx-auto max-w-2xl"
                   />
                 </Suspense>
               </div>
               {stats.total > 0 && (
-                <p className="mt-4 text-sm text-muted-foreground">
+                <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
                   {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your collection
                   {stats.favorites > 0 && ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""}`}
                 </p>
@@ -97,15 +97,15 @@ export default async function HomePage() {
             </div>
           </div>
           {/* Decorative elements */}
-          <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-sage/10 blur-3xl" />
-          <div className="absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-terracotta/10 blur-3xl" />
+          <div className="absolute -left-20 top-0 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-sage/10 blur-3xl" />
+          <div className="absolute -right-20 bottom-0 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-terracotta/10 blur-3xl" />
         </section>
 
         {/* Recipe Grid */}
-        <section className="py-12 md:py-16">
+        <section className="py-8 sm:py-12 md:py-16">
           <div className="container">
-            <div className="mb-8 flex items-center justify-between">
-              <h2 className="font-serif text-2xl font-semibold text-charcoal">
+            <div className="mb-6 sm:mb-8 flex items-center justify-between">
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-charcoal">
                 Recent Recipes
               </h2>
             </div>
