@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-source-sans);
+  --font-serif: var(--font-playfair);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Custom cookbook colors */
+  --color-cream: #FDF8F3;
+  --color-warm-white: #FEFCFA;
+  --color-charcoal: #2D2D2D;
+  --color-terracotta: #C4704F;
+  --color-sage: #8B9A7D;
+  --color-butter: #E8D5B7;
+  --color-rust: #A85D3C;
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Cookbook color palette */
+  --cream: #FDF8F3;
+  --warm-white: #FEFCFA;
+  --charcoal: #2D2D2D;
+  --terracotta: #C4704F;
+  --sage: #8B9A7D;
+  --butter: #E8D5B7;
+  --rust-accent: #A85D3C;
+
+  /* Mapped to shadcn variables */
+  --background: #FDF8F3;
+  --foreground: #2D2D2D;
+  --card: #FEFCFA;
+  --card-foreground: #2D2D2D;
+  --popover: #FEFCFA;
+  --popover-foreground: #2D2D2D;
+  --primary: #C4704F;
+  --primary-foreground: #FEFCFA;
+  --secondary: #E8D5B7;
+  --secondary-foreground: #2D2D2D;
+  --muted: #E8D5B7;
+  --muted-foreground: #6B6B6B;
+  --accent: #8B9A7D;
+  --accent-foreground: #FEFCFA;
+  --destructive: #DC2626;
+  --border: #E8D5B7;
+  --input: #E8D5B7;
+  --ring: #C4704F;
+  --chart-1: #C4704F;
+  --chart-2: #8B9A7D;
+  --chart-3: #E8D5B7;
+  --chart-4: #A85D3C;
+  --chart-5: #2D2D2D;
+  --sidebar: #FEFCFA;
+  --sidebar-foreground: #2D2D2D;
+  --sidebar-primary: #C4704F;
+  --sidebar-primary-foreground: #FEFCFA;
+  --sidebar-accent: #E8D5B7;
+  --sidebar-accent-foreground: #2D2D2D;
+  --sidebar-border: #E8D5B7;
+  --sidebar-ring: #C4704F;
+}
+
+.dark {
+  --background: #1A1A1A;
+  --foreground: #FDF8F3;
+  --card: #2D2D2D;
+  --card-foreground: #FDF8F3;
+  --popover: #2D2D2D;
+  --popover-foreground: #FDF8F3;
+  --primary: #C4704F;
+  --primary-foreground: #FDF8F3;
+  --secondary: #3D3D3D;
+  --secondary-foreground: #FDF8F3;
+  --muted: #3D3D3D;
+  --muted-foreground: #A0A0A0;
+  --accent: #8B9A7D;
+  --accent-foreground: #FDF8F3;
+  --destructive: #EF4444;
+  --border: #3D3D3D;
+  --input: #3D3D3D;
+  --ring: #C4704F;
+  --chart-1: #C4704F;
+  --chart-2: #8B9A7D;
+  --chart-3: #E8D5B7;
+  --chart-4: #A85D3C;
+  --chart-5: #FDF8F3;
+  --sidebar: #2D2D2D;
+  --sidebar-foreground: #FDF8F3;
+  --sidebar-primary: #C4704F;
+  --sidebar-primary-foreground: #FDF8F3;
+  --sidebar-accent: #3D3D3D;
+  --sidebar-accent-foreground: #FDF8F3;
+  --sidebar-border: #3D3D3D;
+  --sidebar-ring: #C4704F;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Typography base styles */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-playfair), serif;
+    font-weight: 600;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl;
+  }
+}
+
+/* Print styles for recipes */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .recipe-content {
+    break-inside: avoid;
+  }
+}
