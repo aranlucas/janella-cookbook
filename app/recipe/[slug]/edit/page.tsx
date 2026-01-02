@@ -6,6 +6,8 @@ import { Footer } from "@/components/layout/footer";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
 import type { RecipeWithRelations } from "@/types/recipe";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }

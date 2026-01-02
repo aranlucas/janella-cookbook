@@ -7,6 +7,8 @@ import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecipeWithRelations } from "@/types/recipe";
 
+export const dynamic = "force-dynamic";
+
 async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
   try {
     const recipes = await prisma.recipe.findMany({
@@ -78,11 +80,13 @@ export default async function HomePage() {
                 Find what you&apos;re craving in seconds.
               </p>
               <div className="mt-8">
-                <SearchBar
-                  size="large"
-                  placeholder="Search for recipes... try 'quick pasta dinner' or 'chocolate dessert'"
-                  className="mx-auto max-w-2xl"
-                />
+                <Suspense fallback={<div className="h-14" />}>
+                  <SearchBar
+                    size="large"
+                    placeholder="Search for recipes... try 'quick pasta dinner' or 'chocolate dessert'"
+                    className="mx-auto max-w-2xl"
+                  />
+                </Suspense>
               </div>
               {stats.total > 0 && (
                 <p className="mt-4 text-sm text-muted-foreground">

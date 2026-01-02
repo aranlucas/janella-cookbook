@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { RecipeWithRelations } from "@/types/recipe";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
