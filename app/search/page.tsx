@@ -5,6 +5,8 @@ import { SearchBar } from "@/components/search/search-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchResults } from "./search-results";
 
+export const dynamic = "force-dynamic";
+
 interface PageProps {
   searchParams: Promise<{ q?: string }>;
 }
@@ -50,12 +52,14 @@ export default async function SearchPage({ searchParams }: PageProps) {
             Search Recipes
           </h1>
 
-          <SearchBar
-            size="large"
-            placeholder="Search for recipes... try 'quick chicken dinner' or 'healthy breakfast'"
-            autoFocus
-            className="mb-8"
-          />
+          <Suspense fallback={<div className="h-14 mb-8" />}>
+            <SearchBar
+              size="large"
+              placeholder="Search for recipes... try 'quick chicken dinner' or 'healthy breakfast'"
+              autoFocus
+              className="mb-8"
+            />
+          </Suspense>
 
           {query ? (
             <div>

@@ -3,9 +3,16 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { ParsedRecipe, IngredientInput, InstructionInput, Course, Difficulty } from "@/types/recipe";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openai;
+}
 
 interface JsonLdRecipe {
   "@type": string;
@@ -240,7 +247,8 @@ async function extractRecipeWithAI(html: string, url: string): Promise<ParsedRec
   // Limit content length
   const truncatedContent = content.slice(0, 12000);
 
-  const response = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const response = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       {
@@ -297,7 +305,8 @@ Be accurate and only include information present in the content.`,
  * Parse a recipe from natural language text
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
-  const response = await openai.chat.completions.create({
+  const client = getOpenAI();
+  const response = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       {
