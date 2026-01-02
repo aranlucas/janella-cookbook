@@ -15,7 +15,7 @@ export default function AddRecipePage() {
     <div className="min-h-screen flex flex-col bg-cream">
       <Header />
 
-      <main className="flex-1 container py-6 sm:py-8 px-4 sm:px-6">
+      <main className="flex-1 container py-6 sm:py-8">
         <div className="max-w-3xl mx-auto">
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal mb-2">
             Add a Recipe

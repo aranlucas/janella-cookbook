@@ -69,17 +69,17 @@ export default async function HomePage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-butter/30 to-cream py-12 sm:py-16 md:py-24">
-          <div className="container relative z-10 px-4 sm:px-6">
+          <div className="container relative z-10">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-charcoal md:text-5xl lg:text-6xl">
                 Your Personal
                 <span className="text-terracotta"> Cookbook</span>
               </h1>
-              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground md:text-xl px-4 sm:px-0">
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground md:text-xl">
                 Collect, organize, and discover recipes with intelligent search.
                 Find what you&apos;re craving in seconds.
               </p>
-              <div className="mt-6 sm:mt-8 px-2 sm:px-0">
+              <div className="mt-6 sm:mt-8">
                 <Suspense fallback={<div className="h-12 sm:h-14" />}>
                   <SearchBar
                     size="large"
@@ -103,7 +103,7 @@ export default async function HomePage() {
 
         {/* Recipe Grid */}
         <section className="py-8 sm:py-12 md:py-16">
-          <div className="container px-4 sm:px-6">
+          <div className="container">
             <div className="mb-6 sm:mb-8 flex items-center justify-between">
               <h2 className="font-serif text-xl sm:text-2xl font-semibold text-charcoal">
                 Recent Recipes

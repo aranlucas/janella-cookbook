@@ -46,7 +46,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     <div className="min-h-screen flex flex-col bg-cream">
       <Header />
 
-      <main className="flex-1 container py-6 sm:py-8 px-4 sm:px-6">
+      <main className="flex-1 container py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal mb-4 sm:mb-6">
             Search Recipes
