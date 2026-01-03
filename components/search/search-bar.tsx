@@ -30,7 +30,7 @@ export function SearchBar({
         router.push(`/search?q=${encodeURIComponent(query.trim())}`);
       }
     },
-    [query, router]
+    [query, router],
   );
 
   return (
@@ -48,7 +48,7 @@ export function SearchBar({
             autoFocus={autoFocus}
             className={cn(
               "pl-10 bg-warm-white border-butter focus:border-terracotta",
-              size === "large" && "h-14 text-lg rounded-xl"
+              size === "large" && "h-14 text-lg rounded-xl",
             )}
           />
         </div>
@@ -56,7 +56,7 @@ export function SearchBar({
           type="submit"
           className={cn(
             "bg-terracotta hover:bg-rust text-warm-white",
-            size === "large" && "h-14 px-8 text-lg rounded-xl"
+            size === "large" && "h-14 px-8 text-lg rounded-xl",
           )}
         >
           Search

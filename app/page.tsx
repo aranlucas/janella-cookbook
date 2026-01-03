@@ -90,8 +90,10 @@ export default async function HomePage() {
               </div>
               {stats.total > 0 && (
                 <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
-                  {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your collection
-                  {stats.favorites > 0 && ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""}`}
+                  {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your
+                  collection
+                  {stats.favorites > 0 &&
+                    ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""}`}
                 </p>
               )}
             </div>

@@ -15,7 +15,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { RecipeWithRelations, RecipeInput, IngredientInput, InstructionInput, Difficulty, Course } from "@/types/recipe";
+import type {
+  RecipeWithRelations,
+  RecipeInput,
+  IngredientInput,
+  InstructionInput,
+  Difficulty,
+  Course,
+} from "@/types/recipe";
 
 interface ManualRecipeFormProps {
   initialData?: RecipeWithRelations;
@@ -36,22 +43,35 @@ const courses: Course[] = [
   "BREAD",
 ];
 
-export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormProps) {
+export function ManualRecipeForm({
+  initialData,
+  onSuccess,
+}: ManualRecipeFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
 
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState(initialData?.title || "");
-  const [description, setDescription] = useState(initialData?.description || "");
-  const [prepTime, setPrepTime] = useState(initialData?.prepTime?.toString() || "");
-  const [cookTime, setCookTime] = useState(initialData?.cookTime?.toString() || "");
+  const [description, setDescription] = useState(
+    initialData?.description || "",
+  );
+  const [prepTime, setPrepTime] = useState(
+    initialData?.prepTime?.toString() || "",
+  );
+  const [cookTime, setCookTime] = useState(
+    initialData?.cookTime?.toString() || "",
+  );
   const [servings, setServings] = useState(initialData?.servings || "");
-  const [difficulty, setDifficulty] = useState<Difficulty | "">(initialData?.difficulty || "");
+  const [difficulty, setDifficulty] = useState<Difficulty | "">(
+    initialData?.difficulty || "",
+  );
   const [cuisine, setCuisine] = useState(initialData?.cuisine || "");
   const [course, setCourse] = useState<Course | "">(initialData?.course || "");
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
   const [notes, setNotes] = useState(initialData?.notes || "");
-  const [tags, setTags] = useState(initialData?.tags?.map((t) => t.name).join(", ") || "");
+  const [tags, setTags] = useState(
+    initialData?.tags?.map((t) => t.name).join(", ") || "",
+  );
 
   const [ingredients, setIngredients] = useState<IngredientInput[]>(
     initialData?.ingredients?.map((i) => ({
@@ -60,7 +80,7 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
       name: i.name,
       notes: i.notes || "",
       group: i.group || "",
-    })) || [{ quantity: "", unit: "", name: "", notes: "", group: "" }]
+    })) || [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
   );
 
   const [instructions, setInstructions] = useState<InstructionInput[]>(
@@ -68,11 +88,14 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
       stepNumber: i.stepNumber,
       text: i.text,
       duration: i.duration || undefined,
-    })) || [{ stepNumber: 1, text: "" }]
+    })) || [{ stepNumber: 1, text: "" }],
   );
 
   const addIngredient = () => {
-    setIngredients([...ingredients, { quantity: "", unit: "", name: "", notes: "", group: "" }]);
+    setIngredients([
+      ...ingredients,
+      { quantity: "", unit: "", name: "", notes: "", group: "" },
+    ]);
   };
 
   const removeIngredient = (index: number) => {
@@ -81,7 +104,11 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
     }
   };
 
-  const updateIngredient = (index: number, field: keyof IngredientInput, value: string) => {
+  const updateIngredient = (
+    index: number,
+    field: keyof IngredientInput,
+    value: string,
+  ) => {
     const updated = [...ingredients];
     updated[index] = { ...updated[index], [field]: value };
     setIngredients(updated);
@@ -99,7 +126,7 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
       const updated = instructions.filter((_, i) => i !== index);
       // Renumber steps
       setInstructions(
-        updated.map((inst, i) => ({ ...inst, stepNumber: i + 1 }))
+        updated.map((inst, i) => ({ ...inst, stepNumber: i + 1 })),
       );
     }
   };
@@ -171,10 +198,14 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `Failed to ${isEditing ? "update" : "create"} recipe`);
+        throw new Error(
+          data.error || `Failed to ${isEditing ? "update" : "create"} recipe`,
+        );
       }
 
-      toast.success(`Recipe ${isEditing ? "updated" : "created"} successfully!`);
+      toast.success(
+        `Recipe ${isEditing ? "updated" : "created"} successfully!`,
+      );
 
       if (onSuccess) {
         onSuccess(data.data);
@@ -182,7 +213,10 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
         router.push(`/recipe/${data.data.slug}`);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : `Failed to ${isEditing ? "update" : "create"} recipe`;
+      const message =
+        err instanceof Error
+          ? err.message
+          : `Failed to ${isEditing ? "update" : "create"} recipe`;
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -255,7 +289,10 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
               </div>
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
-                <Select value={difficulty} onValueChange={(v) => setDifficulty(v as Difficulty)}>
+                <Select
+                  value={difficulty}
+                  onValueChange={(v) => setDifficulty(v as Difficulty)}
+                >
                   <SelectTrigger className="bg-cream border-butter">
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
@@ -283,7 +320,10 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
               </div>
               <div className="space-y-2">
                 <Label htmlFor="course">Course</Label>
-                <Select value={course} onValueChange={(v) => setCourse(v as Course)}>
+                <Select
+                  value={course}
+                  onValueChange={(v) => setCourse(v as Course)}
+                >
                   <SelectTrigger className="bg-cream border-butter">
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
@@ -302,32 +342,48 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
           {/* Ingredients */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold">Ingredients *</h3>
-              <Button type="button" variant="outline" size="sm" onClick={addIngredient}>
+              <h3 className="font-serif text-lg font-semibold">
+                Ingredients *
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addIngredient}
+              >
                 + Add Ingredient
               </Button>
             </div>
 
             <div className="space-y-4">
               {ingredients.map((ing, index) => (
-                <div key={index} className="space-y-2 p-3 rounded-lg border border-butter bg-cream/30">
+                <div
+                  key={index}
+                  className="space-y-2 p-3 rounded-lg border border-butter bg-cream/30"
+                >
                   <div className="flex gap-2 items-start">
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <Input
                         value={ing.quantity || ""}
-                        onChange={(e) => updateIngredient(index, "quantity", e.target.value)}
+                        onChange={(e) =>
+                          updateIngredient(index, "quantity", e.target.value)
+                        }
                         placeholder="Qty"
                         className="bg-cream border-butter"
                       />
                       <Input
                         value={ing.unit || ""}
-                        onChange={(e) => updateIngredient(index, "unit", e.target.value)}
+                        onChange={(e) =>
+                          updateIngredient(index, "unit", e.target.value)
+                        }
                         placeholder="Unit"
                         className="bg-cream border-butter"
                       />
                       <Input
                         value={ing.name}
-                        onChange={(e) => updateIngredient(index, "name", e.target.value)}
+                        onChange={(e) =>
+                          updateIngredient(index, "name", e.target.value)
+                        }
                         placeholder="Ingredient name"
                         className="col-span-2 sm:col-span-2 bg-cream border-butter"
                       />
@@ -345,7 +401,9 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
                   </div>
                   <Input
                     value={ing.notes || ""}
-                    onChange={(e) => updateIngredient(index, "notes", e.target.value)}
+                    onChange={(e) =>
+                      updateIngredient(index, "notes", e.target.value)
+                    }
                     placeholder="Notes (optional)"
                     className="bg-cream border-butter"
                   />
@@ -357,8 +415,15 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
           {/* Instructions */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold">Instructions *</h3>
-              <Button type="button" variant="outline" size="sm" onClick={addInstruction}>
+              <h3 className="font-serif text-lg font-semibold">
+                Instructions *
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addInstruction}
+              >
                 + Add Step
               </Button>
             </div>
@@ -392,7 +457,9 @@ export function ManualRecipeForm({ initialData, onSuccess }: ManualRecipeFormPro
 
           {/* Additional Info */}
           <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold">Additional Info</h3>
+            <h3 className="font-serif text-lg font-semibold">
+              Additional Info
+            </h3>
 
             <div className="space-y-2">
               <Label htmlFor="imageUrl">Image URL</Label>

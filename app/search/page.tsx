@@ -77,8 +77,9 @@ export default async function SearchPage({ searchParams }: PageProps) {
                 Start searching
               </h2>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Try natural language queries like &quot;quick weeknight dinner&quot;,
-                &quot;something with chicken and lemon&quot;, or &quot;healthy meal prep ideas&quot;.
+                Try natural language queries like &quot;quick weeknight
+                dinner&quot;, &quot;something with chicken and lemon&quot;, or
+                &quot;healthy meal prep ideas&quot;.
               </p>
             </div>
           )}

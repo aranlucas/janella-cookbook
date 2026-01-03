@@ -8,10 +8,7 @@ type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
 
@@ -39,10 +36,7 @@ export async function GET(
     }
 
     if (!recipe) {
-      return NextResponse.json(
-        { error: "Recipe not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
     return NextResponse.json({ data: recipe });
@@ -50,15 +44,12 @@ export async function GET(
     console.error("Error fetching recipe:", error);
     return NextResponse.json(
       { error: "Failed to fetch recipe" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function PUT(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
     const body: Partial<RecipeInput> & {
@@ -74,10 +65,7 @@ export async function PUT(
     });
 
     if (!existing) {
-      return NextResponse.json(
-        { error: "Recipe not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
     // Generate new slug if title changed
@@ -87,8 +75,11 @@ export async function PUT(
     }
 
     // Calculate total time
-    const totalTime = body.totalTime ||
-      ((body.prepTime ?? existing.prepTime ?? 0) + (body.cookTime ?? existing.cookTime ?? 0)) || undefined;
+    const totalTime =
+      body.totalTime ||
+      (body.prepTime ?? existing.prepTime ?? 0) +
+        (body.cookTime ?? existing.cookTime ?? 0) ||
+      undefined;
 
     // Handle tags
     let tagConnections: { id: string }[] = [];
@@ -102,7 +93,7 @@ export async function PUT(
             update: {},
           });
           return { id: tag.id };
-        })
+        }),
       );
     }
 
@@ -186,7 +177,10 @@ export async function PUT(
     });
 
     // Regenerate embedding if content changed
-    if (process.env.OPENAI_API_KEY && (body.title || body.description || body.ingredients || body.instructions)) {
+    if (
+      process.env.OPENAI_API_KEY &&
+      (body.title || body.description || body.ingredients || body.instructions)
+    ) {
       try {
         const recipeForEmbedding = {
           title: recipe.title,
@@ -200,7 +194,8 @@ export async function PUT(
           difficulty: recipe.difficulty,
         };
 
-        const { searchText, embedding } = await generateRecipeEmbedding(recipeForEmbedding);
+        const { searchText, embedding } =
+          await generateRecipeEmbedding(recipeForEmbedding);
         const embeddingString = `[${embedding.join(",")}]`;
 
         await prisma.$executeRaw`
@@ -218,15 +213,12 @@ export async function PUT(
     console.error("Error updating recipe:", error);
     return NextResponse.json(
       { error: "Failed to update recipe" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
 
@@ -236,10 +228,7 @@ export async function DELETE(
     });
 
     if (!existing) {
-      return NextResponse.json(
-        { error: "Recipe not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
     }
 
     // Delete recipe (cascade will handle related records)
@@ -250,7 +239,7 @@ export async function DELETE(
     console.error("Error deleting recipe:", error);
     return NextResponse.json(
       { error: "Failed to delete recipe" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

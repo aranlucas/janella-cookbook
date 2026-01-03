@@ -75,12 +75,8 @@ export function RecipeMeta({
             {difficulty.toLowerCase()}
           </Badge>
         )}
-        {cuisine && (
-          <Badge variant="outline">{cuisine}</Badge>
-        )}
-        {course && (
-          <Badge variant="secondary">{formatCourse(course)}</Badge>
-        )}
+        {cuisine && <Badge variant="outline">{cuisine}</Badge>}
+        {course && <Badge variant="secondary">{formatCourse(course)}</Badge>}
       </div>
 
       {/* Rating and cook count */}
@@ -89,14 +85,19 @@ export function RecipeMeta({
           {rating && (
             <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className={i < rating ? "text-terracotta" : "text-butter"}>
+                <span
+                  key={i}
+                  className={i < rating ? "text-terracotta" : "text-butter"}
+                >
                   ★
                 </span>
               ))}
             </div>
           )}
           {cookCount !== undefined && cookCount > 0 && (
-            <span>Cooked {cookCount} time{cookCount !== 1 ? "s" : ""}</span>
+            <span>
+              Cooked {cookCount} time{cookCount !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
       )}

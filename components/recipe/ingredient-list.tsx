@@ -10,7 +10,10 @@ interface IngredientListProps {
   className?: string;
 }
 
-export function IngredientList({ ingredients, className }: IngredientListProps) {
+export function IngredientList({
+  ingredients,
+  className,
+}: IngredientListProps) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
 
   const toggleIngredient = (id: string) => {
@@ -33,7 +36,7 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
       acc[group].push(ing);
       return acc;
     },
-    {}
+    {},
   );
 
   const groups = Object.entries(groupedIngredients);
@@ -60,18 +63,24 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
                   htmlFor={ingredient.id}
                   className={cn(
                     "flex-1 cursor-pointer select-none",
-                    checked.has(ingredient.id) && "line-through text-muted-foreground"
+                    checked.has(ingredient.id) &&
+                      "line-through text-muted-foreground",
                   )}
                 >
                   {ingredient.quantity && (
                     <span className="font-medium">{ingredient.quantity} </span>
                   )}
                   {ingredient.unit && (
-                    <span className="text-muted-foreground">{ingredient.unit} </span>
+                    <span className="text-muted-foreground">
+                      {ingredient.unit}{" "}
+                    </span>
                   )}
                   <span>{ingredient.name}</span>
                   {ingredient.notes && (
-                    <span className="text-muted-foreground"> ({ingredient.notes})</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      ({ingredient.notes})
+                    </span>
                   )}
                 </label>
               </li>

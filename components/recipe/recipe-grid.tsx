@@ -29,7 +29,9 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <span className="text-6xl mb-4">📚</span>
-        <h3 className="font-serif text-xl font-semibold mb-2">No recipes yet</h3>
+        <h3 className="font-serif text-xl font-semibold mb-2">
+          No recipes yet
+        </h3>
         <p className="text-muted-foreground">
           Start building your cookbook by adding your first recipe!
         </p>

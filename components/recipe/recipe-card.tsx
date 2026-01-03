@@ -25,7 +25,7 @@ export function RecipeCard({ recipe, className }: RecipeCardProps) {
       <Card
         className={cn(
           "group overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 bg-warm-white",
-          className
+          className,
         )}
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-butter/30">

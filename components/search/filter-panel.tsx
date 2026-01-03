@@ -5,7 +5,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import type { FilterOptions, SearchFilters, Difficulty, Course } from "@/types/recipe";
+import type {
+  FilterOptions,
+  SearchFilters,
+  Difficulty,
+  Course,
+} from "@/types/recipe";
 import { cn } from "@/lib/utils";
 
 interface FilterPanelProps {
@@ -23,7 +28,7 @@ export function FilterPanel({
 }: FilterPanelProps) {
   const toggleArrayFilter = <T extends string>(
     key: keyof SearchFilters,
-    value: T
+    value: T,
   ) => {
     const current = (filters[key] as T[]) || [];
     const updated = current.includes(value)

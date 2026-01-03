@@ -1,6 +1,12 @@
 import { prisma } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
-import type { SearchFilters, SearchResult, RecipeWithRelations, Course, Difficulty } from "@/types/recipe";
+import type {
+  SearchFilters,
+  SearchResult,
+  RecipeWithRelations,
+  Course,
+  Difficulty,
+} from "@/types/recipe";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -10,7 +16,7 @@ export async function semanticSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
-  offset = 0
+  offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
   // Enhance and generate embedding for the query
   const enhancedQuery = enhanceSearchQuery(query);
@@ -114,8 +120,14 @@ export async function semanticSearch(
   const enrichedResults: SearchResult[] = await Promise.all(
     results.map(async (r) => {
       const [ingredients, instructions, tags, images] = await Promise.all([
-        prisma.ingredient.findMany({ where: { recipeId: r.id }, orderBy: { sortOrder: "asc" } }),
-        prisma.instruction.findMany({ where: { recipeId: r.id }, orderBy: { stepNumber: "asc" } }),
+        prisma.ingredient.findMany({
+          where: { recipeId: r.id },
+          orderBy: { sortOrder: "asc" },
+        }),
+        prisma.instruction.findMany({
+          where: { recipeId: r.id },
+          orderBy: { stepNumber: "asc" },
+        }),
         prisma.tag.findMany({ where: { recipes: { some: { id: r.id } } } }),
         prisma.recipeImage.findMany({ where: { recipeId: r.id } }),
       ]);
@@ -154,7 +166,7 @@ export async function semanticSearch(
         score: r.similarity,
         highlights: generateHighlights(recipe, query),
       };
-    })
+    }),
   );
 
   return { results: enrichedResults, total };
@@ -167,7 +179,7 @@ export async function keywordSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
-  offset = 0
+  offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
   const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -184,11 +196,17 @@ export async function keywordSearch(
         })),
       },
       // Apply filters
-      ...(filters.cuisine?.length ? [{ cuisine: { in: filters.cuisine } }] : []),
+      ...(filters.cuisine?.length
+        ? [{ cuisine: { in: filters.cuisine } }]
+        : []),
       ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
-      ...(filters.difficulty?.length ? [{ difficulty: { in: filters.difficulty } }] : []),
+      ...(filters.difficulty?.length
+        ? [{ difficulty: { in: filters.difficulty } }]
+        : []),
       ...(filters.maxTime ? [{ totalTime: { lte: filters.maxTime } }] : []),
-      ...(filters.isFavorite !== undefined ? [{ isFavorite: filters.isFavorite }] : []),
+      ...(filters.isFavorite !== undefined
+        ? [{ isFavorite: filters.isFavorite }]
+        : []),
     ],
   };
 
@@ -211,7 +229,10 @@ export async function keywordSearch(
   const results: SearchResult[] = recipes.map((recipe) => ({
     recipe: recipe as unknown as RecipeWithRelations,
     score: 0.5, // Default score for keyword matches
-    highlights: generateHighlights(recipe as unknown as RecipeWithRelations, query),
+    highlights: generateHighlights(
+      recipe as unknown as RecipeWithRelations,
+      query,
+    ),
   }));
 
   return { results, total };
@@ -224,7 +245,7 @@ export async function hybridSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
-  offset = 0
+  offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
   // Check if we have embeddings capability
   const hasEmbeddings = process.env.OPENAI_API_KEY;
@@ -239,7 +260,10 @@ export async function hybridSearch(
     const keywordResults = await keywordSearch(query, filters, limit * 2, 0);
 
     // Reciprocal Rank Fusion
-    const scores = new Map<string, { recipe: RecipeWithRelations; score: number; highlights?: string[] }>();
+    const scores = new Map<
+      string,
+      { recipe: RecipeWithRelations; score: number; highlights?: string[] }
+    >();
 
     // Add semantic results with RRF scores
     semanticResults.results.forEach((result, index) => {
@@ -258,7 +282,10 @@ export async function hybridSearch(
       if (existing) {
         existing.score += rrf;
         if (result.highlights) {
-          existing.highlights = [...(existing.highlights || []), ...result.highlights];
+          existing.highlights = [
+            ...(existing.highlights || []),
+            ...result.highlights,
+          ];
         }
       } else {
         scores.set(result.recipe.id, {
@@ -287,7 +314,10 @@ export async function hybridSearch(
 /**
  * Generate highlight snippets for search results
  */
-function generateHighlights(recipe: RecipeWithRelations, query: string): string[] {
+function generateHighlights(
+  recipe: RecipeWithRelations,
+  query: string,
+): string[] {
   const highlights: string[] = [];
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -297,8 +327,14 @@ function generateHighlights(recipe: RecipeWithRelations, query: string): string[
   }
 
   // Check description
-  if (recipe.description && terms.some((term) => recipe.description!.toLowerCase().includes(term))) {
-    highlights.push(recipe.description.slice(0, 150) + (recipe.description.length > 150 ? "..." : ""));
+  if (
+    recipe.description &&
+    terms.some((term) => recipe.description!.toLowerCase().includes(term))
+  ) {
+    highlights.push(
+      recipe.description.slice(0, 150) +
+        (recipe.description.length > 150 ? "..." : ""),
+    );
   }
 
   // Check ingredients
@@ -343,8 +379,15 @@ export async function getFilterOptions() {
   return {
     cuisines: cuisines.map((c) => ({ value: c.cuisine!, count: c._count })),
     courses: courses.map((c) => ({ value: c.course!, count: c._count })),
-    difficulties: difficulties.map((d) => ({ value: d.difficulty, count: d._count })),
-    tags: tags.map((t) => ({ value: t.name, slug: t.slug, count: t._count.recipes })),
+    difficulties: difficulties.map((d) => ({
+      value: d.difficulty,
+      count: d._count,
+    })),
+    tags: tags.map((t) => ({
+      value: t.name,
+      slug: t.slug,
+      count: t._count.recipes,
+    })),
     maxTotalTime: maxTime._max.totalTime || 120,
   };
 }
