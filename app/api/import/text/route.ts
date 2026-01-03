@@ -16,7 +16,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse recipe from text (uses Claude Code CLI authentication)
+    if (!process.env.OPENROUTER_API_KEY) {
+      return NextResponse.json(
+        { error: "Text parsing requires OpenRouter API configuration" },
+        { status: 503 }
+      );
+    }
+
+    // Parse recipe from text using OpenRouter
     const parsed = await parseRecipeFromText(body.text);
 
     // Generate slug

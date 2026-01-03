@@ -7,33 +7,31 @@ Janella cookbook
 
 This project uses **AI SDK V6** with the following providers:
 
-1. **Claude Code** (for recipe parsing) - Uses the community provider [ai-sdk-provider-claude-code](https://github.com/ben-vargas/ai-sdk-provider-claude-code)
-   - Requires CLI authentication: `claude login`
-   - No API key needed in environment variables
+1. **OpenRouter** (for recipe parsing) - Uses the free `xiaomi/mimo-v2-flash:free` model
+   - Sign up at [openrouter.ai](https://openrouter.ai/)
+   - Get your API key from the dashboard
+   - Add `OPENROUTER_API_KEY` to your `.env` file
 
-2. **OpenAI** (for embeddings only)
+2. **OpenAI** (for embeddings)
    - Requires `OPENAI_API_KEY` in your `.env` file
+   - Uses `text-embedding-3-small` model
 
 ### Installation
 
-1. Install Claude Code CLI globally and authenticate:
-   ```bash
-   npm install -g @anthropic-ai/claude-code
-   claude login
-   ```
-
-2. Install dependencies:
+1. Install dependencies:
    ```bash
    npm install
    ```
 
-3. Set up your environment variables:
+2. Set up your environment variables:
    ```bash
    cp .env.example .env
-   # Edit .env and add your OPENAI_API_KEY for embeddings
+   # Edit .env and add:
+   # - OPENROUTER_API_KEY for recipe parsing (free tier available)
+   # - OPENAI_API_KEY for embeddings
    ```
 
-4. Run the development server:
+3. Run the development server:
    ```bash
    npm run dev
    ```

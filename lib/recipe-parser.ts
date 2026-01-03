@@ -1,9 +1,15 @@
-import { claudeCode } from "ai-sdk-provider-claude-code";
+import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { ParsedRecipe, IngredientInput, InstructionInput, Course, Difficulty } from "@/types/recipe";
+
+// OpenRouter client configured for AI SDK
+const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: "https://openrouter.ai/api/v1",
+});
 
 // Zod schema for recipe parsing
 const recipeSchema = z.object({
@@ -262,7 +268,7 @@ async function extractRecipeWithAI(html: string, url: string): Promise<ParsedRec
   const truncatedContent = content.slice(0, 12000);
 
   const { object: parsed } = await generateObject({
-    model: claudeCode("haiku"),
+    model: openrouter("xiaomi/mimo-v2-flash:free"),
     schema: recipeSchema,
     system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
 Be accurate and only include information present in the content. Extract all ingredients and instructions even if formatting is messy.`,
@@ -295,7 +301,7 @@ Be accurate and only include information present in the content. Extract all ing
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
   const { object: parsed } = await generateObject({
-    model: claudeCode("haiku"),
+    model: openrouter("xiaomi/mimo-v2-flash:free"),
     schema: recipeSchema,
     system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
