@@ -16,14 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "Text parsing requires OpenAI API configuration" },
-        { status: 503 }
-      );
-    }
-
-    // Parse recipe from text
+    // Parse recipe from text (uses Claude Code CLI authentication)
     const parsed = await parseRecipeFromText(body.text);
 
     // Generate slug

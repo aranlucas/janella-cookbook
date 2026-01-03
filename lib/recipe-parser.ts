@@ -1,18 +1,32 @@
-import OpenAI from "openai";
+import { claudeCode } from "ai-sdk-provider-claude-code";
+import { generateObject } from "ai";
+import { z } from "zod";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import type { ParsedRecipe, IngredientInput, InstructionInput, Course, Difficulty } from "@/types/recipe";
 
-let openai: OpenAI | null = null;
-
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-  return openai;
-}
+// Zod schema for recipe parsing
+const recipeSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  ingredients: z.array(z.object({
+    quantity: z.string().optional(),
+    unit: z.string().optional(),
+    name: z.string(),
+    notes: z.string().optional(),
+  })),
+  instructions: z.array(z.object({
+    stepNumber: z.number(),
+    text: z.string(),
+  })),
+  prepTime: z.number().optional(),
+  cookTime: z.number().optional(),
+  totalTime: z.number().optional(),
+  servings: z.string().optional(),
+  cuisine: z.string().optional(),
+  course: z.enum(["BREAKFAST", "LUNCH", "DINNER", "APPETIZER", "SIDE", "DESSERT", "SNACK", "DRINK", "SAUCE", "BREAD"]).optional(),
+  difficulty: z.enum(["EASY", "MEDIUM", "HARD", "EXPERT"]).optional(),
+});
 
 interface JsonLdRecipe {
   "@type": string;
@@ -247,47 +261,22 @@ async function extractRecipeWithAI(html: string, url: string): Promise<ParsedRec
   // Limit content length
   const truncatedContent = content.slice(0, 12000);
 
-  const client = getOpenAI();
-  const response = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
-Return a JSON object with these fields:
-- title: string (required)
-- description: string (optional)
-- ingredients: array of objects with { quantity?, unit?, name, notes? }
-- instructions: array of objects with { stepNumber, text }
-- prepTime: number in minutes (optional)
-- cookTime: number in minutes (optional)
-- totalTime: number in minutes (optional)
-- servings: string (optional)
-- cuisine: string (optional)
-- course: one of BREAKFAST, LUNCH, DINNER, APPETIZER, SIDE, DESSERT, SNACK, DRINK, SAUCE, BREAD (optional)
-- difficulty: one of EASY, MEDIUM, HARD, EXPERT (optional)
-
-Be accurate and only include information present in the content.`,
-      },
-      {
-        role: "user",
-        content: `Extract the recipe from this content:\n\n${truncatedContent}`,
-      },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.3,
+  const { object: parsed } = await generateObject({
+    model: claudeCode("haiku"),
+    schema: recipeSchema,
+    system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
+Be accurate and only include information present in the content. Extract all ingredients and instructions even if formatting is messy.`,
+    prompt: `Extract the recipe from this content:\n\n${truncatedContent}`,
   });
-
-  const parsed = JSON.parse(response.choices[0].message.content || "{}");
 
   return {
     title: parsed.title || "Untitled Recipe",
     description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing: IngredientInput, i: number) => ({
+    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
       ...ing,
       sortOrder: i,
     })),
-    instructions: (parsed.instructions || []).map((inst: InstructionInput, i: number) => ({
+    instructions: (parsed.instructions || []).map((inst, i: number) => ({
       stepNumber: inst.stepNumber || i + 1,
       text: inst.text,
     })),
@@ -305,47 +294,22 @@ Be accurate and only include information present in the content.`,
  * Parse a recipe from natural language text
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
-  const client = getOpenAI();
-  const response = await client.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
-Return a JSON object with these fields:
-- title: string (required)
-- description: string (optional)
-- ingredients: array of objects with { quantity?, unit?, name, notes? }
-- instructions: array of objects with { stepNumber, text }
-- prepTime: number in minutes (optional)
-- cookTime: number in minutes (optional)
-- totalTime: number in minutes (optional)
-- servings: string (optional)
-- cuisine: string (optional)
-- course: one of BREAKFAST, LUNCH, DINNER, APPETIZER, SIDE, DESSERT, SNACK, DRINK, SAUCE, BREAD (optional)
-- difficulty: one of EASY, MEDIUM, HARD, EXPERT based on complexity (optional)
-
+  const { object: parsed } = await generateObject({
+    model: claudeCode("haiku"),
+    schema: recipeSchema,
+    system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.3,
+    prompt: text,
   });
-
-  const parsed = JSON.parse(response.choices[0].message.content || "{}");
 
   return {
     title: parsed.title || "Untitled Recipe",
     description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing: IngredientInput, i: number) => ({
+    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
       ...ing,
       sortOrder: i,
     })),
-    instructions: (parsed.instructions || []).map((inst: InstructionInput, i: number) => ({
+    instructions: (parsed.instructions || []).map((inst, i: number) => ({
       stepNumber: inst.stepNumber || i + 1,
       text: inst.text,
     })),
