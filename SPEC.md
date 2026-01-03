@@ -11,7 +11,7 @@ A modern, personal cookbook web application built with Next.js and shadcn/ui tha
 ### Aesthetic: **Warm Editorial Kitchen**
 
 - **Tone**: Refined, inviting, and slightly nostalgic—like a well-loved cookbook with modern touches
-- **Typography**: 
+- **Typography**:
   - Display: **Playfair Display** (elegant serif for headings)
   - Body: **Source Sans 3** (clean, readable sans-serif)
 - **Color Palette**:
@@ -30,17 +30,17 @@ A modern, personal cookbook web application built with Next.js and shadcn/ui tha
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 16+ (App Router) |
-| UI Components | shadcn/ui |
-| Styling | Tailwind CSS |
-| Database | PostgreSQL with Prisma ORM |
-| Vector Search | pgvector extension |
-| Embeddings | OpenAI `text-embedding-3-small` |
+| Layer          | Technology                             |
+| -------------- | -------------------------------------- |
+| Framework      | Next.js 16+ (App Router)               |
+| UI Components  | shadcn/ui                              |
+| Styling        | Tailwind CSS                           |
+| Database       | PostgreSQL with Prisma ORM             |
+| Vector Search  | pgvector extension                     |
+| Embeddings     | OpenAI `text-embedding-3-small`        |
 | Authentication | NextAuth.js (optional, for multi-user) |
-| Deployment | Vercel / Cloudflare |
-| File Storage | Cloudflare R2 / S3 (recipe images) |
+| Deployment     | Vercel / Cloudflare                    |
+| File Storage   | Cloudflare R2 / S3 (recipe images)     |
 
 ---
 
@@ -64,47 +64,47 @@ model Recipe {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Core fields
   title       String
   slug        String   @unique
   description String?
-  
+
   // Recipe content
   ingredients   Ingredient[]
   instructions  Instruction[]
-  
+
   // Metadata
   prepTime      Int?          // minutes
   cookTime      Int?          // minutes
   totalTime     Int?          // minutes
   servings      String?
   difficulty    Difficulty    @default(MEDIUM)
-  
+
   // Categorization
   cuisine       String?
   course        Course?
   tags          Tag[]
-  
+
   // Source tracking
   sourceUrl     String?
   sourceType    SourceType
-  
+
   // Media
   imageUrl      String?
   images        RecipeImage[]
-  
+
   // Search
   embedding     Unsupported("vector(1536)")?
   searchText    String?       // Concatenated searchable text
-  
+
   // User interaction
   notes         String?
   rating        Int?          // 1-5
   isFavorite    Boolean       @default(false)
   cookCount     Int           @default(0)
   lastCooked    DateTime?
-  
+
   @@index([slug])
   @@index([cuisine])
   @@index([course])
@@ -115,14 +115,14 @@ model Ingredient {
   id         String  @id @default(cuid())
   recipeId   String
   recipe     Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  
+
   quantity   String?
   unit       String?
   name       String
   notes      String?   // "finely diced", "optional"
   group      String?   // "For the sauce", "For the crust"
   sortOrder  Int       @default(0)
-  
+
   @@index([recipeId])
 }
 
@@ -130,12 +130,12 @@ model Instruction {
   id         String  @id @default(cuid())
   recipeId   String
   recipe     Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  
+
   stepNumber Int
   text       String
   duration   Int?      // minutes for this step
   imageUrl   String?
-  
+
   @@index([recipeId])
 }
 
@@ -205,29 +205,31 @@ POST   /api/search
 ```
 
 **Request Body:**
+
 ```typescript
 interface SearchRequest {
-  query: string;              // Natural language query
+  query: string; // Natural language query
   filters?: {
     cuisine?: string[];
     course?: Course[];
     difficulty?: Difficulty[];
-    maxTime?: number;         // Max total time in minutes
+    maxTime?: number; // Max total time in minutes
     tags?: string[];
     isFavorite?: boolean;
   };
-  limit?: number;             // Default 20
+  limit?: number; // Default 20
   offset?: number;
 }
 ```
 
 **Response:**
+
 ```typescript
 interface SearchResponse {
   results: {
     recipe: Recipe;
-    score: number;            // Similarity score 0-1
-    highlights?: string[];    // Matched text snippets
+    score: number; // Similarity score 0-1
+    highlights?: string[]; // Matched text snippets
   }[];
   total: number;
   query: string;
@@ -236,30 +238,31 @@ interface SearchResponse {
 ```
 
 **Search Implementation:**
+
 ```typescript
 // lib/search.ts
 
-import { OpenAI } from 'openai';
-import { prisma } from './prisma';
+import { OpenAI } from "openai";
+import { prisma } from "./prisma";
 
 const openai = new OpenAI();
 
 export async function semanticSearch(
   query: string,
   filters: SearchFilters = {},
-  limit = 20
+  limit = 20,
 ) {
   // 1. Generate embedding for the query
   const embeddingResponse = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: "text-embedding-3-small",
     input: query,
   });
-  
+
   const queryEmbedding = embeddingResponse.data[0].embedding;
-  
+
   // 2. Build filter conditions
   const whereConditions = buildWhereClause(filters);
-  
+
   // 3. Perform vector similarity search with filters
   const results = await prisma.$queryRaw`
     SELECT 
@@ -271,7 +274,7 @@ export async function semanticSearch(
     ORDER BY r.embedding <=> ${queryEmbedding}::vector
     LIMIT ${limit}
   `;
-  
+
   // 4. Enhance with keyword highlighting
   return enhanceResults(results, query);
 }
@@ -282,7 +285,7 @@ export async function hybridSearch(query: string, filters: SearchFilters) {
     semanticSearch(query, filters),
     keywordSearch(query, filters),
   ]);
-  
+
   // Reciprocal Rank Fusion to combine results
   return fuseResults(semanticResults, keywordResults);
 }
@@ -297,35 +300,36 @@ POST   /api/import/image         - OCR from photo (future)
 ```
 
 **URL Import Implementation:**
+
 ```typescript
 // app/api/import/url/route.ts
 
-import { parseRecipeFromUrl } from '@/lib/recipe-parser';
-import { generateEmbedding } from '@/lib/embeddings';
+import { parseRecipeFromUrl } from "@/lib/recipe-parser";
+import { generateEmbedding } from "@/lib/embeddings";
 
 export async function POST(req: Request) {
   const { url } = await req.json();
-  
+
   // 1. Fetch and parse recipe from URL
   const parsedRecipe = await parseRecipeFromUrl(url);
-  
+
   // 2. Generate searchable text
   const searchText = generateSearchText(parsedRecipe);
-  
+
   // 3. Generate embedding
   const embedding = await generateEmbedding(searchText);
-  
+
   // 4. Save to database
   const recipe = await prisma.recipe.create({
     data: {
       ...parsedRecipe,
       sourceUrl: url,
-      sourceType: 'URL_IMPORT',
+      sourceType: "URL_IMPORT",
       searchText,
       embedding,
     },
   });
-  
+
   return Response.json({ recipe });
 }
 
@@ -333,25 +337,26 @@ export async function POST(req: Request) {
 export async function parseRecipeFromUrl(url: string) {
   const response = await fetch(url);
   const html = await response.text();
-  
+
   // Strategy 1: Look for JSON-LD structured data
   const jsonLd = extractJsonLd(html);
-  if (jsonLd?.['@type'] === 'Recipe') {
+  if (jsonLd?.["@type"] === "Recipe") {
     return parseJsonLdRecipe(jsonLd);
   }
-  
+
   // Strategy 2: Use AI to extract recipe
   return extractRecipeWithAI(html, url);
 }
 
 async function extractRecipeWithAI(html: string, url: string) {
   const cleanedText = extractMainContent(html);
-  
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{
-      role: 'system',
-      content: `Extract recipe data from this webpage content. Return JSON with:
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `Extract recipe data from this webpage content. Return JSON with:
         - title
         - description
         - ingredients (array of { quantity, unit, name, notes })
@@ -359,52 +364,58 @@ async function extractRecipeWithAI(html: string, url: string) {
         - prepTime, cookTime (in minutes)
         - servings
         - cuisine
-        - course`
-    }, {
-      role: 'user',
-      content: cleanedText.slice(0, 8000)
-    }],
-    response_format: { type: 'json_object' }
+        - course`,
+      },
+      {
+        role: "user",
+        content: cleanedText.slice(0, 8000),
+      },
+    ],
+    response_format: { type: "json_object" },
   });
-  
+
   return JSON.parse(response.choices[0].message.content);
 }
 ```
 
 **Natural Language Import:**
+
 ```typescript
 // app/api/import/text/route.ts
 
 export async function POST(req: Request) {
   const { text } = await req.json();
-  
+
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{
-      role: 'system',
-      content: `Parse this recipe text into structured JSON format...`
-    }, {
-      role: 'user',
-      content: text
-    }],
-    response_format: { type: 'json_object' }
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: `Parse this recipe text into structured JSON format...`,
+      },
+      {
+        role: "user",
+        content: text,
+      },
+    ],
+    response_format: { type: "json_object" },
   });
-  
+
   const parsed = JSON.parse(response.choices[0].message.content);
-  
+
   // Generate embedding and save
   const searchText = generateSearchText(parsed);
   const embedding = await generateEmbedding(searchText);
-  
+
   const recipe = await prisma.recipe.create({
     data: {
       ...parsed,
-      sourceType: 'NATURAL_LANGUAGE',
+      sourceType: "NATURAL_LANGUAGE",
       searchText,
       embedding,
     },
   });
-  
+
   return Response.json({ recipe });
 }
 ```
@@ -426,12 +437,14 @@ GET    /api/filters              - Get all available filter options
 **Purpose**: Browse and discover recipes
 
 **Components**:
+
 - Hero section with search bar (prominent)
 - Quick filter chips (Favorites, Quick Meals, Recently Added)
 - Recipe grid with infinite scroll
 - Sidebar filters (desktop)
 
 **Features**:
+
 - Real-time search as you type
 - Filter by cuisine, course, time, difficulty
 - Sort by: Recent, Popular, Rating, Quick to make
@@ -446,11 +459,11 @@ export default async function HomePage({
   searchParams: { q?: string; cuisine?: string; course?: string }
 }) {
   const filters = parseFilters(searchParams);
-  
+
   const recipes = searchParams.q
     ? await semanticSearch(searchParams.q, filters)
     : await getRecentRecipes(filters);
-    
+
   return (
     <main className="min-h-screen bg-cream">
       <HeroSearch />
@@ -466,6 +479,7 @@ export default async function HomePage({
 **Purpose**: View full recipe
 
 **Layout**:
+
 ```
 +----------------------------------+
 |  [← Back]           [Edit] [⭐]  |
@@ -494,6 +508,7 @@ export default async function HomePage({
 ```
 
 **Features**:
+
 - Sticky ingredients panel (desktop)
 - Checkbox ingredients (client-side)
 - Step-by-step mode with timers
@@ -506,6 +521,7 @@ export default async function HomePage({
 **Purpose**: Multiple ways to add recipes
 
 **Tabs/Modes**:
+
 1. **Import from URL** (default)
    - Paste URL input
    - Preview parsed recipe before saving
@@ -528,22 +544,22 @@ export default function AddRecipePage() {
   return (
     <main className="container max-w-3xl py-12">
       <h1 className="text-3xl font-playfair mb-8">Add a Recipe</h1>
-      
+
       <Tabs defaultValue="url">
         <TabsList>
           <TabsTrigger value="url">From URL</TabsTrigger>
           <TabsTrigger value="text">Paste Text</TabsTrigger>
           <TabsTrigger value="manual">Manual</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="url">
           <UrlImportForm />
         </TabsContent>
-        
+
         <TabsContent value="text">
           <TextImportForm />
         </TabsContent>
-        
+
         <TabsContent value="manual">
           <ManualRecipeForm />
         </TabsContent>
@@ -558,6 +574,7 @@ export default function AddRecipePage() {
 **Purpose**: Advanced search experience
 
 **Features**:
+
 - Large search input with suggestions
 - Real-time results as you type (debounced)
 - Highlighted matching text
@@ -566,6 +583,7 @@ export default function AddRecipePage() {
 - Suggested queries
 
 **Search UX Flow**:
+
 ```
 1. User types: "easy chicken dinner under 30 minutes"
 2. Debounce 300ms
@@ -642,14 +660,16 @@ function generateSearchText(recipe: Recipe): string {
     recipe.description,
     recipe.cuisine,
     recipe.course,
-    recipe.tags?.join(' '),
-    recipe.ingredients.map(i => i.name).join(' '),
-    recipe.instructions.map(i => i.text).join(' '),
+    recipe.tags?.join(" "),
+    recipe.ingredients.map((i) => i.name).join(" "),
+    recipe.instructions.map((i) => i.text).join(" "),
     // Add semantic hints
-    recipe.totalTime && recipe.totalTime < 30 ? 'quick fast easy' : '',
-    recipe.difficulty === 'EASY' ? 'simple beginner' : '',
-    recipe.difficulty === 'EXPERT' ? 'advanced chef professional' : '',
-  ].filter(Boolean).join(' ');
+    recipe.totalTime && recipe.totalTime < 30 ? "quick fast easy" : "",
+    recipe.difficulty === "EASY" ? "simple beginner" : "",
+    recipe.difficulty === "EXPERT" ? "advanced chef professional" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 ```
 
@@ -665,18 +685,18 @@ function generateSearchText(recipe: Recipe): string {
 async function enhanceSearchQuery(query: string): Promise<string> {
   // Expand abbreviations and synonyms
   const expansions: Record<string, string> = {
-    'quick': 'quick fast easy under 30 minutes',
-    'healthy': 'healthy light low-calorie nutritious',
-    'comfort food': 'comfort food hearty warming cozy',
+    quick: "quick fast easy under 30 minutes",
+    healthy: "healthy light low-calorie nutritious",
+    "comfort food": "comfort food hearty warming cozy",
   };
-  
+
   let enhanced = query;
   for (const [term, expansion] of Object.entries(expansions)) {
     if (query.toLowerCase().includes(term)) {
       enhanced = enhanced.replace(term, expansion);
     }
   }
-  
+
   return enhanced;
 }
 ```
@@ -710,6 +730,7 @@ NEXTAUTH_URL="http://localhost:3000"
 ## Implementation Phases
 
 ### Phase 1: Core MVP
+
 - [ ] Database setup with Prisma + pgvector
 - [ ] Basic CRUD API routes
 - [ ] Landing page with recipe grid
@@ -718,12 +739,14 @@ NEXTAUTH_URL="http://localhost:3000"
 - [ ] Basic keyword search
 
 ### Phase 2: Smart Import
+
 - [ ] URL import with JSON-LD parsing
 - [ ] AI-powered URL content extraction
 - [ ] Natural language recipe parsing
 - [ ] Preview and edit before save
 
 ### Phase 3: Semantic Search
+
 - [ ] OpenAI embeddings integration
 - [ ] Vector search implementation
 - [ ] Hybrid search (semantic + keyword)
@@ -731,6 +754,7 @@ NEXTAUTH_URL="http://localhost:3000"
 - [ ] Search result highlighting
 
 ### Phase 4: Enhanced UX
+
 - [ ] Ingredient checkbox state
 - [ ] Recipe scaling calculator
 - [ ] Print-friendly styles
@@ -739,6 +763,7 @@ NEXTAUTH_URL="http://localhost:3000"
 - [ ] Cook count tracking
 
 ### Phase 5: Polish
+
 - [ ] Image upload and optimization
 - [ ] Share functionality
 - [ ] PWA support (offline recipes)
@@ -807,11 +832,11 @@ cookbook/
 
 The semantic search should handle these naturally:
 
-| Query | Expected Behavior |
-|-------|-------------------|
-| "quick weeknight dinner" | Recipes under 30 min, dinner course |
-| "something with chicken and lemon" | Ingredient matching |
-| "Italian grandma style" | Cuisine + comfort/traditional |
-| "healthy meal prep" | Light, batch-cookable recipes |
-| "impressive dinner party" | Higher difficulty, elegant dishes |
-| "what can I make with eggs and cheese" | Ingredient-based discovery |
+| Query                                  | Expected Behavior                   |
+| -------------------------------------- | ----------------------------------- |
+| "quick weeknight dinner"               | Recipes under 30 min, dinner course |
+| "something with chicken and lemon"     | Ingredient matching                 |
+| "Italian grandma style"                | Cuisine + comfort/traditional       |
+| "healthy meal prep"                    | Light, batch-cookable recipes       |
+| "impressive dinner party"              | Higher difficulty, elegant dishes   |
+| "what can I make with eggs and cheese" | Ingredient-based discovery          |

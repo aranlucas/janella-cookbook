@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
-import type { RecipeInput, Difficulty, Course, SourceType } from "@/types/recipe";
+import type {
+  RecipeInput,
+  Difficulty,
+  Course,
+  SourceType,
+} from "@/types/recipe";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -68,7 +73,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching recipes:", error);
     return NextResponse.json(
       { error: "Failed to fetch recipes" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -79,31 +84,32 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!body.title) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
     // Generate unique slug
     const slug = await generateUniqueSlug(body.title);
 
     // Calculate total time if not provided
-    const totalTime = body.totalTime ||
-      ((body.prepTime || 0) + (body.cookTime || 0)) || undefined;
+    const totalTime =
+      body.totalTime ||
+      (body.prepTime || 0) + (body.cookTime || 0) ||
+      undefined;
 
     // Create or find tags
-    const tagConnections = body.tags ? await Promise.all(
-      body.tags.map(async (tagName) => {
-        const tagSlug = generateTagSlug(tagName);
-        const tag = await prisma.tag.upsert({
-          where: { slug: tagSlug },
-          create: { name: tagName, slug: tagSlug },
-          update: {},
-        });
-        return { id: tag.id };
-      })
-    ) : [];
+    const tagConnections = body.tags
+      ? await Promise.all(
+          body.tags.map(async (tagName) => {
+            const tagSlug = generateTagSlug(tagName);
+            const tag = await prisma.tag.upsert({
+              where: { slug: tagSlug },
+              create: { name: tagName, slug: tagSlug },
+              update: {},
+            });
+            return { id: tag.id };
+          }),
+        )
+      : [];
 
     // Prepare recipe data for embedding
     const recipeForEmbedding = {
@@ -196,7 +202,7 @@ export async function POST(request: NextRequest) {
     console.error("Error creating recipe:", error);
     return NextResponse.json(
       { error: "Failed to create recipe" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -40,7 +40,9 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       const { data } = await response.json();
       onUpdate?.(data);
-      toast.success(data.isFavorite ? "Added to favorites" : "Removed from favorites");
+      toast.success(
+        data.isFavorite ? "Added to favorites" : "Removed from favorites",
+      );
     } catch {
       toast.error("Failed to update favorite status");
     } finally {
@@ -113,8 +115,7 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
         disabled={isCooking}
         className="gap-1"
       >
-        <span>👨‍🍳</span>
-        I Made This
+        <span>👨‍🍳</span>I Made This
       </Button>
 
       <Button
@@ -139,7 +140,11 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1 text-destructive">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1 text-destructive"
+          >
             <span>🗑️</span>
             Delete
           </Button>
@@ -148,7 +153,8 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
           <DialogHeader>
             <DialogTitle>Delete Recipe</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{recipe.title}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{recipe.title}&quot;? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

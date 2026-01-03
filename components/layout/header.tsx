@@ -4,11 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 
@@ -39,9 +35,7 @@ export function Header() {
               href={item.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-terracotta",
-                pathname === item.href
-                  ? "text-terracotta"
-                  : "text-charcoal/70"
+                pathname === item.href ? "text-terracotta" : "text-charcoal/70",
               )}
             >
               {item.label}
@@ -76,13 +70,17 @@ export function Header() {
                       "text-lg font-medium transition-colors hover:text-terracotta py-2 px-4 rounded-lg",
                       pathname === item.href
                         ? "text-terracotta bg-butter/30"
-                        : "text-charcoal/70"
+                        : "text-charcoal/70",
                     )}
                   >
                     {item.label}
                   </Link>
                 ))}
-                <Link href="/add" onClick={() => setIsOpen(false)} className="mt-4">
+                <Link
+                  href="/add"
+                  onClick={() => setIsOpen(false)}
+                  className="mt-4"
+                >
                   <Button className="w-full bg-terracotta hover:bg-rust text-warm-white">
                     + New Recipe
                   </Button>

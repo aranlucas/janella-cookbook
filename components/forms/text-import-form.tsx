@@ -51,7 +51,8 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
         router.push(`/recipe/${data.data.slug}`);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to parse recipe";
+      const message =
+        err instanceof Error ? err.message : "Failed to parse recipe";
       setError(message);
       toast.error(message);
     } finally {

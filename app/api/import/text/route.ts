@@ -10,16 +10,13 @@ export async function POST(request: NextRequest) {
     const body: TextImportRequest = await request.json();
 
     if (!body.text || body.text.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Text is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
         { error: "Text parsing requires OpenAI API configuration" },
-        { status: 503 }
+        { status: 503 },
       );
     }
 
@@ -58,7 +55,10 @@ export async function POST(request: NextRequest) {
         description: parsed.description,
         prepTime: parsed.prepTime,
         cookTime: parsed.cookTime,
-        totalTime: parsed.totalTime || ((parsed.prepTime || 0) + (parsed.cookTime || 0)) || undefined,
+        totalTime:
+          parsed.totalTime ||
+          (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+          undefined,
         servings: parsed.servings,
         difficulty: parsed.difficulty || "MEDIUM",
         cuisine: parsed.cuisine,
@@ -106,8 +106,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error importing recipe from text:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to parse recipe" },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to parse recipe",
+      },
+      { status: 500 },
     );
   }
 }

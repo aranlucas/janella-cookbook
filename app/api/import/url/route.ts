@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
     const body: UrlImportRequest = await request.json();
 
     if (!body.url) {
-      return NextResponse.json(
-        { error: "URL is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
     // Validate URL
@@ -21,10 +18,7 @@ export async function POST(request: NextRequest) {
     try {
       url = new URL(body.url);
     } catch {
-      return NextResponse.json(
-        { error: "Invalid URL" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
     // Parse recipe from URL
@@ -64,7 +58,10 @@ export async function POST(request: NextRequest) {
         description: parsed.description,
         prepTime: parsed.prepTime,
         cookTime: parsed.cookTime,
-        totalTime: parsed.totalTime || ((parsed.prepTime || 0) + (parsed.cookTime || 0)) || undefined,
+        totalTime:
+          parsed.totalTime ||
+          (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+          undefined,
         servings: parsed.servings,
         difficulty: parsed.difficulty || "MEDIUM",
         cuisine: parsed.cuisine,
@@ -113,8 +110,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error importing recipe from URL:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to import recipe" },
-      { status: 500 }
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to import recipe",
+      },
+      { status: 500 },
     );
   }
 }

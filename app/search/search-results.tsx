@@ -70,7 +70,10 @@ export async function SearchResults({ query }: SearchResultsProps) {
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (
-                  <Badge variant="secondary" className="shrink-0 text-xs hidden sm:inline-flex">
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 text-xs hidden sm:inline-flex"
+                  >
                     {Math.round(score * 100)}% match
                   </Badge>
                 )}
@@ -84,17 +87,17 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
                 {recipe.totalTime && (
-                  <span className="flex items-center gap-0.5">⏱️ {recipe.totalTime} min</span>
+                  <span className="flex items-center gap-0.5">
+                    ⏱️ {recipe.totalTime} min
+                  </span>
                 )}
-                {recipe.cuisine && (
-                  <span>• {recipe.cuisine}</span>
-                )}
+                {recipe.cuisine && <span>• {recipe.cuisine}</span>}
                 {recipe.difficulty && (
-                  <span className="hidden sm:inline">• {recipe.difficulty.toLowerCase()}</span>
+                  <span className="hidden sm:inline">
+                    • {recipe.difficulty.toLowerCase()}
+                  </span>
                 )}
-                {recipe.isFavorite && (
-                  <span>❤️</span>
-                )}
+                {recipe.isFavorite && <span>❤️</span>}
               </div>
 
               {/* Highlights */}

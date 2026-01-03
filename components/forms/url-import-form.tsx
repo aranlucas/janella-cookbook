@@ -58,7 +58,8 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
         router.push(`/recipe/${data.data.slug}`);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to import recipe";
+      const message =
+        err instanceof Error ? err.message : "Failed to import recipe";
       setError(message);
       toast.error(message);
     } finally {
@@ -85,7 +86,10 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>Paste a URL from your favorite recipe site. We&apos;ll automatically extract:</p>
+            <p>
+              Paste a URL from your favorite recipe site. We&apos;ll
+              automatically extract:
+            </p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>Recipe title and description</li>
               <li>Ingredients with quantities</li>

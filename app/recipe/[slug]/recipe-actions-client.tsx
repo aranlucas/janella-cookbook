@@ -8,13 +8,12 @@ interface RecipeActionsClientProps {
   recipe: RecipeWithRelations;
 }
 
-export function RecipeActionsClient({ recipe: initialRecipe }: RecipeActionsClientProps) {
+export function RecipeActionsClient({
+  recipe: initialRecipe,
+}: RecipeActionsClientProps) {
   const [recipe, setRecipe] = useState(initialRecipe);
 
   return (
-    <RecipeActions
-      recipe={recipe}
-      onUpdate={(updated) => setRecipe(updated)}
-    />
+    <RecipeActions recipe={recipe} onUpdate={(updated) => setRecipe(updated)} />
   );
 }

@@ -4,7 +4,10 @@ import { prisma } from "./prisma";
 /**
  * Generate a unique slug for a recipe
  */
-export async function generateUniqueSlug(title: string, existingId?: string): Promise<string> {
+export async function generateUniqueSlug(
+  title: string,
+  existingId?: string,
+): Promise<string> {
   const baseSlug = slugify(title, {
     lower: true,
     strict: true,

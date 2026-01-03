@@ -26,7 +26,7 @@ export function FilterChips({ chips, onToggle, className }: FilterChipsProps) {
             "cursor-pointer transition-colors",
             chip.active
               ? "bg-terracotta hover:bg-rust text-warm-white"
-              : "hover:bg-butter"
+              : "hover:bg-butter",
           )}
           onClick={() => onToggle(chip.value)}
         >

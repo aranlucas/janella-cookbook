@@ -26,13 +26,22 @@ export default function AddRecipePage() {
 
           <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
             <TabsList className="grid w-full grid-cols-3 bg-butter/50 h-auto">
-              <TabsTrigger value="url" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
+              <TabsTrigger
+                value="url"
+                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+              >
                 From URL
               </TabsTrigger>
-              <TabsTrigger value="text" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
+              <TabsTrigger
+                value="text"
+                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+              >
                 Paste Text
               </TabsTrigger>
-              <TabsTrigger value="manual" className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2">
+              <TabsTrigger
+                value="manual"
+                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+              >
                 Manual
               </TabsTrigger>
             </TabsList>

@@ -1,7 +1,13 @@
 import OpenAI from "openai";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
-import type { ParsedRecipe, IngredientInput, InstructionInput, Course, Difficulty } from "@/types/recipe";
+import type {
+  ParsedRecipe,
+  IngredientInput,
+  InstructionInput,
+  Course,
+  Difficulty,
+} from "@/types/recipe";
 
 let openai: OpenAI | null = null;
 
@@ -41,7 +47,9 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch URL: ${response.status} ${response.statusText}`,
+    );
   }
 
   const html = await response.text();
@@ -61,7 +69,9 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
  */
 function extractJsonLd(html: string): JsonLdRecipe | null {
   const dom = new JSDOM(html);
-  const scripts = dom.window.document.querySelectorAll('script[type="application/ld+json"]');
+  const scripts = dom.window.document.querySelectorAll(
+    'script[type="application/ld+json"]',
+  );
 
   for (const script of scripts) {
     try {
@@ -75,7 +85,9 @@ function extractJsonLd(html: string): JsonLdRecipe | null {
 
       // Handle @graph structure
       if (data["@graph"]) {
-        const recipe = data["@graph"].find((item: JsonLdRecipe) => item["@type"] === "Recipe");
+        const recipe = data["@graph"].find(
+          (item: JsonLdRecipe) => item["@type"] === "Recipe",
+        );
         if (recipe) return recipe;
       }
 
@@ -96,13 +108,17 @@ function extractJsonLd(html: string): JsonLdRecipe | null {
  */
 function parseJsonLdRecipe(jsonLd: JsonLdRecipe): ParsedRecipe {
   // Parse ingredients
-  const ingredients: IngredientInput[] = (jsonLd.recipeIngredient || []).map((ing, index) => {
-    const parsed = parseIngredientString(ing);
-    return { ...parsed, sortOrder: index };
-  });
+  const ingredients: IngredientInput[] = (jsonLd.recipeIngredient || []).map(
+    (ing, index) => {
+      const parsed = parseIngredientString(ing);
+      return { ...parsed, sortOrder: index };
+    },
+  );
 
   // Parse instructions
-  const instructions: InstructionInput[] = (jsonLd.recipeInstructions || []).map((inst, index) => {
+  const instructions: InstructionInput[] = (
+    jsonLd.recipeInstructions || []
+  ).map((inst, index) => {
     const text = typeof inst === "string" ? inst : inst.text;
     return { stepNumber: index + 1, text };
   });
@@ -110,7 +126,9 @@ function parseJsonLdRecipe(jsonLd: JsonLdRecipe): ParsedRecipe {
   // Parse times (ISO 8601 duration)
   const prepTime = parseDuration(jsonLd.prepTime);
   const cookTime = parseDuration(jsonLd.cookTime);
-  const totalTime = parseDuration(jsonLd.totalTime) || (prepTime && cookTime ? prepTime + cookTime : undefined);
+  const totalTime =
+    parseDuration(jsonLd.totalTime) ||
+    (prepTime && cookTime ? prepTime + cookTime : undefined);
 
   // Get image URL
   let imageUrl: string | undefined;
@@ -163,11 +181,49 @@ function parseIngredientString(str: string): IngredientInput {
   if (match) {
     const [, quantityStr, potentialUnit, rest] = match;
     const units = [
-      "cup", "cups", "tablespoon", "tablespoons", "tbsp", "teaspoon", "teaspoons", "tsp",
-      "ounce", "ounces", "oz", "pound", "pounds", "lb", "lbs", "gram", "grams", "g",
-      "kilogram", "kilograms", "kg", "ml", "milliliter", "milliliters", "liter", "liters", "l",
-      "pinch", "dash", "clove", "cloves", "slice", "slices", "piece", "pieces",
-      "whole", "large", "medium", "small", "can", "cans", "package", "packages",
+      "cup",
+      "cups",
+      "tablespoon",
+      "tablespoons",
+      "tbsp",
+      "teaspoon",
+      "teaspoons",
+      "tsp",
+      "ounce",
+      "ounces",
+      "oz",
+      "pound",
+      "pounds",
+      "lb",
+      "lbs",
+      "gram",
+      "grams",
+      "g",
+      "kilogram",
+      "kilograms",
+      "kg",
+      "ml",
+      "milliliter",
+      "milliliters",
+      "liter",
+      "liters",
+      "l",
+      "pinch",
+      "dash",
+      "clove",
+      "cloves",
+      "slice",
+      "slices",
+      "piece",
+      "pieces",
+      "whole",
+      "large",
+      "medium",
+      "small",
+      "can",
+      "cans",
+      "package",
+      "packages",
     ];
 
     if (potentialUnit && units.includes(potentialUnit.toLowerCase())) {
@@ -236,7 +292,10 @@ function mapToCourse(category?: string): Course | undefined {
 /**
  * Extract recipe using AI from HTML content
  */
-async function extractRecipeWithAI(html: string, url: string): Promise<ParsedRecipe> {
+async function extractRecipeWithAI(
+  html: string,
+  url: string,
+): Promise<ParsedRecipe> {
   // Use Readability to extract main content
   const dom = new JSDOM(html, { url });
   const reader = new Readability(dom.window.document);
@@ -283,14 +342,18 @@ Be accurate and only include information present in the content.`,
   return {
     title: parsed.title || "Untitled Recipe",
     description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing: IngredientInput, i: number) => ({
-      ...ing,
-      sortOrder: i,
-    })),
-    instructions: (parsed.instructions || []).map((inst: InstructionInput, i: number) => ({
-      stepNumber: inst.stepNumber || i + 1,
-      text: inst.text,
-    })),
+    ingredients: (parsed.ingredients || []).map(
+      (ing: IngredientInput, i: number) => ({
+        ...ing,
+        sortOrder: i,
+      }),
+    ),
+    instructions: (parsed.instructions || []).map(
+      (inst: InstructionInput, i: number) => ({
+        stepNumber: inst.stepNumber || i + 1,
+        text: inst.text,
+      }),
+    ),
     prepTime: parsed.prepTime,
     cookTime: parsed.cookTime,
     totalTime: parsed.totalTime,
@@ -341,14 +404,18 @@ Be accurate and organized. Extract all ingredients and instructions even if form
   return {
     title: parsed.title || "Untitled Recipe",
     description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing: IngredientInput, i: number) => ({
-      ...ing,
-      sortOrder: i,
-    })),
-    instructions: (parsed.instructions || []).map((inst: InstructionInput, i: number) => ({
-      stepNumber: inst.stepNumber || i + 1,
-      text: inst.text,
-    })),
+    ingredients: (parsed.ingredients || []).map(
+      (ing: IngredientInput, i: number) => ({
+        ...ing,
+        sortOrder: i,
+      }),
+    ),
+    instructions: (parsed.instructions || []).map(
+      (inst: InstructionInput, i: number) => ({
+        stepNumber: inst.stepNumber || i + 1,
+        text: inst.text,
+      }),
+    ),
     prepTime: parsed.prepTime,
     cookTime: parsed.cookTime,
     totalTime: parsed.totalTime,

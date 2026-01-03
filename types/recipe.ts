@@ -6,7 +6,7 @@ import type {
   RecipeImage as PrismaRecipeImage,
   Difficulty,
   Course,
-  SourceType
+  SourceType,
 } from "@prisma/client";
 
 // Re-export Prisma types
@@ -20,7 +20,7 @@ export type Tag = PrismaTag;
 export type RecipeImage = PrismaRecipeImage;
 
 // Extended recipe with relations
-export interface RecipeWithRelations extends Omit<Recipe, 'embedding'> {
+export interface RecipeWithRelations extends Omit<Recipe, "embedding"> {
   ingredients: Ingredient[];
   instructions: Instruction[];
   tags: Tag[];
