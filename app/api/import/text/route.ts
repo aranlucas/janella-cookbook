@@ -13,14 +13,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: "Text parsing requires OpenAI API configuration" },
-        { status: 503 },
+        { error: "Text parsing requires OpenRouter API configuration" },
+        { status: 503 }
       );
     }
 
-    // Parse recipe from text
+    // Parse recipe from text using OpenRouter
     const parsed = await parseRecipeFromText(body.text);
 
     // Generate slug

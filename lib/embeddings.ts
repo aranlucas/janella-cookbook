@@ -1,28 +1,17 @@
-import OpenAI from "openai";
+import { openai } from "@ai-sdk/openai";
+import { embed } from "ai";
 import type { RecipeWithRelations } from "@/types/recipe";
-
-let openai: OpenAI | null = null;
-
-function getOpenAI(): OpenAI {
-  if (!openai) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-  }
-  return openai;
-}
 
 /**
  * Generate an embedding vector for the given text using OpenAI's embedding model
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const client = getOpenAI();
-  const response = await client.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text,
+  const { embedding } = await embed({
+    model: openai.embedding("text-embedding-3-small"),
+    value: text,
   });
 
-  return response.data[0].embedding;
+  return embedding;
 }
 
 /**
