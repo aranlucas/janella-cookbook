@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx prettier --write $filepath",
+            "command": "npx prettier --write .",
             "statusMessage": "Formatting with Prettier..."
           }
         ]
