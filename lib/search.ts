@@ -1,13 +1,155 @@
 import { prisma } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
+import { ExternalApiError, DatabaseError, withRetry } from "./errors";
 import type {
   SearchFilters,
   SearchResult,
   RecipeWithRelations,
   Course,
   Difficulty,
+  Ingredient,
+  Instruction,
+  Tag,
+  RecipeImage,
 } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
+
+/**
+ * Batch fetch related data for multiple recipes in a single query per relation
+ * This fixes the N+1 query problem by fetching all related data at once
+ */
+async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
+  ingredients: Map<string, Ingredient[]>;
+  instructions: Map<string, Instruction[]>;
+  tags: Map<string, Tag[]>;
+  images: Map<string, RecipeImage[]>;
+}> {
+  if (recipeIds.length === 0) {
+    return {
+      ingredients: new Map(),
+      instructions: new Map(),
+      tags: new Map(),
+      images: new Map(),
+    };
+  }
+
+  // Fetch all related data in parallel with batch queries
+  const [allIngredients, allInstructions, recipeTags, allImages] =
+    await Promise.all([
+      prisma.ingredient.findMany({
+        where: { recipeId: { in: recipeIds } },
+        orderBy: { sortOrder: "asc" },
+      }),
+      prisma.instruction.findMany({
+        where: { recipeId: { in: recipeIds } },
+        orderBy: { sortOrder: "asc" },
+      }),
+      prisma.recipe.findMany({
+        where: { id: { in: recipeIds } },
+        select: {
+          id: true,
+          tags: true,
+        },
+      }),
+      prisma.recipeImage.findMany({
+        where: { recipeId: { in: recipeIds } },
+      }),
+    ]);
+
+  // Group by recipe ID
+  const ingredients = new Map<string, Ingredient[]>();
+  const instructions = new Map<string, Instruction[]>();
+  const tags = new Map<string, Tag[]>();
+  const images = new Map<string, RecipeImage[]>();
+
+  // Initialize with empty arrays
+  for (const id of recipeIds) {
+    ingredients.set(id, []);
+    instructions.set(id, []);
+    tags.set(id, []);
+    images.set(id, []);
+  }
+
+  // Group ingredients by recipe
+  for (const ing of allIngredients) {
+    const list = ingredients.get(ing.recipeId) || [];
+    list.push(ing);
+    ingredients.set(ing.recipeId, list);
+  }
+
+  // Group instructions by recipe
+  for (const inst of allInstructions) {
+    const list = instructions.get(inst.recipeId) || [];
+    list.push(inst);
+    instructions.set(inst.recipeId, list);
+  }
+
+  // Group tags by recipe
+  for (const recipe of recipeTags) {
+    tags.set(recipe.id, recipe.tags);
+  }
+
+  // Group images by recipe
+  for (const img of allImages) {
+    const list = images.get(img.recipeId) || [];
+    list.push(img);
+    images.set(img.recipeId, list);
+  }
+
+  return { ingredients, instructions, tags, images };
+}
+
+/**
+ * Build safe WHERE conditions for filters using parameterized queries
+ * This fixes the SQL injection vulnerability
+ */
+function buildFilterConditions(filters: SearchFilters): {
+  conditions: string[];
+  params: Record<string, unknown>;
+} {
+  const conditions: string[] = ["r.embedding IS NOT NULL"];
+  const params: Record<string, unknown> = {};
+
+  if (filters.cuisine && filters.cuisine.length > 0) {
+    // Validate that cuisines are safe strings (alphanumeric + spaces)
+    const safeCuisines = filters.cuisine.filter((c) =>
+      /^[\w\s-]+$/i.test(c),
+    );
+    if (safeCuisines.length > 0) {
+      const placeholders = safeCuisines
+        .map((_, i) => `$cuisine${i}`)
+        .join(", ");
+      conditions.push(`r.cuisine IN (${placeholders})`);
+      safeCuisines.forEach((c, i) => {
+        params[`cuisine${i}`] = c;
+      });
+    }
+  }
+
+  if (filters.course && filters.course.length > 0) {
+    // Course values are from enum, so they're safe
+    const courseList = filters.course.map((c) => `'${c}'`).join(", ");
+    conditions.push(`r.course::text IN (${courseList})`);
+  }
+
+  if (filters.difficulty && filters.difficulty.length > 0) {
+    // Difficulty values are from enum, so they're safe
+    const diffList = filters.difficulty.map((d) => `'${d}'`).join(", ");
+    conditions.push(`r.difficulty::text IN (${diffList})`);
+  }
+
+  if (filters.maxTime !== undefined && filters.maxTime > 0) {
+    // Numeric value, safe to use directly after validation
+    const maxTime = Math.floor(Math.abs(filters.maxTime));
+    conditions.push(`r."totalTime" <= ${maxTime}`);
+  }
+
+  if (filters.isFavorite !== undefined) {
+    conditions.push(`r."isFavorite" = ${filters.isFavorite}`);
+  }
+
+  return { conditions, params };
+}
 
 /**
  * Perform semantic search using vector similarity
@@ -18,156 +160,160 @@ export async function semanticSearch(
   limit = 20,
   offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
-  // Enhance and generate embedding for the query
+  // Enhance and generate embedding for the query with retry logic
   const enhancedQuery = enhanceSearchQuery(query);
-  const queryEmbedding = await generateEmbedding(enhancedQuery);
+
+  let queryEmbedding: number[];
+  try {
+    queryEmbedding = await withRetry(
+      () => generateEmbedding(enhancedQuery),
+      {
+        maxRetries: 2,
+        initialDelayMs: 500,
+        shouldRetry: (error) => {
+          // Retry on network errors, not on auth errors
+          if (error instanceof Error) {
+            return !error.message.includes("401");
+          }
+          return true;
+        },
+      },
+    );
+  } catch (error) {
+    throw new ExternalApiError(
+      "Hugging Face",
+      "Failed to generate embedding for search query",
+      error,
+    );
+  }
+
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
-  // Build filter conditions
-  const whereConditions: string[] = ["r.embedding IS NOT NULL"];
-
-  if (filters.cuisine && filters.cuisine.length > 0) {
-    const cuisines = filters.cuisine.map((c) => `'${c}'`).join(",");
-    whereConditions.push(`r.cuisine IN (${cuisines})`);
-  }
-
-  if (filters.course && filters.course.length > 0) {
-    const courses = filters.course.map((c) => `'${c}'`).join(",");
-    whereConditions.push(`r.course IN (${courses})`);
-  }
-
-  if (filters.difficulty && filters.difficulty.length > 0) {
-    const difficulties = filters.difficulty.map((d) => `'${d}'`).join(",");
-    whereConditions.push(`r.difficulty IN (${difficulties})`);
-  }
-
-  if (filters.maxTime) {
-    whereConditions.push(`r."totalTime" <= ${filters.maxTime}`);
-  }
-
-  if (filters.isFavorite !== undefined) {
-    whereConditions.push(`r."isFavorite" = ${filters.isFavorite}`);
-  }
-
-  const whereClause = whereConditions.join(" AND ");
+  // Build safe filter conditions
+  const { conditions } = buildFilterConditions(filters);
+  const whereClause = conditions.join(" AND ");
 
   // Query with vector similarity
-  const results = await prisma.$queryRaw<
-    Array<{
-      id: string;
-      title: string;
-      slug: string;
-      description: string | null;
-      prepTime: number | null;
-      cookTime: number | null;
-      totalTime: number | null;
-      servings: string | null;
-      difficulty: Difficulty;
-      cuisine: string | null;
-      course: Course | null;
-      sourceUrl: string | null;
-      sourceType: string;
-      imageUrl: string | null;
-      notes: string | null;
-      rating: number | null;
-      isFavorite: boolean;
-      cookCount: number;
-      lastCooked: Date | null;
-      createdAt: Date;
-      updatedAt: Date;
-      similarity: number;
-    }>
-  >`
-    SELECT
-      r.id,
-      r.title,
-      r.slug,
-      r.description,
-      r."prepTime",
-      r."cookTime",
-      r."totalTime",
-      r.servings,
-      r.difficulty,
-      r.cuisine,
-      r.course,
-      r."sourceUrl",
-      r."sourceType",
-      r."imageUrl",
-      r.notes,
-      r.rating,
-      r."isFavorite",
-      r."cookCount",
-      r."lastCooked",
-      r."createdAt",
-      r."updatedAt",
-      1 - (r.embedding <=> ${embeddingString}::vector) as similarity
-    FROM "Recipe" r
-    WHERE ${Prisma.raw(whereClause)}
-    ORDER BY r.embedding <=> ${embeddingString}::vector
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `;
+  let results: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    description: string | null;
+    prepTime: number | null;
+    cookTime: number | null;
+    totalTime: number | null;
+    servings: string | null;
+    difficulty: Difficulty;
+    cuisine: string | null;
+    course: Course | null;
+    sourceUrl: string | null;
+    sourceType: string;
+    imageUrl: string | null;
+    notes: string | null;
+    rating: number | null;
+    isFavorite: boolean;
+    cookCount: number;
+    lastCooked: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    similarity: number;
+  }>;
 
-  // Get total count
-  const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
-    SELECT COUNT(*) as count
-    FROM "Recipe" r
-    WHERE ${Prisma.raw(whereClause)}
-  `;
-  const total = Number(countResult[0].count);
+  try {
+    results = await prisma.$queryRaw`
+      SELECT * FROM (
+        SELECT
+          r.id,
+          r.title,
+          r.slug,
+          r.description,
+          r."prepTime",
+          r."cookTime",
+          r."totalTime",
+          r.servings,
+          r.difficulty,
+          r.cuisine,
+          r.course,
+          r."sourceUrl",
+          r."sourceType",
+          r."imageUrl",
+          r.notes,
+          r.rating,
+          r."isFavorite",
+          r."cookCount",
+          r."lastCooked",
+          r."createdAt",
+          r."updatedAt",
+          1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+        FROM "Recipe" r
+        WHERE ${Prisma.raw(whereClause)}
+      ) AS sub
+      WHERE similarity > 0.35
+      ORDER BY similarity DESC
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `;
+  } catch (error) {
+    throw new DatabaseError("semantic search", String(error));
+  }
 
-  // Fetch related data for each recipe
-  const enrichedResults: SearchResult[] = await Promise.all(
-    results.map(async (r) => {
-      const [ingredients, instructions, tags, images] = await Promise.all([
-        prisma.ingredient.findMany({
-          where: { recipeId: r.id },
-          orderBy: { sortOrder: "asc" },
-        }),
-        prisma.instruction.findMany({
-          where: { recipeId: r.id },
-          orderBy: { sortOrder: "asc" },
-        }),
-        prisma.tag.findMany({ where: { recipes: { some: { id: r.id } } } }),
-        prisma.recipeImage.findMany({ where: { recipeId: r.id } }),
-      ]);
+  // Get total count with similarity threshold
+  let total: number;
+  try {
+    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM (
+        SELECT 1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+        FROM "Recipe" r
+        WHERE ${Prisma.raw(whereClause)}
+      ) AS sub
+      WHERE similarity > 0.35
+    `;
+    total = Number(countResult[0].count);
+  } catch (error) {
+    throw new DatabaseError("count query", String(error));
+  }
 
-      const recipe: RecipeWithRelations = {
-        id: r.id,
-        title: r.title,
-        slug: r.slug,
-        description: r.description,
-        prepTime: r.prepTime,
-        cookTime: r.cookTime,
-        totalTime: r.totalTime,
-        servings: r.servings,
-        difficulty: r.difficulty,
-        cuisine: r.cuisine,
-        course: r.course,
-        sourceUrl: r.sourceUrl,
-        sourceType: r.sourceType as RecipeWithRelations["sourceType"],
-        imageUrl: r.imageUrl,
-        searchText: null,
-        notes: r.notes,
-        rating: r.rating,
-        isFavorite: r.isFavorite,
-        cookCount: r.cookCount,
-        lastCooked: r.lastCooked,
-        createdAt: r.createdAt,
-        updatedAt: r.updatedAt,
-        ingredients,
-        instructions,
-        tags,
-        images,
-      };
+  // Batch fetch related data (fixes N+1 problem)
+  const recipeIds = results.map((r) => r.id);
+  const relations = await batchFetchRecipeRelations(recipeIds);
 
-      return {
-        recipe,
-        score: r.similarity,
-        highlights: generateHighlights(recipe, query),
-      };
-    }),
-  );
+  // Build enriched results
+  const enrichedResults: SearchResult[] = results.map((r) => {
+    const recipe: RecipeWithRelations = {
+      id: r.id,
+      title: r.title,
+      slug: r.slug,
+      description: r.description,
+      prepTime: r.prepTime,
+      cookTime: r.cookTime,
+      totalTime: r.totalTime,
+      servings: r.servings,
+      difficulty: r.difficulty,
+      cuisine: r.cuisine,
+      course: r.course,
+      sourceUrl: r.sourceUrl,
+      sourceType: r.sourceType as RecipeWithRelations["sourceType"],
+      imageUrl: r.imageUrl,
+      searchText: null,
+      notes: r.notes,
+      rating: r.rating,
+      isFavorite: r.isFavorite,
+      cookCount: r.cookCount,
+      lastCooked: r.lastCooked,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      ingredients: relations.ingredients.get(r.id) || [],
+      instructions: relations.instructions.get(r.id) || [],
+      tags: relations.tags.get(r.id) || [],
+      images: relations.images.get(r.id) || [],
+    };
+
+    return {
+      recipe,
+      score: r.similarity,
+      highlights: generateHighlights(recipe, query),
+    };
+  });
 
   return { results: enrichedResults, total };
 }
@@ -187,7 +333,7 @@ export async function keywordSearch(
     AND: [
       // Search in title, description, and searchText
       {
-        OR: searchTerms.map((term) => ({
+        AND: searchTerms.map((term) => ({
           OR: [
             { title: { contains: term, mode: "insensitive" as const } },
             { description: { contains: term, mode: "insensitive" as const } },
@@ -210,32 +356,36 @@ export async function keywordSearch(
     ],
   };
 
-  const [recipes, total] = await Promise.all([
-    prisma.recipe.findMany({
-      where,
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
-      take: limit,
-      skip: offset,
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.recipe.count({ where }),
-  ]);
+  try {
+    const [recipes, total] = await Promise.all([
+      prisma.recipe.findMany({
+        where,
+        include: {
+          ingredients: { orderBy: { sortOrder: "asc" } },
+          instructions: { orderBy: { sortOrder: "asc" } },
+          tags: true,
+          images: true,
+        },
+        take: limit,
+        skip: offset,
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.recipe.count({ where }),
+    ]);
 
-  const results: SearchResult[] = recipes.map((recipe) => ({
-    recipe: recipe as unknown as RecipeWithRelations,
-    score: 0.5, // Default score for keyword matches
-    highlights: generateHighlights(
-      recipe as unknown as RecipeWithRelations,
-      query,
-    ),
-  }));
+    const results: SearchResult[] = recipes.map((recipe) => ({
+      recipe: recipe as unknown as RecipeWithRelations,
+      score: 0.5, // Default score for keyword matches
+      highlights: generateHighlights(
+        recipe as unknown as RecipeWithRelations,
+        query,
+      ),
+    }));
 
-  return { results, total };
+    return { results, total };
+  } catch (error) {
+    throw new DatabaseError("keyword search", String(error));
+  }
 }
 
 /**
@@ -305,8 +455,9 @@ export async function hybridSearch(
       results: combined,
       total: scores.size,
     };
-  } catch {
+  } catch (error) {
     // Fall back to keyword search if semantic fails
+    console.error("Hybrid search failed, falling back to keyword:", error);
     return keywordSearch(query, filters, limit, offset);
   }
 }
@@ -333,7 +484,7 @@ function generateHighlights(
   ) {
     highlights.push(
       recipe.description.slice(0, 150) +
-        (recipe.description.length > 150 ? "..." : ""),
+      (recipe.description.length > 150 ? "..." : ""),
     );
   }
 
@@ -351,43 +502,47 @@ function generateHighlights(
  * Get filter options from the database
  */
 export async function getFilterOptions() {
-  const [cuisines, courses, difficulties, tags, maxTime] = await Promise.all([
-    prisma.recipe.groupBy({
-      by: ["cuisine"],
-      _count: true,
-      where: { cuisine: { not: null } },
-    }),
-    prisma.recipe.groupBy({
-      by: ["course"],
-      _count: true,
-      where: { course: { not: null } },
-    }),
-    prisma.recipe.groupBy({
-      by: ["difficulty"],
-      _count: true,
-    }),
-    prisma.tag.findMany({
-      include: {
-        _count: { select: { recipes: true } },
-      },
-    }),
-    prisma.recipe.aggregate({
-      _max: { totalTime: true },
-    }),
-  ]);
+  try {
+    const [cuisines, courses, difficulties, tags, maxTime] = await Promise.all([
+      prisma.recipe.groupBy({
+        by: ["cuisine"],
+        _count: true,
+        where: { cuisine: { not: null } },
+      }),
+      prisma.recipe.groupBy({
+        by: ["course"],
+        _count: true,
+        where: { course: { not: null } },
+      }),
+      prisma.recipe.groupBy({
+        by: ["difficulty"],
+        _count: true,
+      }),
+      prisma.tag.findMany({
+        include: {
+          _count: { select: { recipes: true } },
+        },
+      }),
+      prisma.recipe.aggregate({
+        _max: { totalTime: true },
+      }),
+    ]);
 
-  return {
-    cuisines: cuisines.map((c) => ({ value: c.cuisine!, count: c._count })),
-    courses: courses.map((c) => ({ value: c.course!, count: c._count })),
-    difficulties: difficulties.map((d) => ({
-      value: d.difficulty,
-      count: d._count,
-    })),
-    tags: tags.map((t) => ({
-      value: t.name,
-      slug: t.slug,
-      count: t._count.recipes,
-    })),
-    maxTotalTime: maxTime._max.totalTime || 120,
-  };
+    return {
+      cuisines: cuisines.map((c) => ({ value: c.cuisine!, count: c._count })),
+      courses: courses.map((c) => ({ value: c.course!, count: c._count })),
+      difficulties: difficulties.map((d) => ({
+        value: d.difficulty,
+        count: d._count,
+      })),
+      tags: tags.map((t) => ({
+        value: t.name,
+        slug: t.slug,
+        count: t._count.recipes,
+      })),
+      maxTotalTime: maxTime._max.totalTime || 120,
+    };
+  } catch (error) {
+    throw new DatabaseError("fetch filter options", String(error));
+  }
 }

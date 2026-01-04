@@ -1,4 +1,5 @@
 import { InferenceClient } from "@huggingface/inference";
+import { ExternalApiError } from "./errors";
 
 const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
@@ -8,20 +9,54 @@ const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
  * Free tier: 30,000 requests/month
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const result = await hf.featureExtraction({
-    model: "google/embeddinggemma-300m",
-    inputs: text,
-  });
-
-  // Validate the result is a 1D array of numbers
-  if (!Array.isArray(result)) {
-    throw new Error(`Expected array, got ${typeof result}`);
-  }
-  if (result.length > 0 && Array.isArray(result[0])) {
-    throw new Error("Expected 1D array, got 2D array");
+  if (!process.env.HUGGINGFACE_API_KEY) {
+    throw new ExternalApiError(
+      "Hugging Face",
+      "HUGGINGFACE_API_KEY environment variable is not set",
+    );
   }
 
-  return result as number[];
+  if (!text || text.trim().length === 0) {
+    throw new ExternalApiError(
+      "Hugging Face",
+      "Cannot generate embedding for empty text",
+    );
+  }
+
+  try {
+    const result = await hf.featureExtraction({
+      model: "google/embeddinggemma-300m",
+      inputs: text.slice(0, 8000), // Limit input length to avoid token limits
+    });
+
+    // Validate the result is a 1D array of numbers
+    if (!Array.isArray(result)) {
+      throw new ExternalApiError(
+        "Hugging Face",
+        `Expected array response, got ${typeof result}`,
+      );
+    }
+
+    // Handle potential 2D array response (batch mode)
+    if (result.length > 0 && Array.isArray(result[0])) {
+      throw new ExternalApiError(
+        "Hugging Face",
+        "Expected 1D array response, got 2D array",
+      );
+    }
+
+    return result as number[];
+  } catch (error) {
+    // Re-throw if already an AppError
+    if (error instanceof ExternalApiError) {
+      throw error;
+    }
+
+    // Wrap other errors
+    const message =
+      error instanceof Error ? error.message : "Unknown embedding error";
+    throw new ExternalApiError("Hugging Face", message, error);
+  }
 }
 
 /**
@@ -52,11 +87,20 @@ export function generateSearchText(recipe: {
   if (recipe.totalTime && recipe.totalTime < 30) {
     parts.push("quick fast easy");
   }
+  if (recipe.totalTime && recipe.totalTime < 15) {
+    parts.push("super quick instant");
+  }
   if (recipe.difficulty === "EASY") {
-    parts.push("simple beginner");
+    parts.push("simple beginner friendly");
+  }
+  if (recipe.difficulty === "MEDIUM") {
+    parts.push("intermediate");
+  }
+  if (recipe.difficulty === "HARD") {
+    parts.push("challenging advanced");
   }
   if (recipe.difficulty === "EXPERT") {
-    parts.push("advanced chef professional");
+    parts.push("advanced chef professional complex");
   }
 
   return parts.filter(Boolean).join(" ");
@@ -95,6 +139,12 @@ export function enhanceSearchQuery(query: string): string {
     spicy: "spicy hot pepper chili",
     vegetarian: "vegetarian veggie meatless plant-based",
     vegan: "vegan plant-based dairy-free",
+    asian: "asian chinese japanese korean thai vietnamese",
+    italian: "italian pasta pizza mediterranean",
+    mexican: "mexican tacos burritos tex-mex latin",
+    breakfast: "breakfast brunch morning",
+    dinner: "dinner supper evening meal",
+    dessert: "dessert sweet treat cake pie",
   };
 
   let enhanced = query.toLowerCase();

@@ -12,6 +12,21 @@ export type ActionResult<T = RecipeWithRelations> =
   | { success: true; data: T; slug?: string }
   | { success: false; error: string };
 
+/**
+ * Revalidate all recipe-related caches
+ * This triggers regeneration of static pages on-demand
+ */
+function revalidateRecipes(slug?: string) {
+  // Revalidate home page (recipe list)
+  revalidatePath("/");
+
+  // Revalidate specific recipe pages if slug provided
+  if (slug) {
+    revalidatePath(`/recipe/${slug}`);
+    revalidatePath(`/recipe/${slug}/edit`);
+  }
+}
+
 // Helper to create recipe in DB with embedding
 async function createRecipeInDb(data: {
   title: string;
@@ -190,7 +205,7 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
       `;
     }
 
-    revalidatePath("/");
+    revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error importing recipe from URL:", error);
@@ -286,7 +301,7 @@ export async function importFromText(text: string): Promise<ActionResult> {
       `;
     }
 
-    revalidatePath("/");
+    revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error importing recipe from text:", error);
@@ -316,16 +331,16 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     // Create or find tags
     const tagConnections = input.tags
       ? await Promise.all(
-          input.tags.map(async (tagName) => {
-            const tagSlug = generateTagSlug(tagName);
-            const tag = await prisma.tag.upsert({
-              where: { slug: tagSlug },
-              create: { name: tagName, slug: tagSlug },
-              update: {},
-            });
-            return { id: tag.id };
-          }),
-        )
+        input.tags.map(async (tagName) => {
+          const tagSlug = generateTagSlug(tagName);
+          const tag = await prisma.tag.upsert({
+            where: { slug: tagSlug },
+            create: { name: tagName, slug: tagSlug },
+            update: {},
+          });
+          return { id: tag.id };
+        }),
+      )
       : [];
 
     // Generate embedding
@@ -398,7 +413,7 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
       `;
     }
 
-    revalidatePath("/");
+    revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error creating recipe:", error);
@@ -436,7 +451,7 @@ export async function updateRecipe(
     const totalTime =
       input.totalTime ||
       (input.prepTime ?? existing.prepTime ?? 0) +
-        (input.cookTime ?? existing.cookTime ?? 0) ||
+      (input.cookTime ?? existing.cookTime ?? 0) ||
       undefined;
 
     // Handle tags
@@ -570,8 +585,7 @@ export async function updateRecipe(
       }
     }
 
-    revalidatePath("/");
-    revalidatePath(`/recipe/${slug}`);
+    revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error updating recipe:", error);
@@ -596,8 +610,7 @@ export async function toggleFavorite(
       },
     });
 
-    revalidatePath("/");
-    revalidatePath(`/recipe/${recipe.slug}`);
+    revalidateRecipes(recipe.slug);
     return { success: true, data: recipe };
   } catch (error) {
     console.error("Error toggling favorite:", error);
@@ -625,8 +638,7 @@ export async function markAsCooked(
       },
     });
 
-    revalidatePath("/");
-    revalidatePath(`/recipe/${recipe.slug}`);
+    revalidateRecipes(recipe.slug);
     return { success: true, data: recipe };
   } catch (error) {
     console.error("Error marking as cooked:", error);
@@ -647,7 +659,7 @@ export async function deleteRecipe(
 
     await prisma.recipe.delete({ where: { id } });
 
-    revalidatePath("/");
+    revalidateRecipes();
     return { success: true };
   } catch (error) {
     console.error("Error deleting recipe:", error);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hybridSearch } from "@/lib/search";
 import { Badge } from "@/components/ui/badge";
+import { RecipeImage } from "@/components/ui/recipe-image";
 import type { SearchResult } from "@/types/recipe";
 
 interface SearchResultsProps {
@@ -47,18 +48,13 @@ export async function SearchResults({ query }: SearchResultsProps) {
             className="bg-warm-white flex gap-3 rounded-lg p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-4 sm:p-4"
           >
             {/* Thumbnail */}
-            <div className="bg-butter/30 relative h-16 w-20 shrink-0 overflow-hidden rounded-md sm:h-24 sm:w-32">
-              {recipe.imageUrl ? (
-                <img
-                  src={recipe.imageUrl}
-                  alt={recipe.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <span className="text-2xl opacity-30 sm:text-3xl">🍽️</span>
-                </div>
-              )}
+            <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-md sm:h-24 sm:w-32">
+              <RecipeImage
+                src={recipe.imageUrl}
+                alt={recipe.title}
+                sizes="(max-width: 640px) 80px, 128px"
+                fallbackEmoji="🍽️"
+              />
             </div>
 
             {/* Content */}

@@ -5,6 +5,7 @@ import { SearchBar } from "@/components/search/search-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchResults } from "./search-results";
 
+// Search must be dynamic - depends on query params and calls external embedding API
 export const dynamic = "force-dynamic";
 
 interface PageProps {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,15 +18,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { createRecipe, updateRecipe } from "@/lib/actions";
-import type {
-  RecipeWithRelations,
-  RecipeInput,
-  IngredientInput,
-  InstructionInput,
-  Difficulty,
-  Course,
-  ParsedRecipe,
-} from "@/types/recipe";
+import { recipeInputSchema, type RecipeInputSchema } from "@/lib/validations";
+import type { RecipeWithRelations, Difficulty, Course, ParsedRecipe } from "@/types/recipe";
 
 interface ManualRecipeFormProps {
   initialData?: RecipeWithRelations;
@@ -68,186 +63,93 @@ export function ManualRecipeForm({
   const [isPending, startTransition] = useTransition();
 
   // Get import draft once on initial render (only when not editing)
-  const [importDraft] = useState<ParsedRecipe | null>(() =>
-    initialData ? null : getImportDraft(),
-  );
+  const importDraft = !initialData ? getImportDraft() : null;
 
-  const [title, setTitle] = useState(
-    initialData?.title || importDraft?.title || "",
-  );
-  const [description, setDescription] = useState(
-    initialData?.description || importDraft?.description || "",
-  );
-  const [prepTime, setPrepTime] = useState(
-    initialData?.prepTime?.toString() ||
-      importDraft?.prepTime?.toString() ||
-      "",
-  );
-  const [cookTime, setCookTime] = useState(
-    initialData?.cookTime?.toString() ||
-      importDraft?.cookTime?.toString() ||
-      "",
-  );
-  const [servings, setServings] = useState(
-    initialData?.servings || importDraft?.servings || "",
-  );
-  const [difficulty, setDifficulty] = useState<Difficulty | "">(
-    initialData?.difficulty || "",
-  );
-  const [cuisine, setCuisine] = useState(
-    initialData?.cuisine || importDraft?.cuisine || "",
-  );
-  const [course, setCourse] = useState<Course | "">(
-    initialData?.course || importDraft?.course || "",
-  );
-  const [imageUrl, setImageUrl] = useState(
-    initialData?.imageUrl || importDraft?.imageUrl || "",
-  );
-  const [notes, setNotes] = useState(initialData?.notes || "");
-  const [tags, setTags] = useState(
-    initialData?.tags?.map((t) => t.name).join(", ") || "",
-  );
-
-  const [ingredients, setIngredients] = useState<IngredientInput[]>(() => {
-    if (initialData?.ingredients?.length) {
-      return initialData.ingredients.map((i) => ({
-        quantity: i.quantity || "",
-        unit: i.unit || "",
-        name: i.name,
-        notes: i.notes || "",
-        group: i.group || "",
-      }));
-    }
-    if (importDraft?.ingredients?.length) {
-      return importDraft.ingredients.map((i, idx) => ({
-        quantity: i.quantity || "",
-        unit: i.unit || "",
-        name: i.name || "",
-        notes: i.notes || "",
-        group: i.group || "",
-        sortOrder: i.sortOrder ?? idx,
-      }));
-    }
-    return [{ quantity: "", unit: "", name: "", notes: "", group: "" }];
-  });
-
-  const [instructions, setInstructions] = useState<InstructionInput[]>(() => {
-    if (initialData?.instructions?.length) {
-      return initialData.instructions.map((i) => ({
-        text: i.text,
-        group: i.group || "",
-        duration: i.duration || undefined,
-      }));
-    }
-    if (importDraft?.instructions?.length) {
-      return importDraft.instructions.map((inst) => ({
-        text: inst.text || "",
-        group: inst.group || "",
-        duration: inst.duration || undefined,
-      }));
-    }
-    return [{ text: "", group: "" }];
-  });
-
-  const addIngredient = () => {
-    setIngredients([
-      ...ingredients,
-      { quantity: "", unit: "", name: "", notes: "", group: "" },
-    ]);
-  };
-
-  const removeIngredient = (index: number) => {
-    if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateIngredient = (
-    index: number,
-    field: keyof IngredientInput,
-    value: string,
-  ) => {
-    const updated = [...ingredients];
-    updated[index] = { ...updated[index], [field]: value };
-    setIngredients(updated);
-  };
-
-  const addInstruction = () => {
-    setInstructions([...instructions, { text: "", group: "" }]);
-  };
-
-  const removeInstruction = (index: number) => {
-    if (instructions.length > 1) {
-      setInstructions(instructions.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateInstruction = (index: number, text: string) => {
-    const updated = [...instructions];
-    updated[index] = { ...updated[index], text };
-    setInstructions(updated);
-  };
-
-  const updateInstructionField = (
-    index: number,
-    field: keyof InstructionInput,
-    value: string | number | undefined,
-  ) => {
-    const updated = [...instructions];
-    updated[index] = { ...updated[index], [field]: value } as InstructionInput;
-    setInstructions(updated);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!title.trim()) {
-      toast.error("Please enter a recipe title");
-      return;
-    }
-
-    const validIngredients = ingredients.filter((i) => i.name.trim());
-    if (validIngredients.length === 0) {
-      toast.error("Please add at least one ingredient");
-      return;
-    }
-
-    const validInstructions = instructions.filter((i) => i.text.trim());
-    if (validInstructions.length === 0) {
-      toast.error("Please add at least one instruction");
-      return;
-    }
-
-    const recipeData: RecipeInput = {
-      title: title.trim(),
-      description: description.trim() || undefined,
-      prepTime: prepTime ? parseInt(prepTime, 10) : undefined,
-      cookTime: cookTime ? parseInt(cookTime, 10) : undefined,
-      servings: servings.trim() || undefined,
-      difficulty: difficulty || undefined,
-      cuisine: cuisine.trim() || undefined,
-      course: course || undefined,
-      imageUrl: imageUrl.trim() || undefined,
-      notes: notes.trim() || undefined,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
-      ingredients: validIngredients.map((i, idx) => ({
-        ...i,
-        sortOrder: idx,
-      })),
-      instructions: validInstructions.map((i, idx) => ({
-        ...i,
-        sortOrder: idx,
-      })),
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<RecipeInputSchema>({
+    resolver: zodResolver(recipeInputSchema),
+    defaultValues: {
+      title: initialData?.title || importDraft?.title || "",
+      description: initialData?.description || importDraft?.description || "",
+      prepTime: initialData?.prepTime || importDraft?.prepTime || undefined,
+      cookTime: initialData?.cookTime || importDraft?.cookTime || undefined,
+      servings: initialData?.servings || importDraft?.servings || "",
+      difficulty: initialData?.difficulty || undefined,
+      cuisine: initialData?.cuisine || importDraft?.cuisine || "",
+      course: (initialData?.course as Course) || (importDraft?.course as Course) || undefined,
+      imageUrl: initialData?.imageUrl || importDraft?.imageUrl || "",
+      notes: initialData?.notes || "",
+      tags: initialData?.tags?.map((t) => t.name) || [],
+      ingredients: initialData?.ingredients?.length
+        ? initialData.ingredients.map((i) => ({
+          quantity: i.quantity || "",
+          unit: i.unit || "",
+          name: i.name,
+          notes: i.notes || "",
+          group: i.group || "",
+        }))
+        : importDraft?.ingredients?.length
+          ? importDraft.ingredients.map((i: any) => ({
+            quantity: i.quantity || "",
+            unit: i.unit || "",
+            name: i.name || "",
+            notes: i.notes || "",
+            group: i.group || "",
+          }))
+          : [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
+      instructions: initialData?.instructions?.length
+        ? initialData.instructions.map((i) => ({
+          text: i.text,
+          group: i.group || "",
+          duration: i.duration || undefined,
+        }))
+        : importDraft?.instructions?.length
+          ? importDraft.instructions.map((inst: any) => ({
+            text: inst.text || "",
+            group: inst.group || "",
+            duration: inst.duration || undefined,
+          }))
+          : [{ text: "", group: "" }],
       sourceType: initialData?.sourceType || "MANUAL",
+    },
+  });
+
+  const {
+    fields: ingredientFields,
+    append: appendIngredient,
+    remove: removeIngredient,
+  } = useFieldArray({
+    control,
+    name: "ingredients",
+  });
+
+  const {
+    fields: instructionFields,
+    append: appendInstruction,
+    remove: removeInstruction,
+  } = useFieldArray({
+    control,
+    name: "instructions",
+  });
+
+  const onSubmit = async (data: RecipeInputSchema) => {
+    // Add sortOrder to ingredients and instructions
+    const recipeData: RecipeInputSchema = {
+      ...data,
+      ingredients: data.ingredients.map((ing, idx) => ({ ...ing, sortOrder: idx })),
+      instructions: data.instructions.map((inst, idx) => ({ ...inst, sortOrder: idx })),
     };
 
     startTransition(async () => {
       const result = isEditing
-        ? await updateRecipe(initialData.id, recipeData)
-        : await createRecipe(recipeData);
+        ? await updateRecipe(initialData.id, recipeData as any)
+        : await createRecipe(recipeData as any);
 
       if (!result.success) {
         toast.error(result.error);
@@ -259,17 +161,22 @@ export function ManualRecipeForm({
       );
 
       if (onSuccess) {
-        onSuccess(result.data);
+        onSuccess(result.data as any);
       } else {
-        router.push(`/recipe/${result.slug}`);
+        const slug = result.slug || (result.data as any).slug;
+        router.push(`/recipe/${slug}`);
       }
     });
   };
 
+  const difficultyValue = watch("difficulty");
+  const courseValue = watch("course");
+  const tagsValue = watch("tags");
+
   return (
     <Card className="bg-warm-white">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* Basic Info */}
           <div className="space-y-4">
             <h3 className="font-serif text-lg font-semibold">Basic Info</h3>
@@ -278,23 +185,22 @@ export function ManualRecipeForm({
               <Label htmlFor="title">Recipe Title *</Label>
               <Input
                 id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                {...register("title")}
                 placeholder="e.g., Grandma's Chocolate Chip Cookies"
                 className="bg-cream border-butter"
-                required
               />
+              {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                {...register("description")}
                 placeholder="A brief description of this recipe..."
                 className="bg-cream border-butter"
               />
+              {errors.description && <p className="text-destructive text-sm">{errors.description.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -303,8 +209,7 @@ export function ManualRecipeForm({
                 <Input
                   id="prepTime"
                   type="number"
-                  value={prepTime}
-                  onChange={(e) => setPrepTime(e.target.value)}
+                  {...register("prepTime", { valueAsNumber: true })}
                   min="0"
                   className="bg-cream border-butter"
                 />
@@ -314,8 +219,7 @@ export function ManualRecipeForm({
                 <Input
                   id="cookTime"
                   type="number"
-                  value={cookTime}
-                  onChange={(e) => setCookTime(e.target.value)}
+                  {...register("cookTime", { valueAsNumber: true })}
                   min="0"
                   className="bg-cream border-butter"
                 />
@@ -324,8 +228,7 @@ export function ManualRecipeForm({
                 <Label htmlFor="servings">Servings</Label>
                 <Input
                   id="servings"
-                  value={servings}
-                  onChange={(e) => setServings(e.target.value)}
+                  {...register("servings")}
                   placeholder="e.g., 4-6"
                   className="bg-cream border-butter"
                 />
@@ -333,8 +236,8 @@ export function ManualRecipeForm({
               <div className="space-y-2">
                 <Label htmlFor="difficulty">Difficulty</Label>
                 <Select
-                  value={difficulty}
-                  onValueChange={(v) => setDifficulty(v as Difficulty)}
+                  value={difficultyValue}
+                  onValueChange={(v) => setValue("difficulty", v as Difficulty)}
                 >
                   <SelectTrigger className="bg-cream border-butter">
                     <SelectValue placeholder="Select..." />
@@ -355,8 +258,7 @@ export function ManualRecipeForm({
                 <Label htmlFor="cuisine">Cuisine</Label>
                 <Input
                   id="cuisine"
-                  value={cuisine}
-                  onChange={(e) => setCuisine(e.target.value)}
+                  {...register("cuisine")}
                   placeholder="e.g., Italian, Mexican"
                   className="bg-cream border-butter"
                 />
@@ -364,8 +266,8 @@ export function ManualRecipeForm({
               <div className="space-y-2">
                 <Label htmlFor="course">Course</Label>
                 <Select
-                  value={course}
-                  onValueChange={(v) => setCourse(v as Course)}
+                  value={courseValue}
+                  onValueChange={(v) => setValue("course", v as Course)}
                 >
                   <SelectTrigger className="bg-cream border-butter">
                     <SelectValue placeholder="Select..." />
@@ -392,49 +294,42 @@ export function ManualRecipeForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={addIngredient}
+                onClick={() => appendIngredient({ quantity: "", unit: "", name: "", notes: "", group: "" })}
               >
                 + Add Ingredient
               </Button>
             </div>
 
             <div className="space-y-4">
-              {ingredients.map((ing, index) => (
+              {ingredientFields.map((field, index) => (
                 <div
-                  key={index}
+                  key={field.id}
                   className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
                 >
                   <div className="flex items-start gap-2">
                     <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
                       <Input
-                        value={ing.quantity || ""}
-                        onChange={(e) =>
-                          updateIngredient(index, "quantity", e.target.value)
-                        }
+                        {...register(`ingredients.${index}.quantity`)}
                         placeholder="Qty"
                         className="bg-cream border-butter"
                       />
                       <Input
-                        value={ing.unit || ""}
-                        onChange={(e) =>
-                          updateIngredient(index, "unit", e.target.value)
-                        }
+                        {...register(`ingredients.${index}.unit`)}
                         placeholder="Unit"
                         className="bg-cream border-butter"
                       />
+                      <div className="col-span-2 sm:col-span-2 space-y-1">
+                        <Input
+                          {...register(`ingredients.${index}.name`)}
+                          placeholder="Ingredient name"
+                          className="bg-cream border-butter"
+                        />
+                        {errors.ingredients?.[index]?.name && (
+                          <p className="text-destructive text-xs">{errors.ingredients[index].name.message}</p>
+                        )}
+                      </div>
                       <Input
-                        value={ing.name}
-                        onChange={(e) =>
-                          updateIngredient(index, "name", e.target.value)
-                        }
-                        placeholder="Ingredient name"
-                        className="bg-cream border-butter col-span-2 sm:col-span-2"
-                      />
-                      <Input
-                        value={ing.group || ""}
-                        onChange={(e) =>
-                          updateIngredient(index, "group", e.target.value)
-                        }
+                        {...register(`ingredients.${index}.group`)}
                         placeholder="Group (e.g., Green Salsa)"
                         className="bg-cream border-butter"
                       />
@@ -445,21 +340,21 @@ export function ManualRecipeForm({
                       size="sm"
                       onClick={() => removeIngredient(index)}
                       className="text-muted-foreground hover:text-destructive shrink-0"
-                      disabled={ingredients.length === 1}
+                      disabled={ingredientFields.length === 1}
                     >
                       ✕
                     </Button>
                   </div>
                   <Input
-                    value={ing.notes || ""}
-                    onChange={(e) =>
-                      updateIngredient(index, "notes", e.target.value)
-                    }
+                    {...register(`ingredients.${index}.notes`)}
                     placeholder="Notes (optional)"
                     className="bg-cream border-butter"
                   />
                 </div>
               ))}
+              {errors.ingredients?.root && (
+                <p className="text-destructive text-sm">{errors.ingredients.root.message}</p>
+              )}
             </div>
           </div>
 
@@ -473,46 +368,50 @@ export function ManualRecipeForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={addInstruction}
+                onClick={() => appendInstruction({ text: "", group: "" })}
               >
                 + Add Step
               </Button>
             </div>
 
             <div className="space-y-3">
-              {instructions.map((inst, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
-                    {index + 1}
-                  </div>
-                  <Textarea
-                    value={inst.text}
-                    onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder={`Step ${index + 1}...`}
-                    className="bg-cream border-butter min-h-[80px] flex-1"
-                  />
-                  <div className="ml-2 w-40">
-                    <Input
-                      value={(inst as InstructionInput).group || ""}
-                      onChange={(e) =>
-                        updateInstructionField(index, "group", e.target.value)
-                      }
-                      placeholder="Group (e.g., Green Salsa)"
-                      className="bg-cream border-butter"
+              {instructionFields.map((field, index) => (
+                <div key={field.id} className="space-y-1">
+                  <div className="flex items-start gap-2">
+                    <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
+                      {index + 1}
+                    </div>
+                    <Textarea
+                      {...register(`instructions.${index}.text`)}
+                      placeholder={`Step ${index + 1}...`}
+                      className="bg-cream border-butter min-h-[80px] flex-1"
                     />
+                    <div className="ml-2 w-40">
+                      <Input
+                        {...register(`instructions.${index}.group`)}
+                        placeholder="Group (e.g., Green Salsa)"
+                        className="bg-cream border-butter"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeInstruction(index)}
+                      className="text-muted-foreground hover:text-destructive"
+                      disabled={instructionFields.length === 1}
+                    >
+                      ✕
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeInstruction(index)}
-                    className="text-muted-foreground hover:text-destructive"
-                    disabled={instructions.length === 1}
-                  >
-                    ✕
-                  </Button>
+                  {errors.instructions?.[index]?.text && (
+                    <p className="text-destructive text-xs ml-12">{errors.instructions[index].text.message}</p>
+                  )}
                 </div>
               ))}
+              {errors.instructions?.root && (
+                <p className="text-destructive text-sm">{errors.instructions.root.message}</p>
+              )}
             </div>
           </div>
 
@@ -526,8 +425,7 @@ export function ManualRecipeForm({
               <Label htmlFor="imageUrl">Image URL</Label>
               <Input
                 id="imageUrl"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                {...register("imageUrl")}
                 placeholder="https://example.com/image.jpg"
                 className="bg-cream border-butter"
               />
@@ -537,8 +435,8 @@ export function ManualRecipeForm({
               <Label htmlFor="tags">Tags (comma-separated)</Label>
               <Input
                 id="tags"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                value={tagsValue?.join(", ")}
+                onChange={(e) => setValue("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
                 placeholder="e.g., comfort food, family favorite, quick"
                 className="bg-cream border-butter"
               />
@@ -548,8 +446,7 @@ export function ManualRecipeForm({
               <Label htmlFor="notes">Personal Notes</Label>
               <Textarea
                 id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                {...register("notes")}
                 placeholder="Any personal notes or modifications..."
                 className="bg-cream border-butter"
               />
@@ -577,3 +474,4 @@ export function ManualRecipeForm({
     </Card>
   );
 }
+

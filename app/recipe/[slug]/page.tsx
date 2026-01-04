@@ -9,12 +9,32 @@ import { InstructionSteps } from "@/components/recipe/instruction-steps";
 import { RecipeActionsClient } from "./recipe-actions-client";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { RecipeImage } from "@/components/ui/recipe-image";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-export const dynamic = "force-dynamic";
+// ISR: Revalidate every 60 seconds, or on-demand via revalidatePath
+export const revalidate = 60;
+
+// Allow dynamic params for recipes not generated at build time
+export const dynamicParams = true;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+}
+
+// Pre-generate popular recipe pages at build time
+export async function generateStaticParams() {
+  try {
+    // Get the most recent 50 recipes to pre-render
+    const recipes = await prisma.recipe.findMany({
+      select: { slug: true },
+      orderBy: { updatedAt: "desc" },
+      take: 50,
+    });
+    return recipes.map((recipe) => ({ slug: recipe.slug }));
+  } catch {
+    return [];
+  }
 }
 
 async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
@@ -76,7 +96,7 @@ export default async function RecipePage({ params }: PageProps) {
         <section className="container pb-6 md:pb-8">
           <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
             {/* Image */}
-            <div className="bg-butter/30 relative aspect-[4/3] overflow-hidden rounded-lg md:rounded-xl">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-lg md:rounded-xl">
               {recipe.imageUrl ? (
                 <a
                   href={recipe.imageUrl}
@@ -84,16 +104,16 @@ export default async function RecipePage({ params }: PageProps) {
                   rel="noopener noreferrer"
                   className="block h-full"
                 >
-                  <img
+                  <RecipeImage
                     src={recipe.imageUrl}
                     alt={recipe.title}
-                    className="h-full w-full object-cover transition-opacity hover:opacity-90"
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="hover:opacity-90"
                   />
                 </a>
               ) : (
-                <div className="flex h-full items-center justify-center">
-                  <span className="text-6xl opacity-30 md:text-8xl">🍽️</span>
-                </div>
+                <RecipeImage src={null} alt={recipe.title} />
               )}
             </div>
 

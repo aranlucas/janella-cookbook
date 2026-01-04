@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { importFromText } from "@/lib/actions";
+import { textImportSchema, type TextImportSchema } from "@/lib/validations";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface TextImportFormProps {
@@ -16,24 +19,26 @@ interface TextImportFormProps {
 
 export function TextImportForm({ onSuccess }: TextImportFormProps) {
   const router = useRouter();
-  const [text, setText] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+  } = useForm<TextImportSchema>({
+    resolver: zodResolver(textImportSchema),
+    defaultValues: {
+      text: "",
+    },
+  });
 
-    if (!text.trim()) {
-      setError("Please enter some recipe text");
-      return;
-    }
-
+  const onSubmit = async (data: TextImportSchema) => {
     startTransition(async () => {
-      const result = await importFromText(text);
+      const result = await importFromText(data.text);
 
       if (!result.success) {
-        setError(result.error);
+        setError("text", { type: "manual", message: result.error });
         toast.error(result.error);
         return;
       }
@@ -50,13 +55,12 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
   return (
     <Card className="bg-warm-white">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="text">Recipe Text</Label>
             <Textarea
               id="text"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+              {...register("text")}
               placeholder={`Paste your recipe here. For example:
 
 Grandma's Chocolate Chip Cookies
@@ -79,7 +83,7 @@ Instructions:
               className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
               disabled={isPending}
             />
-            {error && <p className="text-destructive text-sm">{error}</p>}
+            {errors.text && <p className="text-destructive text-sm">{errors.text.message}</p>}
           </div>
 
           <div className="text-muted-foreground text-sm">
@@ -108,3 +112,4 @@ Instructions:
     </Card>
   );
 }
+

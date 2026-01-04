@@ -4,6 +4,7 @@ import { z } from "zod";
 import { load } from "cheerio";
 import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
+import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 
 // OpenRouter client configured for AI SDK
@@ -174,22 +175,69 @@ function findRecipeInJsonLd(data: unknown): Array<{ image?: unknown }> {
 }
 
 /**
+ * Validate and sanitize URL
+ */
+function validateUrl(url: string): URL {
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new RecipeParseError("Only HTTP and HTTPS URLs are supported", url);
+    }
+    return parsed;
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new RecipeParseError("Invalid URL format", url);
+  }
+}
+
+/**
  * Parse a recipe from a URL
  */
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
-    },
-  });
+  const validatedUrl = validateUrl(url);
 
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch URL: ${response.status} ${response.statusText}`,
+  let html: string;
+  try {
+    const response = await withRetry(
+      async () => {
+        const res = await fetch(validatedUrl.href, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
+            Accept: "text/html,application/xhtml+xml",
+          },
+          signal: AbortSignal.timeout(15000), // 15 second timeout
+        });
+
+        if (!res.ok) {
+          throw new RecipeParseError(
+            `Failed to fetch URL: ${res.status} ${res.statusText}`,
+            url,
+          );
+        }
+
+        return res;
+      },
+      {
+        maxRetries: 2,
+        initialDelayMs: 1000,
+        shouldRetry: (error) => {
+          // Don't retry on 4xx errors
+          if (error instanceof RecipeParseError) {
+            return !error.message.includes("4");
+          }
+          return true;
+        },
+      },
+    );
+
+    html = await response.text();
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new RecipeParseError(
+      `Failed to fetch recipe: ${error instanceof Error ? error.message : "Unknown error"}`,
+      url,
     );
   }
-
-  const html = await response.text();
 
   return extractRecipeWithAI(html, url);
 }
@@ -201,6 +249,13 @@ async function extractRecipeWithAI(
   html: string,
   sourceUrl: string,
 ): Promise<ParsedRecipe> {
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new ExternalApiError(
+      "OpenRouter",
+      "OPENROUTER_API_KEY environment variable is not set",
+    );
+  }
+
   // Extract the main image before processing content
   const imageUrl = extractImageFromHtml(html, sourceUrl);
 
@@ -224,70 +279,147 @@ async function extractRecipeWithAI(
     else content = $("body").text() || "";
   }
 
-  // Limit content length
-  const truncatedContent = content.slice(0, 12000);
+  // Clean and limit content length
+  const cleanedContent = content
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 12000);
 
-  const { output: parsed } = await generateText({
-    model: model,
-    output: Output.object({ schema: recipeSchema }),
-    system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
+  if (cleanedContent.length < 50) {
+    throw new RecipeParseError(
+      "Could not extract enough content from the page to parse a recipe",
+      sourceUrl,
+    );
+  }
+
+  try {
+    const { output: parsed } = await withRetry(
+      async () => {
+        return await generateText({
+          model: model,
+          output: Output.object({ schema: recipeSchema }),
+          system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
 Be accurate and only include information present in the content. Extract all ingredients and instructions even if formatting is messy. Output in structured JSON format.`,
-    prompt: `Extract the recipe from this content:\n\n${truncatedContent}`,
-  });
+          prompt: `Extract the recipe from this content:\n\n${cleanedContent}`,
+        });
+      },
+      {
+        maxRetries: 2,
+        initialDelayMs: 2000,
+      },
+    );
 
-  return {
-    title: parsed.title || "Untitled Recipe",
-    description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-      ...ing,
-      sortOrder: i,
-    })),
-    instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      text: inst?.text || "",
-      group: inst?.group,
-      sortOrder: i,
-    })),
-    prepTime: parsed.prepTime,
-    cookTime: parsed.cookTime,
-    totalTime: parsed.totalTime,
-    servings: parsed.servings,
-    cuisine: parsed.cuisine,
-    course: parsed.course as Course | undefined,
-    difficulty: parsed.difficulty as Difficulty | undefined,
-    imageUrl,
-  };
+    // Validate we got a proper recipe
+    if (!parsed.title || parsed.title === "Untitled Recipe") {
+      throw new RecipeParseError(
+        "Could not extract recipe title from the page",
+        sourceUrl,
+      );
+    }
+
+    if (!parsed.ingredients || parsed.ingredients.length === 0) {
+      throw new RecipeParseError(
+        "Could not extract any ingredients from the page",
+        sourceUrl,
+      );
+    }
+
+    return {
+      title: parsed.title,
+      description: parsed.description,
+      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
+        ...ing,
+        sortOrder: i,
+      })),
+      instructions: (parsed.instructions || []).map((inst, i: number) => ({
+        text: inst?.text || "",
+        group: inst?.group,
+        sortOrder: i,
+      })),
+      prepTime: parsed.prepTime,
+      cookTime: parsed.cookTime,
+      totalTime: parsed.totalTime,
+      servings: parsed.servings,
+      cuisine: parsed.cuisine,
+      course: parsed.course as Course | undefined,
+      difficulty: parsed.difficulty as Difficulty | undefined,
+      imageUrl,
+    };
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new ExternalApiError(
+      "OpenRouter",
+      `Failed to parse recipe with AI: ${error instanceof Error ? error.message : "Unknown error"}`,
+      error,
+    );
+  }
 }
 
 /**
  * Parse a recipe from natural language text
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
-  const { output: parsed } = await generateText({
-    model: model,
-    output: Output.object({ schema: recipeSchema }),
-    system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
-Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
-    prompt: text,
-  });
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new ExternalApiError(
+      "OpenRouter",
+      "OPENROUTER_API_KEY environment variable is not set",
+    );
+  }
 
-  return {
-    title: parsed.title || "Untitled Recipe",
-    description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-      ...ing,
-      sortOrder: i,
-    })),
-    instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      text: inst?.text || "",
-      group: inst?.group,
-      sortOrder: i,
-    })),
-    prepTime: parsed.prepTime,
-    cookTime: parsed.cookTime,
-    totalTime: parsed.totalTime,
-    servings: parsed.servings,
-    cuisine: parsed.cuisine,
-    course: parsed.course as Course | undefined,
-    difficulty: parsed.difficulty as Difficulty | undefined,
-  };
+  if (!text || text.trim().length < 20) {
+    throw new RecipeParseError("Please provide more recipe text to parse");
+  }
+
+  try {
+    const { output: parsed } = await withRetry(
+      async () => {
+        return await generateText({
+          model: model,
+          output: Output.object({ schema: recipeSchema }),
+          system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
+Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
+          prompt: text.slice(0, 15000), // Limit input size
+        });
+      },
+      {
+        maxRetries: 2,
+        initialDelayMs: 2000,
+      },
+    );
+
+    // Validate we got a proper recipe
+    if (!parsed.ingredients || parsed.ingredients.length === 0) {
+      throw new RecipeParseError(
+        "Could not extract any ingredients from the text",
+      );
+    }
+
+    return {
+      title: parsed.title || "Untitled Recipe",
+      description: parsed.description,
+      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
+        ...ing,
+        sortOrder: i,
+      })),
+      instructions: (parsed.instructions || []).map((inst, i: number) => ({
+        text: inst?.text || "",
+        group: inst?.group,
+        sortOrder: i,
+      })),
+      prepTime: parsed.prepTime,
+      cookTime: parsed.cookTime,
+      totalTime: parsed.totalTime,
+      servings: parsed.servings,
+      cuisine: parsed.cuisine,
+      course: parsed.course as Course | undefined,
+      difficulty: parsed.difficulty as Difficulty | undefined,
+    };
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new ExternalApiError(
+      "OpenRouter",
+      `Failed to parse recipe text: ${error instanceof Error ? error.message : "Unknown error"}`,
+      error,
+    );
+  }
 }

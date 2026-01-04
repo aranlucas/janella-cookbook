@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RecipeImage } from "@/components/ui/recipe-image";
 import { cn } from "@/lib/utils";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeCardProps {
   recipe: RecipeWithRelations;
   className?: string;
+  priority?: boolean;
 }
 
-export function RecipeCard({ recipe, className }: RecipeCardProps) {
+export function RecipeCard({ recipe, className, priority = false }: RecipeCardProps) {
   const difficultyColor = {
     EASY: "bg-sage text-warm-white",
     MEDIUM: "bg-butter text-charcoal",
@@ -28,19 +30,15 @@ export function RecipeCard({ recipe, className }: RecipeCardProps) {
         )}
       >
         <div className="bg-butter/30 relative aspect-[4/3] overflow-hidden">
-          {recipe.imageUrl ? (
-            <img
-              src={recipe.imageUrl}
-              alt={recipe.title}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center">
-              <span className="text-6xl opacity-30">🍽️</span>
-            </div>
-          )}
+          <RecipeImage
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            priority={priority}
+            className="transition-transform group-hover:scale-105"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          />
           {recipe.isFavorite && (
-            <div className="absolute top-2 right-2">
+            <div className="absolute top-2 right-2 z-10">
               <span className="text-2xl">❤️</span>
             </div>
           )}

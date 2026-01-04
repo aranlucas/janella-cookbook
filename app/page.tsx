@@ -7,7 +7,8 @@ import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-export const dynamic = "force-dynamic";
+// Revalidate every 60 seconds, or on-demand via revalidatePath("/")
+export const revalidate = 60;
 
 async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
   try {
@@ -93,8 +94,7 @@ export default async function HomePage() {
                   {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your
                   collection
                   {stats.favorites > 0 &&
-                    ` • ${stats.favorites} favorite${
-                      stats.favorites !== 1 ? "s" : ""
+                    ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""
                     }`}
                 </p>
               )}
