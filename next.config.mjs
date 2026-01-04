@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["jsdom"],
+  transpilePackages: ["jsdom"], // Add the name of the problematic module here
   experimental: {
     turbopackUseSystemTlsCerts: true,
   },
