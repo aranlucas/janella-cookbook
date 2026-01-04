@@ -1,17 +1,17 @@
-import { openai } from "@ai-sdk/openai";
-import { embed } from "ai";
-import type { RecipeWithRelations } from "@/types/recipe";
+import { HfInference } from "@huggingface/inference";
+
+const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
 /**
- * Generate an embedding vector for the given text using OpenAI's embedding model
+ * Generate an embedding vector for the given text using Hugging Face's embedding model
+ * Model: google/embeddinggemma-300m (768 dimensions)
+ * Free tier: 30,000 requests/month
  */
-export async function generateEmbedding(text: string): Promise<number[]> {
-  const { embedding } = await embed({
-    model: openai.embedding("text-embedding-3-small"),
-    value: text,
+export async function generateEmbedding(text: string) {
+  return hf.featureExtraction({
+    model: "google/embeddinggemma-300m",
+    inputs: text,
   });
-
-  return embedding;
 }
 
 /**

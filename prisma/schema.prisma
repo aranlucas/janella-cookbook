@@ -46,7 +46,7 @@ model Recipe {
   images   RecipeImage[]
 
   // Search
-  embedding  Unsupported("vector(1536)")?
+  embedding  Unsupported("vector(768)")?
   searchText String? // Concatenated searchable text
 
   // User interaction

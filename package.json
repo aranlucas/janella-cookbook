@@ -21,6 +21,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^3.0.2",
     "@hookform/resolvers": "^5.2.2",
+    "@huggingface/inference": "^4.13.5",
     "@mozilla/readability": "^0.6.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
