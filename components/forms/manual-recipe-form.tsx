@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
 import { toast } from "sonner";
 import { createRecipe, updateRecipe } from "@/lib/actions";
 import { recipeInputSchema, type RecipeInputSchema } from "@/lib/validations";
-import type { RecipeWithRelations, Difficulty, Course, ParsedRecipe } from "@/types/recipe";
+import type { RecipeWithRelations, Difficulty, Course, ParsedRecipe, IngredientInput, InstructionInput, RecipeInput } from "@/types/recipe";
 
 interface ManualRecipeFormProps {
   initialData?: RecipeWithRelations;
@@ -70,7 +70,6 @@ export function ManualRecipeForm({
     control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<RecipeInputSchema>({
     resolver: zodResolver(recipeInputSchema),
@@ -95,7 +94,7 @@ export function ManualRecipeForm({
           group: i.group || "",
         }))
         : importDraft?.ingredients?.length
-          ? importDraft.ingredients.map((i: any) => ({
+          ? importDraft.ingredients.map((i: IngredientInput) => ({
             quantity: i.quantity || "",
             unit: i.unit || "",
             name: i.name || "",
@@ -110,7 +109,7 @@ export function ManualRecipeForm({
           duration: i.duration || undefined,
         }))
         : importDraft?.instructions?.length
-          ? importDraft.instructions.map((inst: any) => ({
+          ? importDraft.instructions.map((inst: InstructionInput) => ({
             text: inst.text || "",
             group: inst.group || "",
             duration: inst.duration || undefined,
@@ -148,8 +147,8 @@ export function ManualRecipeForm({
 
     startTransition(async () => {
       const result = isEditing
-        ? await updateRecipe(initialData.id, recipeData as any)
-        : await createRecipe(recipeData as any);
+        ? await updateRecipe(initialData.id, recipeData as unknown as Partial<RecipeInput>)
+        : await createRecipe(recipeData as unknown as RecipeInput);
 
       if (!result.success) {
         toast.error(result.error);
@@ -161,17 +160,17 @@ export function ManualRecipeForm({
       );
 
       if (onSuccess) {
-        onSuccess(result.data as any);
+        onSuccess(result.data as RecipeWithRelations);
       } else {
-        const slug = result.slug || (result.data as any).slug;
+        const slug = result.slug || (result.data as RecipeWithRelations).slug;
         router.push(`/recipe/${slug}`);
       }
     });
   };
 
-  const difficultyValue = watch("difficulty");
-  const courseValue = watch("course");
-  const tagsValue = watch("tags");
+  const difficultyValue = useWatch({ control, name: "difficulty" });
+  const courseValue = useWatch({ control, name: "course" });
+  const tagsValue = useWatch({ control, name: "tags" });
 
   return (
     <Card className="bg-warm-white">

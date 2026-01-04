@@ -3,13 +3,12 @@
 import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
-import { MobileNav } from "./mobile-nav";
 
 const navItems = [{ href: "/", label: "Recipes" }];
 
 export function Header() {
   return (
-    <header className="border-butter bg-warm-white/95 supports-[backdrop-filter]:bg-warm-white/60 sticky top-0 z-50 w-full border-b backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center sm:h-16">
         <Logo />
 
@@ -33,8 +32,6 @@ export function Header() {
             <AddRecipeButton variant="desktop" />
           </div>
 
-          {/* Mobile Menu - only shows hamburger on md and below */}
-          <MobileNav navItems={navItems} />
         </div>
       </div>
     </header>

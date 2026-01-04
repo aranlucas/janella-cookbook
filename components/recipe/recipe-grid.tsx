@@ -40,9 +40,15 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {recipes.map((recipe) => (
-        <RecipeCard key={recipe.id} recipe={recipe} />
+    <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {recipes.map((recipe, index) => (
+        <div
+          key={recipe.id}
+          className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
+          <RecipeCard recipe={recipe} priority={index < 4} />
+        </div>
       ))}
     </div>
   );

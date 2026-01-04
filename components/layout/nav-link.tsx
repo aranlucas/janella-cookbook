@@ -28,8 +28,8 @@ export function NavLink({
                 href={href}
                 onClick={onClick}
                 className={cn(
-                    "hover:text-terracotta rounded-lg px-4 py-3 text-lg font-medium transition-colors",
-                    isActive ? "text-terracotta bg-butter/30" : "text-charcoal/70",
+                    "hover:text-primary rounded-lg px-4 py-3 text-lg font-medium transition-colors",
+                    isActive ? "text-primary bg-primary/10" : "text-muted-foreground",
                     className,
                 )}
             >
@@ -42,8 +42,8 @@ export function NavLink({
         <Link
             href={href}
             className={cn(
-                "hover:text-terracotta text-sm font-medium transition-colors",
-                isActive ? "text-terracotta" : "text-charcoal/70",
+                "hover:text-primary text-sm font-medium transition-colors",
+                isActive ? "text-primary border-b-2 border-primary" : "text-muted-foreground",
                 className,
             )}
         >

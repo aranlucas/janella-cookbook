@@ -6,10 +6,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans:
-    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
-  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  
+  /* Typography map to new CSS variables from next/font */
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-heading), ui-serif, Georgia, serif;
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,94 +48,108 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Custom cookbook colors */
-  --color-cream: #fdf8f3;
-  --color-warm-white: #fefcfa;
-  --color-charcoal: #2d2d2d;
-  --color-terracotta: #c4704f;
-  --color-sage: #8b9a7d;
-  --color-butter: #e8d5b7;
-  --color-rust: #a85d3c;
+  /* Modern Rustic Custom Colors */
+  --color-rustic-cream: #f4f1ea;
+  --color-rustic-paper: #efede6;
+  --color-rustic-charcoal: #2a2826;
+  --color-rustic-terracotta: #c45d3e;
+  --color-rustic-moss: #5d6b54;
+  --color-rustic-sand: #d6cfc2;
+  --color-rustic-butter: #e8ded1;
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
 
-  /* Cookbook color palette */
-  --cream: #fdf8f3;
-  --warm-white: #fefcfa;
-  --charcoal: #2d2d2d;
-  --terracotta: #c4704f;
-  --sage: #8b9a7d;
-  --butter: #e8d5b7;
-  --rust-accent: #a85d3c;
-
-  /* Mapped to shadcn variables */
-  --background: #fdf8f3;
-  --foreground: #2d2d2d;
-  --card: #fefcfa;
-  --card-foreground: #2d2d2d;
-  --popover: #fefcfa;
-  --popover-foreground: #2d2d2d;
-  --primary: #c4704f;
-  --primary-foreground: #fefcfa;
-  --secondary: #e8d5b7;
-  --secondary-foreground: #2d2d2d;
-  --muted: #e8d5b7;
-  --muted-foreground: #6b6b6b;
-  --accent: #8b9a7d;
-  --accent-foreground: #fefcfa;
-  --destructive: #dc2626;
-  --border: #e8d5b7;
-  --input: #e8d5b7;
-  --ring: #c4704f;
-  --chart-1: #c4704f;
-  --chart-2: #8b9a7d;
-  --chart-3: #e8d5b7;
-  --chart-4: #a85d3c;
-  --chart-5: #2d2d2d;
-  --sidebar: #fefcfa;
-  --sidebar-foreground: #2d2d2d;
-  --sidebar-primary: #c4704f;
-  --sidebar-primary-foreground: #fefcfa;
-  --sidebar-accent: #e8d5b7;
-  --sidebar-accent-foreground: #2d2d2d;
-  --sidebar-border: #e8d5b7;
-  --sidebar-ring: #c4704f;
+  /* Modern Rustic Palette - Light Mode */
+  --background: #f4f1ea; /* Warm Alabaster */
+  --foreground: #2a2826; /* Warm Ink */
+  
+  --card: #efede6; /* Paper */
+  --card-foreground: #2a2826;
+  
+  --popover: #efede6;
+  --popover-foreground: #2a2826;
+  
+  --primary: #c45d3e; /* Spiced Terracotta */
+  --primary-foreground: #f4f1ea;
+  
+  --secondary: #d6cfc2; /* Sand */
+  --secondary-foreground: #2a2826;
+  
+  --muted: #e8ded1; /* Butter/Beige */
+  --muted-foreground: #756f68; /* Warm Grey */
+  
+  --accent: #5d6b54; /* Deep Moss */
+  --accent-foreground: #f4f1ea;
+  
+  --destructive: #be3931; /* Burnt Red */
+  --destructive-foreground: #f4f1ea;
+  
+  --border: #d6cfc2;
+  --input: #d6cfc2;
+  --ring: #c45d3e;
+  
+  --chart-1: #c45d3e;
+  --chart-2: #5d6b54;
+  --chart-3: #d6cfc2;
+  --chart-4: #e8ded1;
+  --chart-5: #2a2826;
+  
+  --sidebar: #efede6;
+  --sidebar-foreground: #2a2826;
+  --sidebar-primary: #c45d3e;
+  --sidebar-primary-foreground: #f4f1ea;
+  --sidebar-accent: #d6cfc2;
+  --sidebar-accent-foreground: #2a2826;
+  --sidebar-border: #d6cfc2;
+  --sidebar-ring: #c45d3e;
 }
 
 .dark {
-  --background: #1a1a1a;
-  --foreground: #fdf8f3;
-  --card: #2d2d2d;
-  --card-foreground: #fdf8f3;
-  --popover: #2d2d2d;
-  --popover-foreground: #fdf8f3;
-  --primary: #c4704f;
-  --primary-foreground: #fdf8f3;
-  --secondary: #3d3d3d;
-  --secondary-foreground: #fdf8f3;
-  --muted: #3d3d3d;
-  --muted-foreground: #a0a0a0;
-  --accent: #8b9a7d;
-  --accent-foreground: #fdf8f3;
-  --destructive: #ef4444;
-  --border: #3d3d3d;
-  --input: #3d3d3d;
-  --ring: #c4704f;
-  --chart-1: #c4704f;
-  --chart-2: #8b9a7d;
-  --chart-3: #e8d5b7;
-  --chart-4: #a85d3c;
-  --chart-5: #fdf8f3;
-  --sidebar: #2d2d2d;
-  --sidebar-foreground: #fdf8f3;
-  --sidebar-primary: #c4704f;
-  --sidebar-primary-foreground: #fdf8f3;
-  --sidebar-accent: #3d3d3d;
-  --sidebar-accent-foreground: #fdf8f3;
-  --sidebar-border: #3d3d3d;
-  --sidebar-ring: #c4704f;
+  /* Modern Rustic Palette - Dark Mode */
+  --background: #1c1b19; /* Deep Warm Black */
+  --foreground: #efede6; /* Paper White */
+  
+  --card: #2a2826; /* Charcoal */
+  --card-foreground: #efede6;
+  
+  --popover: #2a2826;
+  --popover-foreground: #efede6;
+  
+  --primary: #c45d3e;
+  --primary-foreground: #f4f1ea;
+  
+  --secondary: #3e3b38;
+  --secondary-foreground: #efede6;
+  
+  --muted: #3e3b38;
+  --muted-foreground: #99938d;
+  
+  --accent: #5d6b54;
+  --accent-foreground: #f4f1ea;
+  
+  --destructive: #be3931;
+  --destructive-foreground: #f4f1ea;
+  
+  --border: #3e3b38;
+  --input: #3e3b38;
+  --ring: #c45d3e;
+  
+  --chart-1: #c45d3e;
+  --chart-2: #5d6b54;
+  --chart-3: #99938d;
+  --chart-4: #3e3b38;
+  --chart-5: #efede6;
+  
+  --sidebar: #2a2826;
+  --sidebar-foreground: #efede6;
+  --sidebar-primary: #c45d3e;
+  --sidebar-primary-foreground: #f4f1ea;
+  --sidebar-accent: #3e3b38;
+  --sidebar-accent-foreground: #efede6;
+  --sidebar-border: #3e3b38;
+  --sidebar-ring: #c45d3e;
 }
 
 @layer base {
@@ -145,35 +160,51 @@
     @apply bg-background text-foreground;
   }
 
-  /* Container customization for better mobile and desktop */
+  /* Grain Texture Utility */
+  .grain {
+    position: relative;
+  }
+  .grain::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  /* Container customization */
   .container {
     @apply px-4 sm:px-6 lg:px-8;
-    max-width: 1600px;
+    max-width: 1400px; /* Slightly tighter for editorial feel */
     margin-left: auto;
     margin-right: auto;
   }
 
   /* Typography base styles */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
     font-weight: 600;
+    letter-spacing: -0.02em; /* Tighter headings for editorial look */
   }
 
   h1 {
-    @apply text-4xl md:text-5xl;
+    @apply text-5xl md:text-6xl lg:text-7xl font-bold leading-[0.95];
   }
 
   h2 {
-    @apply text-3xl md:text-4xl;
+    @apply text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl;
+    @apply text-2xl md:text-3xl font-medium;
+  }
+  
+  p {
+    @apply leading-relaxed;
   }
 }
 
@@ -190,5 +221,7 @@
 
   .recipe-content {
     break-inside: avoid;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 }

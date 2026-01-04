@@ -29,18 +29,6 @@ async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
   }
 }
 
-async function getStats() {
-  try {
-    const [total, favorites] = await Promise.all([
-      prisma.recipe.count(),
-      prisma.recipe.count({ where: { isFavorite: true } }),
-    ]);
-    return { total, favorites };
-  } catch {
-    return { total: 0, favorites: 0 };
-  }
-}
-
 function RecipeGridSkeleton() {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -61,52 +49,42 @@ async function RecipeList() {
 }
 
 export default async function HomePage() {
-  const stats = await getStats();
-
   return (
     <div className="bg-cream flex min-h-screen flex-col">
       <Header />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="from-butter/30 to-cream relative overflow-x-clip bg-linear-to-b py-12 sm:py-16 md:py-24">
+        <section className="bg-gradient-to-b from-primary/10 via-background to-background grain relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden py-20 px-4">
+
           <div className="relative z-10 container">
-            <div className="mx-auto max-w-5xl text-center">
-              <h1 className="text-charcoal font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-                Janella&apos;s
-                <span className="text-terracotta"> Cookbook</span>
+            <div className="mx-auto max-w-4xl text-center">
+              <span className="mb-6 inline-block rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold tracking-wider text-primary uppercase">
+                The Cookbook Collection
+              </span>
+              <h1 className="mb-6 font-serif text-6xl font-black tracking-tight text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
+                Janella&apos;s <br />
+                <span className="text-primary italic">Kitchen.</span>
               </h1>
-              <p className="text-muted-foreground mt-3 text-base sm:mt-4 sm:text-lg md:text-xl">
-                Collect, organize, and discover recipes with intelligent search.
-                Find what you&apos;re craving in seconds.
+              <p className="mx-auto max-w-2xl text-lg font-light leading-relaxed text-muted-foreground sm:text-x1 md:text-2xl">
+                A curated collection of recipes, organized with care and discovered with intelligence.
+                Good food, simply found.
               </p>
-              <div className="mt-6 sm:mt-8">
-                <Suspense fallback={<div className="h-12 sm:h-14" />}>
+
+              <div className="mt-10 sm:mt-12">
+                <Suspense fallback={<div className="h-14 sm:h-16" />}>
                   <SearchBar
                     size="large"
-                    placeholder="Search for recipes..."
-                    className="mx-auto max-w-3xl"
+                    placeholder="Search by ingredient, craving, or season..."
+                    className="mx-auto max-w-2xl"
                   />
                 </Suspense>
               </div>
-              {stats.total > 0 && (
-                <p className="text-muted-foreground mt-3 text-xs sm:mt-4 sm:text-sm">
-                  {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your
-                  collection
-                  {stats.favorites > 0 &&
-                    ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""
-                    }`}
-                </p>
-              )}
             </div>
           </div>
-          {/* Decorative elements */}
-          <div className="bg-sage/10 absolute top-0 -left-20 h-48 w-48 rounded-full blur-3xl sm:h-64 sm:w-64" />
-          <div className="bg-terracotta/10 absolute -right-20 bottom-0 h-48 w-48 rounded-full blur-3xl sm:h-64 sm:w-64" />
         </section>
 
         {/* Recipe Grid */}
-        <section className="py-8 sm:py-12 md:py-16">
+        <section className="py-8 sm:py-6 md:py-16">
           <div className="container">
             <div className="mb-6 flex items-center justify-between sm:mb-8">
               <h2 className="text-charcoal font-serif text-xl font-semibold sm:text-2xl">

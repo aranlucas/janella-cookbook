@@ -27,13 +27,13 @@ export function MobileNav({ navItems }: MobileNavProps) {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="text-charcoal md:hidden"
+                    className="text-foreground md:hidden"
                     aria-label="Open menu"
                 >
                     <Menu className="h-6 w-6" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="bg-warm-white w-[280px]">
+            <SheetContent side="right" className="bg-background w-[280px]">
                 <nav className="mt-8 flex flex-col gap-2">
                     {navItems.map((item) => (
                         <NavLink
