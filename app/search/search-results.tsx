@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { hybridSearch } from "@/lib/search";
 import { Badge } from "@/components/ui/badge";
 import type { SearchResult } from "@/types/recipe";
@@ -50,11 +49,10 @@ export async function SearchResults({ query }: SearchResultsProps) {
             {/* Thumbnail */}
             <div className="relative w-20 h-16 sm:w-32 sm:h-24 shrink-0 rounded-md overflow-hidden bg-butter/30">
               {recipe.imageUrl ? (
-                <Image
+                <img
                   src={recipe.imageUrl}
                   alt={recipe.title}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">

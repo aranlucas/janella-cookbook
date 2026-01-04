@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
@@ -79,13 +78,18 @@ export default async function RecipePage({ params }: PageProps) {
             {/* Image */}
             <div className="relative aspect-[4/3] overflow-hidden rounded-lg md:rounded-xl bg-butter/30">
               {recipe.imageUrl ? (
-                <Image
-                  src={recipe.imageUrl}
-                  alt={recipe.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
+                <a
+                  href={recipe.imageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block h-full"
+                >
+                  <img
+                    src={recipe.imageUrl}
+                    alt={recipe.title}
+                    className="w-full h-full object-cover hover:opacity-90 transition-opacity"
+                  />
+                </a>
               ) : (
                 <div className="flex h-full items-center justify-center">
                   <span className="text-6xl md:text-8xl opacity-30">🍽️</span>

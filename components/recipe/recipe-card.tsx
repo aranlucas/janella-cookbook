@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -30,11 +29,10 @@ export function RecipeCard({ recipe, className }: RecipeCardProps) {
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-butter/30">
           {recipe.imageUrl ? (
-            <Image
+            <img
               src={recipe.imageUrl}
               alt={recipe.title}
-              fill
-              className="object-cover transition-transform group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full items-center justify-center">
