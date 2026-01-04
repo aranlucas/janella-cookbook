@@ -248,7 +248,7 @@ export async function hybridSearch(
   offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
   // Check if we have embeddings capability
-  const hasEmbeddings = process.env.OPENAI_API_KEY;
+  const hasEmbeddings = process.env.HUGGINGFACE_API_KEY;
 
   if (!hasEmbeddings) {
     return keywordSearch(query, filters, limit, offset);

@@ -178,7 +178,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Regenerate embedding if content changed
     if (
-      process.env.OPENAI_API_KEY &&
+      process.env.HUGGINGFACE_API_KEY &&
       (body.title || body.description || body.ingredients || body.instructions)
     ) {
       try {

@@ -1,17 +1,27 @@
-import { HfInference } from "@huggingface/inference";
+import { InferenceClient } from "@huggingface/inference";
 
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 
 /**
  * Generate an embedding vector for the given text using Hugging Face's embedding model
  * Model: google/embeddinggemma-300m (768 dimensions)
  * Free tier: 30,000 requests/month
  */
-export async function generateEmbedding(text: string) {
-  return hf.featureExtraction({
+export async function generateEmbedding(text: string): Promise<number[]> {
+  const result = await hf.featureExtraction({
     model: "google/embeddinggemma-300m",
     inputs: text,
   });
+
+  // Validate the result is a 1D array of numbers
+  if (!Array.isArray(result)) {
+    throw new Error(`Expected array, got ${typeof result}`);
+  }
+  if (result.length > 0 && Array.isArray(result[0])) {
+    throw new Error("Expected 1D array, got 2D array");
+  }
+
+  return result as number[];
 }
 
 /**

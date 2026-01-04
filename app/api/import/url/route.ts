@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     let searchText: string | undefined;
     let embeddingData: number[] | undefined;
 
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.HUGGINGFACE_API_KEY) {
       try {
         const embedResult = await generateRecipeEmbedding({
           title: parsed.title,

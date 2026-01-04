@@ -124,11 +124,11 @@ export async function POST(request: NextRequest) {
       difficulty: body.difficulty,
     };
 
-    // Generate embedding if OpenAI is configured
+    // Generate embedding if HuggingFace is configured
     let searchText: string | undefined;
     let embeddingData: number[] | undefined;
 
-    if (process.env.OPENAI_API_KEY) {
+    if (process.env.HUGGINGFACE_API_KEY) {
       try {
         const embedResult = await generateRecipeEmbedding(recipeForEmbedding);
         searchText = embedResult.searchText;
