@@ -28,7 +28,7 @@ export function InstructionSteps({
             className={cn(
               "relative pl-12 transition-colors",
               currentStep === index &&
-                "bg-butter/30 -mx-4 px-4 py-4 rounded-lg pl-16",
+                "bg-butter/30 -mx-4 rounded-lg px-4 py-4 pl-16",
             )}
           >
             <button
@@ -36,7 +36,7 @@ export function InstructionSteps({
                 setCurrentStep(currentStep === index ? null : index)
               }
               className={cn(
-                "absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold transition-colors",
+                "absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold transition-colors",
                 currentStep === index
                   ? "bg-terracotta text-warm-white"
                   : "bg-butter text-charcoal hover:bg-terracotta hover:text-warm-white",
@@ -49,7 +49,7 @@ export function InstructionSteps({
                 {instruction.text}
               </p>
               {instruction.duration && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   ⏱️ {instruction.duration} min
                 </p>
               )}

@@ -28,8 +28,8 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
   if (recipes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <span className="text-6xl mb-4">📚</span>
-        <h3 className="font-serif text-xl font-semibold mb-2">
+        <span className="mb-4 text-6xl">📚</span>
+        <h3 className="mb-2 font-serif text-xl font-semibold">
           No recipes yet
         </h3>
         <p className="text-muted-foreground">

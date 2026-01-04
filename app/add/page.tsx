@@ -12,35 +12,35 @@ export const metadata = {
 
 export default function AddRecipePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="bg-cream flex min-h-screen flex-col">
       <Header />
 
-      <main className="flex-1 container py-6 sm:py-8">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-charcoal mb-2">
+      <main className="container flex-1 py-6 sm:py-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-charcoal mb-2 font-serif text-2xl font-bold sm:text-3xl">
             Add a Recipe
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mb-6 sm:mb-8">
+          <p className="text-muted-foreground mb-6 text-sm sm:mb-8 sm:text-base">
             Import from a website, paste text, or create from scratch.
           </p>
 
           <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 bg-butter/50 h-auto">
+            <TabsList className="bg-butter/50 grid h-auto w-full grid-cols-3">
               <TabsTrigger
                 value="url"
-                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+                className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
               >
                 From URL
               </TabsTrigger>
               <TabsTrigger
                 value="text"
-                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+                className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
               >
                 Paste Text
               </TabsTrigger>
               <TabsTrigger
                 value="manual"
-                className="data-[state=active]:bg-warm-white text-xs sm:text-sm py-2"
+                className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
               >
                 Manual
               </TabsTrigger>

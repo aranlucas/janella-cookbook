@@ -52,19 +52,19 @@ export default async function EditRecipePage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="bg-cream flex min-h-screen flex-col">
       <Header />
 
-      <main className="flex-1 container py-8">
-        <div className="max-w-3xl mx-auto">
+      <main className="container flex-1 py-8">
+        <div className="mx-auto max-w-3xl">
           <Link
             href={`/recipe/${recipe.slug}`}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-terracotta transition-colors mb-6"
+            className="text-muted-foreground hover:text-terracotta mb-6 inline-flex items-center text-sm transition-colors"
           >
             ← Back to recipe
           </Link>
 
-          <h1 className="font-serif text-3xl font-bold text-charcoal mb-8">
+          <h1 className="text-charcoal mb-8 font-serif text-3xl font-bold">
             Edit Recipe
           </h1>
 

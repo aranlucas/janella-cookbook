@@ -41,7 +41,7 @@ export function RecipeMeta({
   return (
     <div className={cn("space-y-3 md:space-y-4", className)}>
       {/* Time info */}
-      <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm">
+      <div className="flex flex-wrap gap-3 text-xs sm:gap-4 sm:text-sm">
         {prepTime && (
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span className="text-muted-foreground">Prep:</span>
@@ -81,7 +81,7 @@ export function RecipeMeta({
 
       {/* Rating and cook count */}
       {(rating || cookCount) && (
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="text-muted-foreground flex items-center gap-4 text-sm">
           {rating && (
             <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (

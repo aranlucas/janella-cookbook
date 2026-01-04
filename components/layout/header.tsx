@@ -18,22 +18,22 @@ export function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-butter bg-warm-white/95 backdrop-blur supports-[backdrop-filter]:bg-warm-white/60">
+    <header className="border-butter bg-warm-white/95 supports-[backdrop-filter]:bg-warm-white/60 sticky top-0 z-50 w-full border-b backdrop-blur">
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="font-serif text-xl sm:text-2xl font-bold text-terracotta">
+          <span className="text-terracotta font-serif text-xl font-bold sm:text-2xl">
             Janella's Cookbook
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="ml-8 hidden md:flex items-center space-x-6">
+        <nav className="ml-8 hidden items-center space-x-6 md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-terracotta",
+                "hover:text-terracotta text-sm font-medium transition-colors",
                 pathname === item.href ? "text-terracotta" : "text-charcoal/70",
               )}
             >
@@ -58,15 +58,15 @@ export function Header() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-warm-white">
-              <nav className="flex flex-col gap-4 mt-8">
+            <SheetContent side="right" className="bg-warm-white w-[280px]">
+              <nav className="mt-8 flex flex-col gap-4">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsOpen(false)}
                     className={cn(
-                      "text-lg font-medium transition-colors hover:text-terracotta py-2 px-4 rounded-lg",
+                      "hover:text-terracotta rounded-lg px-4 py-2 text-lg font-medium transition-colors",
                       pathname === item.href
                         ? "text-terracotta bg-butter/30"
                         : "text-charcoal/70",
@@ -80,7 +80,7 @@ export function Header() {
                   onClick={() => setIsOpen(false)}
                   className="mt-4"
                 >
-                  <Button className="w-full bg-terracotta hover:bg-rust text-warm-white">
+                  <Button className="bg-terracotta hover:bg-rust text-warm-white w-full">
                     + New Recipe
                   </Button>
                 </Link>

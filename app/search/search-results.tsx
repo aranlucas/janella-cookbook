@@ -21,9 +21,9 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
   if (results.length === 0) {
     return (
-      <div className="text-center py-16">
-        <span className="text-6xl mb-4 block">🍽️</span>
-        <h2 className="font-serif text-xl font-semibold mb-2">
+      <div className="py-16 text-center">
+        <span className="mb-4 block text-6xl">🍽️</span>
+        <h2 className="mb-2 font-serif text-xl font-semibold">
           No recipes found
         </h2>
         <p className="text-muted-foreground">
@@ -35,7 +35,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Found {total} recipe{total !== 1 ? "s" : ""}
       </p>
 
@@ -44,33 +44,33 @@ export async function SearchResults({ query }: SearchResultsProps) {
           <Link
             key={recipe.id}
             href={`/recipe/${recipe.slug}`}
-            className="flex gap-3 sm:gap-4 p-3 sm:p-4 bg-warm-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            className="bg-warm-white flex gap-3 rounded-lg p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-4 sm:p-4"
           >
             {/* Thumbnail */}
-            <div className="relative w-20 h-16 sm:w-32 sm:h-24 shrink-0 rounded-md overflow-hidden bg-butter/30">
+            <div className="bg-butter/30 relative h-16 w-20 shrink-0 overflow-hidden rounded-md sm:h-24 sm:w-32">
               {recipe.imageUrl ? (
                 <img
                   src={recipe.imageUrl}
                   alt={recipe.title}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
-                  <span className="text-2xl sm:text-3xl opacity-30">🍽️</span>
+                  <span className="text-2xl opacity-30 sm:text-3xl">🍽️</span>
                 </div>
               )}
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <h3 className="font-serif text-base sm:text-lg font-semibold text-charcoal line-clamp-2 sm:line-clamp-1">
+                <h3 className="text-charcoal line-clamp-2 font-serif text-base font-semibold sm:line-clamp-1 sm:text-lg">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (
                   <Badge
                     variant="secondary"
-                    className="shrink-0 text-xs hidden sm:inline-flex"
+                    className="hidden shrink-0 text-xs sm:inline-flex"
                   >
                     {Math.round(score * 100)}% match
                   </Badge>
@@ -78,12 +78,12 @@ export async function SearchResults({ query }: SearchResultsProps) {
               </div>
 
               {recipe.description && (
-                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mt-1 hidden sm:block">
+                <p className="text-muted-foreground mt-1 line-clamp-2 hidden text-xs sm:block sm:text-sm">
                   {recipe.description}
                 </p>
               )}
 
-              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
+              <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-1.5 text-xs sm:mt-2 sm:gap-2">
                 {recipe.totalTime && (
                   <span className="flex items-center gap-0.5">
                     ⏱️ {recipe.totalTime} min
@@ -100,7 +100,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
               {/* Highlights */}
               {highlights && highlights.length > 0 && (
-                <div className="mt-1.5 sm:mt-2 text-xs text-muted-foreground hidden sm:block">
+                <div className="text-muted-foreground mt-1.5 hidden text-xs sm:mt-2 sm:block">
                   {highlights.slice(0, 2).map((h, i) => (
                     <p key={i} className="line-clamp-1">
                       ...{h}...

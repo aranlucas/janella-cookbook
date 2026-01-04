@@ -72,7 +72,7 @@ export function FilterPanel({
               onChange({ ...filters, isFavorite: checked ? true : undefined })
             }
           />
-          <label htmlFor="favorites" className="text-sm cursor-pointer">
+          <label htmlFor="favorites" className="cursor-pointer text-sm">
             Favorites only
           </label>
         </div>
@@ -119,7 +119,7 @@ export function FilterPanel({
                   />
                   <label
                     htmlFor={`diff-${d.value}`}
-                    className="text-sm cursor-pointer capitalize"
+                    className="cursor-pointer text-sm capitalize"
                   >
                     {d.value.toLowerCase()} ({d.count})
                   </label>
@@ -148,7 +148,7 @@ export function FilterPanel({
                   />
                   <label
                     htmlFor={`course-${c.value}`}
-                    className="text-sm cursor-pointer capitalize"
+                    className="cursor-pointer text-sm capitalize"
                   >
                     {c.value.toLowerCase()} ({c.count})
                   </label>
@@ -164,7 +164,7 @@ export function FilterPanel({
       {options.cuisines.length > 0 && (
         <div className="space-y-3">
           <Label className="text-sm font-medium">Cuisine</Label>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="max-h-48 space-y-2 overflow-y-auto">
             {options.cuisines.map((c) => (
               <div key={c.value} className="flex items-center space-x-2">
                 <Checkbox
@@ -176,7 +176,7 @@ export function FilterPanel({
                 />
                 <label
                   htmlFor={`cuisine-${c.value}`}
-                  className="text-sm cursor-pointer"
+                  className="cursor-pointer text-sm"
                 >
                   {c.value} ({c.count})
                 </label>

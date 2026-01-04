@@ -46,7 +46,7 @@ export function IngredientList({
       {groups.map(([groupName, groupIngredients]) => (
         <div key={groupName}>
           {groups.length > 1 && (
-            <h4 className="font-serif text-lg font-medium mb-3 text-charcoal">
+            <h4 className="text-charcoal mb-3 font-serif text-lg font-medium">
               {groupName}
             </h4>
           )}
@@ -64,7 +64,7 @@ export function IngredientList({
                   className={cn(
                     "flex-1 cursor-pointer select-none",
                     checked.has(ingredient.id) &&
-                      "line-through text-muted-foreground",
+                      "text-muted-foreground line-through",
                   )}
                 >
                   {ingredient.quantity && (

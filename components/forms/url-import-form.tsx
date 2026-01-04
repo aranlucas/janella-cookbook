@@ -82,15 +82,15 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
               className="bg-cream border-butter focus:border-terracotta"
               disabled={isLoading}
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
           </div>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             <p>
               Paste a URL from your favorite recipe site. We&apos;ll
               automatically extract:
             </p>
-            <ul className="list-disc list-inside mt-2 space-y-1">
+            <ul className="mt-2 list-inside list-disc space-y-1">
               <li>Recipe title and description</li>
               <li>Ingredients with quantities</li>
               <li>Step-by-step instructions</li>
@@ -101,12 +101,12 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
 
           <Button
             type="submit"
-            className="w-full bg-terracotta hover:bg-rust text-warm-white"
+            className="bg-terracotta hover:bg-rust text-warm-white w-full"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <span className="animate-spin mr-2">⏳</span>
+                <span className="mr-2 animate-spin">⏳</span>
                 Importing...
               </>
             ) : (

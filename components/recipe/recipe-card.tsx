@@ -23,16 +23,16 @@ export function RecipeCard({ recipe, className }: RecipeCardProps) {
     <Link href={`/recipe/${recipe.slug}`}>
       <Card
         className={cn(
-          "group overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 bg-warm-white",
+          "group bg-warm-white overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg",
           className,
         )}
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-butter/30">
+        <div className="bg-butter/30 relative aspect-[4/3] overflow-hidden">
           {recipe.imageUrl ? (
             <img
               src={recipe.imageUrl}
               alt={recipe.title}
-              className="w-full h-full object-cover transition-transform group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -40,23 +40,23 @@ export function RecipeCard({ recipe, className }: RecipeCardProps) {
             </div>
           )}
           {recipe.isFavorite && (
-            <div className="absolute right-2 top-2">
+            <div className="absolute top-2 right-2">
               <span className="text-2xl">❤️</span>
             </div>
           )}
         </div>
         <CardHeader className="pb-2">
-          <h3 className="font-serif text-lg font-semibold line-clamp-2 group-hover:text-terracotta transition-colors">
+          <h3 className="group-hover:text-terracotta line-clamp-2 font-serif text-lg font-semibold transition-colors">
             {recipe.title}
           </h3>
         </CardHeader>
         <CardContent className="pt-0">
           {recipe.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            <p className="text-muted-foreground mb-3 line-clamp-2 text-sm">
               {recipe.description}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
             {recipe.totalTime && (
               <span className="flex items-center gap-1">
                 <span>⏱️</span>

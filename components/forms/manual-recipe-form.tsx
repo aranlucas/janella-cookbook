@@ -254,7 +254,7 @@ export function ManualRecipeForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="prepTime">Prep Time (min)</Label>
                 <Input
@@ -359,10 +359,10 @@ export function ManualRecipeForm({
               {ingredients.map((ing, index) => (
                 <div
                   key={index}
-                  className="space-y-2 p-3 rounded-lg border border-butter bg-cream/30"
+                  className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
                 >
-                  <div className="flex gap-2 items-start">
-                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="flex items-start gap-2">
+                    <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
                       <Input
                         value={ing.quantity || ""}
                         onChange={(e) =>
@@ -385,7 +385,7 @@ export function ManualRecipeForm({
                           updateIngredient(index, "name", e.target.value)
                         }
                         placeholder="Ingredient name"
-                        className="col-span-2 sm:col-span-2 bg-cream border-butter"
+                        className="bg-cream border-butter col-span-2 sm:col-span-2"
                       />
                     </div>
                     <Button
@@ -430,15 +430,15 @@ export function ManualRecipeForm({
 
             <div className="space-y-3">
               {instructions.map((inst, index) => (
-                <div key={index} className="flex gap-2 items-start">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-butter font-serif font-bold">
+                <div key={index} className="flex items-start gap-2">
+                  <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
                     {index + 1}
                   </div>
                   <Textarea
                     value={inst.text}
                     onChange={(e) => updateInstruction(index, e.target.value)}
                     placeholder={`Step ${index + 1}...`}
-                    className="flex-1 min-h-[80px] bg-cream border-butter"
+                    className="bg-cream border-butter min-h-[80px] flex-1"
                   />
                   <Button
                     type="button"
@@ -497,12 +497,12 @@ export function ManualRecipeForm({
 
           <Button
             type="submit"
-            className="w-full bg-terracotta hover:bg-rust text-warm-white"
+            className="bg-terracotta hover:bg-rust text-warm-white w-full"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <span className="animate-spin mr-2">⏳</span>
+                <span className="mr-2 animate-spin">⏳</span>
                 {isEditing ? "Updating..." : "Creating..."}
               </>
             ) : isEditing ? (

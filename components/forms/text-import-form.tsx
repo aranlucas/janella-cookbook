@@ -89,13 +89,13 @@ Instructions:
 4. Gradually add flour
 5. Fold in chocolate chips
 6. Bake for 9-11 minutes`}
-              className="min-h-[300px] bg-cream border-butter focus:border-terracotta"
+              className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
               disabled={isLoading}
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-destructive text-sm">{error}</p>}
           </div>
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-sm">
             <p>
               Paste any recipe text - from a cookbook, email, or anywhere else.
               We&apos;ll use AI to extract and organize it automatically.
@@ -104,12 +104,12 @@ Instructions:
 
           <Button
             type="submit"
-            className="w-full bg-terracotta hover:bg-rust text-warm-white"
+            className="bg-terracotta hover:bg-rust text-warm-white w-full"
             disabled={isLoading}
           >
             {isLoading ? (
               <>
-                <span className="animate-spin mr-2">⏳</span>
+                <span className="mr-2 animate-spin">⏳</span>
                 Parsing...
               </>
             ) : (

@@ -63,19 +63,19 @@ export default async function HomePage() {
   const stats = await getStats();
 
   return (
-    <div className="min-h-screen flex flex-col bg-cream">
+    <div className="bg-cream flex min-h-screen flex-col">
       <Header />
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-x-clip bg-linear-to-b from-butter/30 to-cream py-12 sm:py-16 md:py-24">
-          <div className="container relative z-10">
+        <section className="from-butter/30 to-cream relative overflow-x-clip bg-linear-to-b py-12 sm:py-16 md:py-24">
+          <div className="relative z-10 container">
             <div className="mx-auto max-w-5xl text-center">
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-charcoal md:text-5xl lg:text-6xl">
+              <h1 className="text-charcoal font-serif text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
                 Janella&apos;s
                 <span className="text-terracotta"> Cookbook</span>
               </h1>
-              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground md:text-xl">
+              <p className="text-muted-foreground mt-3 text-base sm:mt-4 sm:text-lg md:text-xl">
                 Collect, organize, and discover recipes with intelligent search.
                 Find what you&apos;re craving in seconds.
               </p>
@@ -89,7 +89,7 @@ export default async function HomePage() {
                 </Suspense>
               </div>
               {stats.total > 0 && (
-                <p className="mt-3 sm:mt-4 text-xs sm:text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-3 text-xs sm:mt-4 sm:text-sm">
                   {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your
                   collection
                   {stats.favorites > 0 &&
@@ -101,15 +101,15 @@ export default async function HomePage() {
             </div>
           </div>
           {/* Decorative elements */}
-          <div className="absolute -left-20 top-0 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-sage/10 blur-3xl" />
-          <div className="absolute -right-20 bottom-0 h-48 w-48 sm:h-64 sm:w-64 rounded-full bg-terracotta/10 blur-3xl" />
+          <div className="bg-sage/10 absolute top-0 -left-20 h-48 w-48 rounded-full blur-3xl sm:h-64 sm:w-64" />
+          <div className="bg-terracotta/10 absolute -right-20 bottom-0 h-48 w-48 rounded-full blur-3xl sm:h-64 sm:w-64" />
         </section>
 
         {/* Recipe Grid */}
         <section className="py-8 sm:py-12 md:py-16">
           <div className="container">
-            <div className="mb-6 sm:mb-8 flex items-center justify-between">
-              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-charcoal">
+            <div className="mb-6 flex items-center justify-between sm:mb-8">
+              <h2 className="text-charcoal font-serif text-xl font-semibold sm:text-2xl">
                 Recent Recipes
               </h2>
             </div>

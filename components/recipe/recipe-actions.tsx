@@ -132,7 +132,7 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
         variant="outline"
         size="sm"
         onClick={handlePrint}
-        className="gap-1 no-print"
+        className="no-print gap-1"
       >
         <span>🖨️</span>
         Print
@@ -143,7 +143,7 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
           <Button
             variant="outline"
             size="sm"
-            className="gap-1 text-destructive"
+            className="text-destructive gap-1"
           >
             <span>🗑️</span>
             Delete

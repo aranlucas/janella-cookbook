@@ -1,8 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "mcp__playwright__execute"
-    ]
+    "allow": ["mcp__playwright__execute"]
   },
   "hooks": {
     "PostToolUse": [
