@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__execute"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run format \"${filepath}\"",
+            "statusMessage": "Formatting with Prettier..."
+          }
+        ]
+      }
+    ]
+  }
+}

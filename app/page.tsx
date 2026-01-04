@@ -42,7 +42,7 @@ async function getStats() {
 
 function RecipeGridSkeleton() {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="space-y-3">
           <Skeleton className="aspect-[4/3] w-full rounded-lg" />
@@ -68,11 +68,11 @@ export default async function HomePage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-butter/30 to-cream py-12 sm:py-16 md:py-24">
+        <section className="relative overflow-x-clip bg-linear-to-b from-butter/30 to-cream py-12 sm:py-16 md:py-24">
           <div className="container relative z-10">
-            <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto max-w-5xl text-center">
               <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-charcoal md:text-5xl lg:text-6xl">
-                Your Personal
+                Janella&apos;s
                 <span className="text-terracotta"> Cookbook</span>
               </h1>
               <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground md:text-xl">
@@ -84,7 +84,7 @@ export default async function HomePage() {
                   <SearchBar
                     size="large"
                     placeholder="Search for recipes..."
-                    className="mx-auto max-w-2xl"
+                    className="mx-auto max-w-3xl"
                   />
                 </Suspense>
               </div>
@@ -93,7 +93,9 @@ export default async function HomePage() {
                   {stats.total} recipe{stats.total !== 1 ? "s" : ""} in your
                   collection
                   {stats.favorites > 0 &&
-                    ` • ${stats.favorites} favorite${stats.favorites !== 1 ? "s" : ""}`}
+                    ` • ${stats.favorites} favorite${
+                      stats.favorites !== 1 ? "s" : ""
+                    }`}
                 </p>
               )}
             </div>

@@ -15,7 +15,6 @@ export function Header() {
   const navItems = [
     { href: "/", label: "Recipes" },
     { href: "/search", label: "Search" },
-    { href: "/add", label: "Add Recipe" },
   ];
 
   return (
@@ -23,7 +22,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center space-x-2">
           <span className="font-serif text-xl sm:text-2xl font-bold text-terracotta">
-            Cookbook
+            Janella's Cookbook
           </span>
         </Link>
 
