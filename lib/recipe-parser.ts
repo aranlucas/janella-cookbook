@@ -21,22 +21,39 @@ const openrouter = createOpenAI({
 const recipeSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
-  ingredients: z.array(z.object({
-    quantity: z.string().optional(),
-    unit: z.string().optional(),
-    name: z.string(),
-    notes: z.string().optional(),
-  })),
-  instructions: z.array(z.object({
-    stepNumber: z.number(),
-    text: z.string(),
-  })),
+  ingredients: z.array(
+    z.object({
+      quantity: z.string().optional(),
+      unit: z.string().optional(),
+      name: z.string(),
+      notes: z.string().optional(),
+    }),
+  ),
+  instructions: z.array(
+    z.object({
+      stepNumber: z.number(),
+      text: z.string(),
+    }),
+  ),
   prepTime: z.number().optional(),
   cookTime: z.number().optional(),
   totalTime: z.number().optional(),
   servings: z.string().optional(),
   cuisine: z.string().optional(),
-  course: z.enum(["BREAKFAST", "LUNCH", "DINNER", "APPETIZER", "SIDE", "DESSERT", "SNACK", "DRINK", "SAUCE", "BREAD"]).optional(),
+  course: z
+    .enum([
+      "BREAKFAST",
+      "LUNCH",
+      "DINNER",
+      "APPETIZER",
+      "SIDE",
+      "DESSERT",
+      "SNACK",
+      "DRINK",
+      "SAUCE",
+      "BREAD",
+    ])
+    .optional(),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD", "EXPERT"]).optional(),
 });
 

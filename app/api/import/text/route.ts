@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
         { error: "Text parsing requires OpenRouter API configuration" },
-        { status: 503 }
+        { status: 503 },
       );
     }
 

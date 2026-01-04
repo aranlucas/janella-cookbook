@@ -1,4 +1,5 @@
 # janella-cookbook
+
 Janella cookbook
 
 ## Setup
@@ -19,11 +20,13 @@ This project uses **AI SDK V6** with the following providers:
 ### Installation
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Set up your environment variables:
+
    ```bash
    cp .env.example .env
    # Edit .env and add:
@@ -35,4 +38,3 @@ This project uses **AI SDK V6** with the following providers:
    ```bash
    npm run dev
    ```
-
