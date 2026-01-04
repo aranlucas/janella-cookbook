@@ -4,11 +4,13 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  // Add this line for ES Module compatibility
+  moduleFormat    = "esm"
 }
 
 datasource db {
   provider   = "postgresql"
-  extensions = [pgvector(map: "vector")]
+  extensions = [vector]
 }
 
 model Recipe {
@@ -26,9 +28,9 @@ model Recipe {
   instructions Instruction[]
 
   // Metadata
-  prepTime   Int?       // minutes
-  cookTime   Int?       // minutes
-  totalTime  Int?       // minutes
+  prepTime   Int? // minutes
+  cookTime   Int? // minutes
+  totalTime  Int? // minutes
   servings   String?
   difficulty Difficulty @default(MEDIUM)
 
@@ -51,9 +53,9 @@ model Recipe {
 
   // User interaction
   notes      String?
-  rating     Int?     // 1-5
-  isFavorite Boolean  @default(false)
-  cookCount  Int      @default(0)
+  rating     Int? // 1-5
+  isFavorite Boolean   @default(false)
+  cookCount  Int       @default(0)
   lastCooked DateTime?
 
   @@index([slug])
@@ -84,7 +86,7 @@ model Instruction {
 
   stepNumber Int
   text       String
-  duration   Int?    // minutes for this step
+  duration   Int? // minutes for this step
   imageUrl   String?
 
   @@index([recipeId])
@@ -127,9 +129,9 @@ enum Course {
 }
 
 enum SourceType {
-  URL_IMPORT      // Imported from external URL
-  MANUAL          // Manually entered
+  URL_IMPORT // Imported from external URL
+  MANUAL // Manually entered
   NATURAL_LANGUAGE // Parsed from text/AI
-  PHOTO           // OCR from photo
-  API             // External recipe API
+  PHOTO // OCR from photo
+  API // External recipe API
 }

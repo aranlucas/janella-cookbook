@@ -28,7 +28,7 @@ CREATE TABLE "Recipe" (
     "sourceUrl" TEXT,
     "sourceType" "SourceType" NOT NULL,
     "imageUrl" TEXT,
-    "embedding" vector(1536),
+    "embedding" vector(768),
     "searchText" TEXT,
     "notes" TEXT,
     "rating" INTEGER,
