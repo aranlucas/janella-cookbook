@@ -58,6 +58,122 @@ const recipeSchema = z.object({
 });
 
 /**
+ * Extract the most important image from HTML content
+ * Priority: JSON-LD schema > Open Graph > Twitter Card > Common selectors
+ */
+function extractImageFromHtml(
+  html: string,
+  baseUrl: string,
+): string | undefined {
+  const $ = load(html);
+
+  // Helper to resolve relative URLs
+  const resolveUrl = (imgUrl: string | undefined): string | undefined => {
+    if (!imgUrl) return undefined;
+    try {
+      return new URL(imgUrl, baseUrl).href;
+    } catch {
+      return imgUrl;
+    }
+  };
+
+  // 1. Try JSON-LD schema.org Recipe format (most reliable for recipe sites)
+  const jsonLdScripts = $('script[type="application/ld+json"]');
+  for (let i = 0; i < jsonLdScripts.length; i++) {
+    try {
+      const content = $(jsonLdScripts[i]).html();
+      if (!content) continue;
+
+      const data = JSON.parse(content);
+      const recipes = findRecipeInJsonLd(data);
+
+      for (const recipe of recipes) {
+        if (recipe.image) {
+          // image can be string, array of strings, or ImageObject(s)
+          const img = Array.isArray(recipe.image)
+            ? recipe.image[0]
+            : recipe.image;
+          if (typeof img === "string") {
+            return resolveUrl(img);
+          } else if (img?.url) {
+            return resolveUrl(img.url);
+          }
+        }
+      }
+    } catch {
+      // Invalid JSON, continue to next script
+    }
+  }
+
+  // 2. Try Open Graph meta tag (commonly used for social sharing)
+  const ogImage = $('meta[property="og:image"]').attr("content");
+  if (ogImage) {
+    return resolveUrl(ogImage);
+  }
+
+  // 3. Try Twitter Card image
+  const twitterImage = $('meta[name="twitter:image"]').attr("content");
+  if (twitterImage) {
+    return resolveUrl(twitterImage);
+  }
+
+  // 4. Try common recipe image selectors
+  const selectors = [
+    'img[itemprop="image"]',
+    ".recipe-image img",
+    '[class*="recipe-hero"] img',
+    '[class*="recipe-image"] img',
+    ".recipe-photo img",
+    ".hero-image img",
+    '[class*="hero-image"] img',
+    "article img",
+    ".post-content img",
+    "main img",
+  ];
+
+  for (const selector of selectors) {
+    const img = $(selector).first();
+    const src =
+      img.attr("src") || img.attr("data-src") || img.attr("data-lazy-src");
+    if (src && !src.includes("placeholder") && !src.includes("avatar")) {
+      return resolveUrl(src);
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Find Recipe objects within JSON-LD data (handles @graph arrays)
+ */
+function findRecipeInJsonLd(data: unknown): Array<{ image?: unknown }> {
+  const recipes: Array<{ image?: unknown }> = [];
+
+  if (Array.isArray(data)) {
+    for (const item of data) {
+      recipes.push(...findRecipeInJsonLd(item));
+    }
+  } else if (data && typeof data === "object") {
+    const obj = data as Record<string, unknown>;
+
+    // Check if this is a Recipe
+    if (
+      obj["@type"] === "Recipe" ||
+      (Array.isArray(obj["@type"]) && obj["@type"].includes("Recipe"))
+    ) {
+      recipes.push(obj as { image?: unknown });
+    }
+
+    // Check @graph array
+    if (Array.isArray(obj["@graph"])) {
+      recipes.push(...findRecipeInJsonLd(obj["@graph"]));
+    }
+  }
+
+  return recipes;
+}
+
+/**
  * Parse a recipe from a URL
  */
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
@@ -75,13 +191,19 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
 
   const html = await response.text();
 
-  return extractRecipeWithAI(html);
+  return extractRecipeWithAI(html, url);
 }
 
 /**
  * Extract recipe using AI from HTML content
  */
-async function extractRecipeWithAI(html: string): Promise<ParsedRecipe> {
+async function extractRecipeWithAI(
+  html: string,
+  sourceUrl: string,
+): Promise<ParsedRecipe> {
+  // Extract the main image before processing content
+  const imageUrl = extractImageFromHtml(html, sourceUrl);
+
   // First try Readability (linkedom provides a lightweight DOM for Readability)
   let content = "";
   try {
@@ -132,6 +254,7 @@ Be accurate and only include information present in the content. Extract all ing
     cuisine: parsed.cuisine,
     course: parsed.course as Course | undefined,
     difficulty: parsed.difficulty as Difficulty | undefined,
+    imageUrl,
   };
 }
 

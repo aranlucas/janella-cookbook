@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,20 @@ const courses: Course[] = [
   "BREAD",
 ];
 
+// Helper to read and clear import draft from sessionStorage (only runs on client)
+function getImportDraft(): ParsedRecipe | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const draft = sessionStorage.getItem("importedRecipeDraft");
+    if (!draft) return null;
+    const parsed = JSON.parse(draft) as ParsedRecipe;
+    sessionStorage.removeItem("importedRecipeDraft");
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export function ManualRecipeForm({
   initialData,
   onSuccess,
@@ -53,92 +67,87 @@ export function ManualRecipeForm({
   const isEditing = !!initialData;
   const [isPending, startTransition] = useTransition();
 
-  const [title, setTitle] = useState(initialData?.title || "");
+  // Get import draft once on initial render (only when not editing)
+  const [importDraft] = useState<ParsedRecipe | null>(() =>
+    initialData ? null : getImportDraft(),
+  );
+
+  const [title, setTitle] = useState(
+    initialData?.title || importDraft?.title || "",
+  );
   const [description, setDescription] = useState(
-    initialData?.description || "",
+    initialData?.description || importDraft?.description || "",
   );
   const [prepTime, setPrepTime] = useState(
-    initialData?.prepTime?.toString() || "",
+    initialData?.prepTime?.toString() ||
+      importDraft?.prepTime?.toString() ||
+      "",
   );
   const [cookTime, setCookTime] = useState(
-    initialData?.cookTime?.toString() || "",
+    initialData?.cookTime?.toString() ||
+      importDraft?.cookTime?.toString() ||
+      "",
   );
-  const [servings, setServings] = useState(initialData?.servings || "");
+  const [servings, setServings] = useState(
+    initialData?.servings || importDraft?.servings || "",
+  );
   const [difficulty, setDifficulty] = useState<Difficulty | "">(
     initialData?.difficulty || "",
   );
-  const [cuisine, setCuisine] = useState(initialData?.cuisine || "");
-  const [course, setCourse] = useState<Course | "">(initialData?.course || "");
-  const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || "");
+  const [cuisine, setCuisine] = useState(
+    initialData?.cuisine || importDraft?.cuisine || "",
+  );
+  const [course, setCourse] = useState<Course | "">(
+    initialData?.course || importDraft?.course || "",
+  );
+  const [imageUrl, setImageUrl] = useState(
+    initialData?.imageUrl || importDraft?.imageUrl || "",
+  );
   const [notes, setNotes] = useState(initialData?.notes || "");
   const [tags, setTags] = useState(
     initialData?.tags?.map((t) => t.name).join(", ") || "",
   );
 
-  const [ingredients, setIngredients] = useState<IngredientInput[]>(
-    initialData?.ingredients?.map((i) => ({
-      quantity: i.quantity || "",
-      unit: i.unit || "",
-      name: i.name,
-      notes: i.notes || "",
-      group: i.group || "",
-    })) || [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
-  );
-
-  const [instructions, setInstructions] = useState<InstructionInput[]>(
-    initialData?.instructions?.map((i) => ({
-      text: i.text,
-      group: i.group || "",
-      duration: i.duration || undefined,
-    })) || [{ text: "", group: "" }],
-  );
-
-  // If an import draft exists in sessionStorage, prefill the form (only when not editing an existing recipe)
-  useEffect(() => {
-    if (initialData) return;
-    try {
-      const draft = sessionStorage.getItem("importedRecipeDraft");
-      if (!draft) return;
-      const parsed = JSON.parse(draft) as ParsedRecipe;
-
-      setTitle(parsed.title || "");
-      setDescription(parsed.description || "");
-      setPrepTime(parsed.prepTime?.toString() || "");
-      setCookTime(parsed.cookTime?.toString() || "");
-      setServings(parsed.servings || "");
-      setCuisine(parsed.cuisine || "");
-      setCourse(parsed.course || "");
-      setImageUrl(parsed.imageUrl || "");
-
-      if (Array.isArray(parsed.ingredients) && parsed.ingredients.length) {
-        setIngredients(
-          parsed.ingredients.map((i, idx: number) => ({
-            quantity: i.quantity || "",
-            unit: i.unit || "",
-            name: i.name || "",
-            notes: i.notes || "",
-            group: i.group || "",
-            sortOrder: i.sortOrder ?? idx,
-          })),
-        );
-      }
-
-      if (Array.isArray(parsed.instructions) && parsed.instructions.length) {
-        setInstructions(
-          parsed.instructions.map((inst) => ({
-            text: inst.text || "",
-            group: inst.group || "",
-            duration: inst.duration || undefined,
-          })),
-        );
-      }
-
-      sessionStorage.removeItem("importedRecipeDraft");
-    } catch (e) {
-      // ignore parse errors
-      console.error("Failed to load import draft:", e);
+  const [ingredients, setIngredients] = useState<IngredientInput[]>(() => {
+    if (initialData?.ingredients?.length) {
+      return initialData.ingredients.map((i) => ({
+        quantity: i.quantity || "",
+        unit: i.unit || "",
+        name: i.name,
+        notes: i.notes || "",
+        group: i.group || "",
+      }));
     }
-  }, [initialData]);
+    if (importDraft?.ingredients?.length) {
+      return importDraft.ingredients.map((i, idx) => ({
+        quantity: i.quantity || "",
+        unit: i.unit || "",
+        name: i.name || "",
+        notes: i.notes || "",
+        group: i.group || "",
+        sortOrder: i.sortOrder ?? idx,
+      }));
+    }
+    return [{ quantity: "", unit: "", name: "", notes: "", group: "" }];
+  });
+
+  const [instructions, setInstructions] = useState<InstructionInput[]>(() => {
+    if (initialData?.instructions?.length) {
+      return initialData.instructions.map((i) => ({
+        text: i.text,
+        group: i.group || "",
+        duration: i.duration || undefined,
+      }));
+    }
+    if (importDraft?.instructions?.length) {
+      return importDraft.instructions.map((inst) => ({
+        text: inst.text || "",
+        group: inst.group || "",
+        duration: inst.duration || undefined,
+      }));
+    }
+    return [{ text: "", group: "" }];
+  });
 
   const addIngredient = () => {
     setIngredients([

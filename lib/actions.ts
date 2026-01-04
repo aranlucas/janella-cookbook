@@ -13,29 +13,40 @@ export type ActionResult<T = RecipeWithRelations> =
   | { success: false; error: string };
 
 // Helper to create recipe in DB with embedding
-async function createRecipeInDb(
-  data: {
-    title: string;
-    slug: string;
-    description?: string | null;
-    prepTime?: number | null;
-    cookTime?: number | null;
-    totalTime?: number | null;
-    servings?: string | null;
-    difficulty?: string;
-    cuisine?: string | null;
-    course?: string | null;
-    sourceUrl?: string | null;
-    sourceType: string;
-    imageUrl?: string | null;
-    notes?: string | null;
-    rating?: number | null;
-    searchText?: string;
-    ingredients: { quantity?: string; unit?: string; name: string; notes?: string; group?: string; sortOrder: number }[];
-    instructions: { text: string; group?: string; sortOrder: number; duration?: number; imageUrl?: string }[];
-    tagIds?: { id: string }[];
-  }
-) {
+async function createRecipeInDb(data: {
+  title: string;
+  slug: string;
+  description?: string | null;
+  prepTime?: number | null;
+  cookTime?: number | null;
+  totalTime?: number | null;
+  servings?: string | null;
+  difficulty?: string;
+  cuisine?: string | null;
+  course?: string | null;
+  sourceUrl?: string | null;
+  sourceType: string;
+  imageUrl?: string | null;
+  notes?: string | null;
+  rating?: number | null;
+  searchText?: string;
+  ingredients: {
+    quantity?: string;
+    unit?: string;
+    name: string;
+    notes?: string;
+    group?: string;
+    sortOrder: number;
+  }[];
+  instructions: {
+    text: string;
+    group?: string;
+    sortOrder: number;
+    duration?: number;
+    imageUrl?: string;
+  }[];
+  tagIds?: { id: string }[];
+}) {
   const recipe = await prisma.recipe.create({
     data: {
       title: data.title,
@@ -45,11 +56,28 @@ async function createRecipeInDb(
       cookTime: data.cookTime,
       totalTime: data.totalTime,
       servings: data.servings,
-      difficulty: (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
+      difficulty:
+        (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
       cuisine: data.cuisine,
-      course: data.course as "BREAKFAST" | "LUNCH" | "DINNER" | "APPETIZER" | "SIDE" | "DESSERT" | "SNACK" | "DRINK" | "SAUCE" | "BREAD" | undefined,
+      course: data.course as
+        | "BREAKFAST"
+        | "LUNCH"
+        | "DINNER"
+        | "APPETIZER"
+        | "SIDE"
+        | "DESSERT"
+        | "SNACK"
+        | "DRINK"
+        | "SAUCE"
+        | "BREAD"
+        | undefined,
       sourceUrl: data.sourceUrl,
-      sourceType: data.sourceType as "URL_IMPORT" | "MANUAL" | "NATURAL_LANGUAGE" | "PHOTO" | "API",
+      sourceType: data.sourceType as
+        | "URL_IMPORT"
+        | "MANUAL"
+        | "NATURAL_LANGUAGE"
+        | "PHOTO"
+        | "API",
       imageUrl: data.imageUrl,
       notes: data.notes,
       rating: data.rating,
@@ -124,7 +152,10 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
       description: parsed.description,
       prepTime: parsed.prepTime,
       cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime || (parsed.prepTime || 0) + (parsed.cookTime || 0) || undefined,
+      totalTime:
+        parsed.totalTime ||
+        (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+        undefined,
       servings: parsed.servings,
       difficulty: parsed.difficulty || "MEDIUM",
       cuisine: parsed.cuisine,
@@ -178,7 +209,10 @@ export async function importFromText(text: string): Promise<ActionResult> {
     }
 
     if (!process.env.OPENROUTER_API_KEY) {
-      return { success: false, error: "Text parsing requires OpenRouter API configuration" };
+      return {
+        success: false,
+        error: "Text parsing requires OpenRouter API configuration",
+      };
     }
 
     // Parse recipe from text
@@ -215,7 +249,10 @@ export async function importFromText(text: string): Promise<ActionResult> {
       description: parsed.description,
       prepTime: parsed.prepTime,
       cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime || (parsed.prepTime || 0) + (parsed.cookTime || 0) || undefined,
+      totalTime:
+        parsed.totalTime ||
+        (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+        undefined,
       servings: parsed.servings,
       difficulty: parsed.difficulty || "MEDIUM",
       cuisine: parsed.cuisine,
@@ -271,7 +308,10 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     const slug = await generateUniqueSlug(input.title);
 
     // Calculate total time
-    const totalTime = input.totalTime || (input.prepTime || 0) + (input.cookTime || 0) || undefined;
+    const totalTime =
+      input.totalTime ||
+      (input.prepTime || 0) + (input.cookTime || 0) ||
+      undefined;
 
     // Create or find tags
     const tagConnections = input.tags
@@ -373,7 +413,7 @@ export async function updateRecipe(
     isFavorite?: boolean;
     cookCount?: number;
     lastCooked?: string;
-  }
+  },
 ): Promise<ActionResult> {
   try {
     // Check if recipe exists
@@ -395,7 +435,8 @@ export async function updateRecipe(
     // Calculate total time
     const totalTime =
       input.totalTime ||
-      (input.prepTime ?? existing.prepTime ?? 0) + (input.cookTime ?? existing.cookTime ?? 0) ||
+      (input.prepTime ?? existing.prepTime ?? 0) +
+        (input.cookTime ?? existing.cookTime ?? 0) ||
       undefined;
 
     // Handle tags
@@ -497,7 +538,10 @@ export async function updateRecipe(
     // Regenerate embedding if content changed
     if (
       process.env.HUGGINGFACE_API_KEY &&
-      (input.title || input.description || input.ingredients || input.instructions)
+      (input.title ||
+        input.description ||
+        input.ingredients ||
+        input.instructions)
     ) {
       try {
         const recipeForEmbedding = {
@@ -512,7 +556,8 @@ export async function updateRecipe(
           difficulty: recipe.difficulty,
         };
 
-        const { searchText, embedding } = await generateRecipeEmbedding(recipeForEmbedding);
+        const { searchText, embedding } =
+          await generateRecipeEmbedding(recipeForEmbedding);
         const embeddingString = `[${embedding.join(",")}]`;
 
         await prisma.$executeRaw`
@@ -535,7 +580,10 @@ export async function updateRecipe(
 }
 
 // Toggle favorite status
-export async function toggleFavorite(id: string, isFavorite: boolean): Promise<ActionResult> {
+export async function toggleFavorite(
+  id: string,
+  isFavorite: boolean,
+): Promise<ActionResult> {
   try {
     const recipe = await prisma.recipe.update({
       where: { id },
@@ -558,7 +606,10 @@ export async function toggleFavorite(id: string, isFavorite: boolean): Promise<A
 }
 
 // Mark recipe as cooked
-export async function markAsCooked(id: string, currentCount: number): Promise<ActionResult> {
+export async function markAsCooked(
+  id: string,
+  currentCount: number,
+): Promise<ActionResult> {
   try {
     const recipe = await prisma.recipe.update({
       where: { id },
@@ -584,7 +635,9 @@ export async function markAsCooked(id: string, currentCount: number): Promise<Ac
 }
 
 // Delete a recipe
-export async function deleteRecipe(id: string): Promise<{ success: true } | { success: false; error: string }> {
+export async function deleteRecipe(
+  id: string,
+): Promise<{ success: true } | { success: false; error: string }> {
   try {
     const existing = await prisma.recipe.findUnique({ where: { id } });
 

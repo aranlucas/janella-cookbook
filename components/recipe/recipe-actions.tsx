@@ -39,7 +39,9 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       onUpdate?.(result.data);
       toast.success(
-        result.data.isFavorite ? "Added to favorites" : "Removed from favorites",
+        result.data.isFavorite
+          ? "Added to favorites"
+          : "Removed from favorites",
       );
     });
   };
