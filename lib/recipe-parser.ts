@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
@@ -343,9 +343,9 @@ async function extractRecipeWithAI(
   // Limit content length
   const truncatedContent = content.slice(0, 12000);
 
-  const { object: parsed } = await generateObject({
+  const { output: parsed } = await generateText({
     model: openrouter("xiaomi/mimo-v2-flash:free"),
-    schema: recipeSchema,
+    output: Output.object({ schema: recipeSchema }),
     system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
 Be accurate and only include information present in the content. Extract all ingredients and instructions even if formatting is messy.`,
     prompt: `Extract the recipe from this content:\n\n${truncatedContent}`,
@@ -376,9 +376,9 @@ Be accurate and only include information present in the content. Extract all ing
  * Parse a recipe from natural language text
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
-  const { object: parsed } = await generateObject({
+  const { output: parsed } = await generateText({
     model: openrouter("xiaomi/mimo-v2-flash:free"),
-    schema: recipeSchema,
+    output: Output.object({ schema: recipeSchema }),
     system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
     prompt: text,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseRecipeFromUrl } from "@/lib/recipe-parser";
 import { prisma } from "@/lib/prisma";
-import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
+import { generateUniqueSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
 import type { UrlImportRequest } from "@/types/recipe";
 
