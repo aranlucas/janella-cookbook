@@ -36,7 +36,6 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
     }
 
     setIsLoading(true);
-
     try {
       const response = await fetch("/api/import/url", {
         method: "POST",
