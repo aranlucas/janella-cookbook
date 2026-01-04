@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { createRecipe, updateRecipe } from "@/lib/actions";
 import type {
   RecipeWithRelations,
   RecipeInput,
@@ -50,8 +51,8 @@ export function ManualRecipeForm({
 }: ManualRecipeFormProps) {
   const router = useRouter();
   const isEditing = !!initialData;
+  const [isPending, startTransition] = useTransition();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState(initialData?.title || "");
   const [description, setDescription] = useState(
     initialData?.description || "",
@@ -208,8 +209,6 @@ export function ManualRecipeForm({
       return;
     }
 
-    setIsLoading(true);
-
     const recipeData: RecipeInput = {
       title: title.trim(),
       description: description.trim() || undefined,
@@ -236,22 +235,14 @@ export function ManualRecipeForm({
       sourceType: initialData?.sourceType || "MANUAL",
     };
 
-    try {
-      const url = isEditing ? `/api/recipes/${initialData.id}` : "/api/recipes";
-      const method = isEditing ? "PUT" : "POST";
+    startTransition(async () => {
+      const result = isEditing
+        ? await updateRecipe(initialData.id, recipeData)
+        : await createRecipe(recipeData);
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recipeData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || `Failed to ${isEditing ? "update" : "create"} recipe`,
-        );
+      if (!result.success) {
+        toast.error(result.error);
+        return;
       }
 
       toast.success(
@@ -259,19 +250,11 @@ export function ManualRecipeForm({
       );
 
       if (onSuccess) {
-        onSuccess(data.data);
+        onSuccess(result.data);
       } else {
-        router.push(`/recipe/${data.data.slug}`);
+        router.push(`/recipe/${result.slug}`);
       }
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : `Failed to ${isEditing ? "update" : "create"} recipe`;
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -471,8 +454,6 @@ export function ManualRecipeForm({
             </div>
           </div>
 
-          {/* Prefill from import draft (sessionStorage) */}
-
           {/* Instructions */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -569,9 +550,9 @@ export function ManualRecipeForm({
           <Button
             type="submit"
             className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? (
+            {isPending ? (
               <>
                 <span className="mr-2 animate-spin">⏳</span>
                 {isEditing ? "Updating..." : "Creating..."}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { importFromUrl } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface UrlImportFormProps {
@@ -16,8 +17,8 @@ interface UrlImportFormProps {
 export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
   const router = useRouter();
   const [url, setUrl] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,34 +36,22 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/import/url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
+    startTransition(async () => {
+      const result = await importFromUrl(url);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to import recipe");
+      if (!result.success) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
       }
 
       toast.success("Recipe imported");
       if (onSuccess) {
-        onSuccess(data.data);
+        onSuccess(result.data);
       } else {
-        router.push(`/recipe/${data.data.slug}/edit`);
+        router.push(`/recipe/${result.slug}`);
       }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to import recipe";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -78,7 +67,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://example.com/recipe/delicious-pasta"
               className="bg-cream border-butter focus:border-terracotta"
-              disabled={isLoading}
+              disabled={isPending}
             />
             {error && <p className="text-destructive text-sm">{error}</p>}
           </div>
@@ -100,9 +89,9 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
           <Button
             type="submit"
             className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? (
+            {isPending ? (
               <>
                 <span className="mr-2 animate-spin">⏳</span>
                 Importing...

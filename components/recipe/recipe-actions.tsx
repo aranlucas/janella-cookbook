@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { toggleFavorite, markAsCooked, deleteRecipe } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeActionsProps {
@@ -22,73 +23,53 @@ interface RecipeActionsProps {
 
 export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isFavoriting, setIsFavoriting] = useState(false);
-  const [isCooking, setIsCooking] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isFavoriting, startFavoriteTransition] = useTransition();
+  const [isCooking, startCookTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
 
-  const handleToggleFavorite = async () => {
-    setIsFavoriting(true);
-    try {
-      const response = await fetch(`/api/recipes/${recipe.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFavorite: !recipe.isFavorite }),
-      });
+  const handleToggleFavorite = () => {
+    startFavoriteTransition(async () => {
+      const result = await toggleFavorite(recipe.id, !recipe.isFavorite);
 
-      if (!response.ok) throw new Error("Failed to update favorite status");
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
 
-      const { data } = await response.json();
-      onUpdate?.(data);
+      onUpdate?.(result.data);
       toast.success(
-        data.isFavorite ? "Added to favorites" : "Removed from favorites",
+        result.data.isFavorite ? "Added to favorites" : "Removed from favorites",
       );
-    } catch {
-      toast.error("Failed to update favorite status");
-    } finally {
-      setIsFavoriting(false);
-    }
+    });
   };
 
-  const handleMarkCooked = async () => {
-    setIsCooking(true);
-    try {
-      const response = await fetch(`/api/recipes/${recipe.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cookCount: (recipe.cookCount || 0) + 1,
-          lastCooked: new Date().toISOString(),
-        }),
-      });
+  const handleMarkCooked = () => {
+    startCookTransition(async () => {
+      const result = await markAsCooked(recipe.id, recipe.cookCount || 0);
 
-      if (!response.ok) throw new Error("Failed to mark as cooked");
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
 
-      const { data } = await response.json();
-      onUpdate?.(data);
+      onUpdate?.(result.data);
       toast.success("Recipe marked as cooked!");
-    } catch {
-      toast.error("Failed to mark as cooked");
-    } finally {
-      setIsCooking(false);
-    }
+    });
   };
 
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/recipes/${recipe.id}`, {
-        method: "DELETE",
-      });
+  const handleDelete = () => {
+    startDeleteTransition(async () => {
+      const result = await deleteRecipe(recipe.id);
 
-      if (!response.ok) throw new Error("Failed to delete recipe");
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
 
       toast.success("Recipe deleted");
       router.push("/");
-    } catch {
-      toast.error("Failed to delete recipe");
-      setIsDeleting(false);
-    }
+    });
   };
 
   const handlePrint = () => {

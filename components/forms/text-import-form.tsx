@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
+import { importFromText } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface TextImportFormProps {
@@ -16,8 +17,8 @@ interface TextImportFormProps {
 export function TextImportForm({ onSuccess }: TextImportFormProps) {
   const router = useRouter();
   const [text, setText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,35 +29,22 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
       return;
     }
 
-    setIsLoading(true);
+    startTransition(async () => {
+      const result = await importFromText(text);
 
-    try {
-      const response = await fetch("/api/import/text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to parse recipe");
+      if (!result.success) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
       }
 
       toast.success("Recipe imported");
       if (onSuccess) {
-        onSuccess(data.data);
+        onSuccess(result.data);
       } else {
-        router.push(`/recipe/${data.data.slug}/edit`);
+        router.push(`/recipe/${result.slug}`);
       }
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to parse recipe";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -89,7 +77,7 @@ Instructions:
 5. Fold in chocolate chips
 6. Bake for 9-11 minutes`}
               className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
-              disabled={isLoading}
+              disabled={isPending}
             />
             {error && <p className="text-destructive text-sm">{error}</p>}
           </div>
@@ -104,9 +92,9 @@ Instructions:
           <Button
             type="submit"
             className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isLoading}
+            disabled={isPending}
           >
-            {isLoading ? (
+            {isPending ? (
               <>
                 <span className="mr-2 animate-spin">⏳</span>
                 Parsing...
