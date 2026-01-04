@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ import type {
   InstructionInput,
   Difficulty,
   Course,
+  ParsedRecipe,
 } from "@/types/recipe";
 
 interface ManualRecipeFormProps {
@@ -85,11 +86,58 @@ export function ManualRecipeForm({
 
   const [instructions, setInstructions] = useState<InstructionInput[]>(
     initialData?.instructions?.map((i) => ({
-      stepNumber: i.stepNumber,
       text: i.text,
+      group: i.group || "",
       duration: i.duration || undefined,
-    })) || [{ stepNumber: 1, text: "" }],
+    })) || [{ text: "", group: "" }],
   );
+
+  // If an import draft exists in sessionStorage, prefill the form (only when not editing an existing recipe)
+  useEffect(() => {
+    if (initialData) return;
+    try {
+      const draft = sessionStorage.getItem("importedRecipeDraft");
+      if (!draft) return;
+      const parsed = JSON.parse(draft) as ParsedRecipe;
+
+      setTitle(parsed.title || "");
+      setDescription(parsed.description || "");
+      setPrepTime(parsed.prepTime?.toString() || "");
+      setCookTime(parsed.cookTime?.toString() || "");
+      setServings(parsed.servings || "");
+      setCuisine(parsed.cuisine || "");
+      setCourse(parsed.course || "");
+      setImageUrl(parsed.imageUrl || "");
+
+      if (Array.isArray(parsed.ingredients) && parsed.ingredients.length) {
+        setIngredients(
+          parsed.ingredients.map((i, idx: number) => ({
+            quantity: i.quantity || "",
+            unit: i.unit || "",
+            name: i.name || "",
+            notes: i.notes || "",
+            group: i.group || "",
+            sortOrder: i.sortOrder ?? idx,
+          })),
+        );
+      }
+
+      if (Array.isArray(parsed.instructions) && parsed.instructions.length) {
+        setInstructions(
+          parsed.instructions.map((inst) => ({
+            text: inst.text || "",
+            group: inst.group || "",
+            duration: inst.duration || undefined,
+          })),
+        );
+      }
+
+      sessionStorage.removeItem("importedRecipeDraft");
+    } catch (e) {
+      // ignore parse errors
+      console.error("Failed to load import draft:", e);
+    }
+  }, [initialData]);
 
   const addIngredient = () => {
     setIngredients([
@@ -115,25 +163,28 @@ export function ManualRecipeForm({
   };
 
   const addInstruction = () => {
-    setInstructions([
-      ...instructions,
-      { stepNumber: instructions.length + 1, text: "" },
-    ]);
+    setInstructions([...instructions, { text: "", group: "" }]);
   };
 
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
-      const updated = instructions.filter((_, i) => i !== index);
-      // Renumber steps
-      setInstructions(
-        updated.map((inst, i) => ({ ...inst, stepNumber: i + 1 })),
-      );
+      setInstructions(instructions.filter((_, i) => i !== index));
     }
   };
 
   const updateInstruction = (index: number, text: string) => {
     const updated = [...instructions];
     updated[index] = { ...updated[index], text };
+    setInstructions(updated);
+  };
+
+  const updateInstructionField = (
+    index: number,
+    field: keyof InstructionInput,
+    value: string | number | undefined,
+  ) => {
+    const updated = [...instructions];
+    updated[index] = { ...updated[index], [field]: value } as InstructionInput;
     setInstructions(updated);
   };
 
@@ -180,9 +231,9 @@ export function ManualRecipeForm({
       })),
       instructions: validInstructions.map((i, idx) => ({
         ...i,
-        stepNumber: idx + 1,
+        sortOrder: idx,
       })),
-      sourceType: "MANUAL",
+      sourceType: initialData?.sourceType || "MANUAL",
     };
 
     try {
@@ -387,6 +438,14 @@ export function ManualRecipeForm({
                         placeholder="Ingredient name"
                         className="bg-cream border-butter col-span-2 sm:col-span-2"
                       />
+                      <Input
+                        value={ing.group || ""}
+                        onChange={(e) =>
+                          updateIngredient(index, "group", e.target.value)
+                        }
+                        placeholder="Group (e.g., Green Salsa)"
+                        className="bg-cream border-butter"
+                      />
                     </div>
                     <Button
                       type="button"
@@ -411,6 +470,8 @@ export function ManualRecipeForm({
               ))}
             </div>
           </div>
+
+          {/* Prefill from import draft (sessionStorage) */}
 
           {/* Instructions */}
           <div className="space-y-4">
@@ -440,6 +501,16 @@ export function ManualRecipeForm({
                     placeholder={`Step ${index + 1}...`}
                     className="bg-cream border-butter min-h-[80px] flex-1"
                   />
+                  <div className="ml-2 w-40">
+                    <Input
+                      value={(inst as InstructionInput).group || ""}
+                      onChange={(e) =>
+                        updateInstructionField(index, "group", e.target.value)
+                      }
+                      placeholder="Group (e.g., Green Salsa)"
+                      className="bg-cream border-butter"
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"

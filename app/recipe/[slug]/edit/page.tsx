@@ -18,7 +18,7 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
       where: { slug },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

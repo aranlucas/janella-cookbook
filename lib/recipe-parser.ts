@@ -4,13 +4,7 @@ import { z } from "zod";
 import { load } from "cheerio";
 import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
-import type {
-  ParsedRecipe,
-  IngredientInput,
-  InstructionInput,
-  Course,
-  Difficulty,
-} from "@/types/recipe";
+import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 
 // OpenRouter client configured for AI SDK
 const openrouter = createOpenAI({
@@ -18,7 +12,7 @@ const openrouter = createOpenAI({
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-const model = openrouter("kwaipilot/kat-coder-pro:free");
+const model = openrouter("mistralai/devstral-2512:free");
 
 // Zod schema for recipe parsing
 const recipeSchema = z.object({
@@ -30,12 +24,14 @@ const recipeSchema = z.object({
       unit: z.string().optional(),
       name: z.string(),
       notes: z.string().optional(),
+      group: z.string().optional(),
     }),
   ),
   instructions: z.array(
     z
       .object({
         text: z.string(),
+        group: z.string().optional(),
       })
       .optional(),
   ),
@@ -125,8 +121,9 @@ Be accurate and only include information present in the content. Extract all ing
       sortOrder: i,
     })),
     instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      stepNumber: i + 1,
       text: inst?.text || "",
+      group: inst?.group,
+      sortOrder: i,
     })),
     prepTime: parsed.prepTime,
     cookTime: parsed.cookTime,
@@ -158,8 +155,9 @@ Be accurate and organized. Extract all ingredients and instructions even if form
       sortOrder: i,
     })),
     instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      stepNumber: i + 1,
       text: inst?.text || "",
+      group: inst?.group,
+      sortOrder: i,
     })),
     prepTime: parsed.prepTime,
     cookTime: parsed.cookTime,

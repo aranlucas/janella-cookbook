@@ -38,8 +38,9 @@ export interface IngredientInput {
 }
 
 export interface InstructionInput {
-  stepNumber: number;
   text: string;
+  group?: string;
+  sortOrder?: number;
   duration?: number;
   imageUrl?: string;
 }

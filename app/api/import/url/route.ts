@@ -7,7 +7,7 @@ import type { UrlImportRequest } from "@/types/recipe";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: UrlImportRequest = await request.json();
+    const body: UrlImportRequest & { preview?: boolean } = await request.json();
 
     if (!body.url) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -23,6 +23,11 @@ export async function POST(request: NextRequest) {
 
     // Parse recipe from URL
     const parsed = await parseRecipeFromUrl(url.toString());
+
+    // If caller requested a preview, return the parsed object without creating DB records
+    if (body.preview) {
+      return NextResponse.json({ data: parsed });
+    }
 
     // Generate slug
     const slug = await generateUniqueSlug(parsed.title);
@@ -82,15 +87,16 @@ export async function POST(request: NextRequest) {
         },
         instructions: {
           create: parsed.instructions.map((inst, index) => ({
-            stepNumber: inst.stepNumber ?? index + 1,
             text: inst.text,
+            group: inst.group,
+            sortOrder: inst.sortOrder ?? index,
             duration: inst.duration,
           })),
         },
       },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

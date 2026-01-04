@@ -43,12 +43,11 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
         throw new Error(data.error || "Failed to parse recipe");
       }
 
-      toast.success("Recipe parsed successfully!");
-
+      toast.success("Recipe imported");
       if (onSuccess) {
         onSuccess(data.data);
       } else {
-        router.push(`/recipe/${data.data.slug}`);
+        router.push(`/recipe/${data.data.slug}/edit`);
       }
     } catch (err) {
       const message =

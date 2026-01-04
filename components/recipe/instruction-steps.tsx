@@ -13,50 +13,76 @@ export function InstructionSteps({
   instructions,
   className,
 }: InstructionStepsProps) {
-  const [currentStep, setCurrentStep] = useState<number | null>(null);
+  const [currentStep, setCurrentStep] = useState<string | null>(null);
 
-  const sortedInstructions = [...instructions].sort(
-    (a, b) => a.stepNumber - b.stepNumber,
-  );
+  // Group instructions by their group field, preserving order within each group
+  const groupedInstructions = instructions.reduce<
+    Record<string, Instruction[]>
+  >((acc, instruction) => {
+    const group = instruction.group || "Instructions";
+    if (!acc[group]) {
+      acc[group] = [];
+    }
+    acc[group].push(instruction);
+    return acc;
+  }, {});
+
+  // Sort instructions within each group by sortOrder
+  Object.values(groupedInstructions).forEach((group) => {
+    group.sort((a, b) => a.sortOrder - b.sortOrder);
+  });
+
+  const groups = Object.entries(groupedInstructions);
 
   return (
     <div className={cn("space-y-6", className)}>
-      <ol className="space-y-6">
-        {sortedInstructions.map((instruction, index) => (
-          <li
-            key={instruction.id}
-            className={cn(
-              "relative pl-12 transition-colors",
-              currentStep === index &&
-                "bg-butter/30 -mx-4 rounded-lg px-4 py-4 pl-16",
-            )}
-          >
-            <button
-              onClick={() =>
-                setCurrentStep(currentStep === index ? null : index)
-              }
-              className={cn(
-                "absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold transition-colors",
-                currentStep === index
-                  ? "bg-terracotta text-warm-white"
-                  : "bg-butter text-charcoal hover:bg-terracotta hover:text-warm-white",
-              )}
-            >
-              {instruction.stepNumber}
-            </button>
-            <div className="space-y-2">
-              <p className="text-charcoal leading-relaxed">
-                {instruction.text}
-              </p>
-              {instruction.duration && (
-                <p className="text-muted-foreground text-sm">
-                  ⏱️ {instruction.duration} min
-                </p>
-              )}
-            </div>
-          </li>
-        ))}
-      </ol>
+      {groups.map(([groupName, groupInstructions]) => (
+        <div key={groupName}>
+          {groups.length > 1 && (
+            <h4 className="text-charcoal mb-4 font-serif text-lg font-medium">
+              {groupName}
+            </h4>
+          )}
+          <ol className="space-y-6">
+            {groupInstructions.map((instruction, index) => (
+              <li
+                key={instruction.id}
+                className={cn(
+                  "relative pl-12 transition-colors",
+                  currentStep === instruction.id &&
+                    "bg-butter/30 -mx-4 rounded-lg px-4 py-4 pl-16",
+                )}
+              >
+                <button
+                  onClick={() =>
+                    setCurrentStep(
+                      currentStep === instruction.id ? null : instruction.id,
+                    )
+                  }
+                  className={cn(
+                    "absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold transition-colors",
+                    currentStep === instruction.id
+                      ? "bg-terracotta text-warm-white"
+                      : "bg-butter text-charcoal hover:bg-terracotta hover:text-warm-white",
+                  )}
+                >
+                  {index + 1}
+                </button>
+                <div className="space-y-2">
+                  <p className="text-charcoal leading-relaxed">
+                    {instruction.text}
+                  </p>
+                  {instruction.duration && (
+                    <p className="text-muted-foreground text-sm">
+                      ⏱️ {instruction.duration} min
+                    </p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
     </div>
   );
 }

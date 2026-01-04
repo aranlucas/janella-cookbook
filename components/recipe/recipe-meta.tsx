@@ -37,6 +37,9 @@ export function RecipeMeta({
   const formatCourse = (c: Course) => {
     return c.charAt(0) + c.slice(1).toLowerCase();
   };
+  const hasPositiveRatingOrCookCount =
+    (rating !== undefined && rating !== null && rating > 0) ||
+    (cookCount !== undefined && cookCount > 0);
 
   return (
     <div className={cn("space-y-3 md:space-y-4", className)}>
@@ -72,17 +75,16 @@ export function RecipeMeta({
       <div className="flex flex-wrap gap-2">
         {difficulty && (
           <Badge className={cn(difficultyColor[difficulty])}>
-            {difficulty.toLowerCase()}
+            {difficulty.charAt(0) + difficulty.slice(1).toLowerCase()}
           </Badge>
         )}
         {cuisine && <Badge variant="outline">{cuisine}</Badge>}
         {course && <Badge variant="secondary">{formatCourse(course)}</Badge>}
       </div>
-
-      {/* Rating and cook count */}
-      {(rating || cookCount) && (
+      {/* Rating and cook count (only show positive values) */}
+      {hasPositiveRatingOrCookCount && (
         <div className="text-muted-foreground flex items-center gap-4 text-sm">
-          {rating && (
+          {rating !== undefined && rating !== null && rating > 0 && (
             <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <span

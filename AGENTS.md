@@ -89,7 +89,7 @@ This project uses the **App Router** (not Pages Router). Key patterns:
 
 - `Recipe` - Main entity with relations to ingredients, instructions, tags, images
 - `Ingredient` - Ordered list (sortOrder) with quantity, unit, name, notes, group
-- `Instruction` - Ordered steps (stepNumber) with optional duration and images
+- `Instruction` - Ordered steps (sortOrder) with group, optional duration and images
 - `Tag` - Many-to-many with recipes via implicit join table
 - `RecipeImage` - Multiple images per recipe with isPrimary flag
 

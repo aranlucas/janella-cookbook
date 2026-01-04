@@ -49,12 +49,11 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
         throw new Error(data.error || "Failed to import recipe");
       }
 
-      toast.success("Recipe imported successfully!");
-
+      toast.success("Recipe imported");
       if (onSuccess) {
         onSuccess(data.data);
       } else {
-        router.push(`/recipe/${data.data.slug}`);
+        router.push(`/recipe/${data.data.slug}/edit`);
       }
     } catch (err) {
       const message =

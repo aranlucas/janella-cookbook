@@ -22,7 +22,7 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center space-x-2">
           <span className="text-terracotta font-serif text-xl font-bold sm:text-2xl">
-            Janella's Cookbook
+            Janella&apos;s Cookbook
           </span>
         </Link>
 

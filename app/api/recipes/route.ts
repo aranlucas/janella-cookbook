@@ -2,12 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
-import type {
-  RecipeInput,
-  Difficulty,
-  Course,
-  SourceType,
-} from "@/types/recipe";
+import type { RecipeInput, Course } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
@@ -51,7 +46,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { stepNumber: "asc" } },
+          instructions: { orderBy: { sortOrder: "asc" } },
           tags: true,
           images: true,
         },
@@ -169,8 +164,9 @@ export async function POST(request: NextRequest) {
         },
         instructions: {
           create: body.instructions.map((inst, index) => ({
-            stepNumber: inst.stepNumber ?? index + 1,
             text: inst.text,
+            group: inst.group,
+            sortOrder: inst.sortOrder ?? index,
             duration: inst.duration,
             imageUrl: inst.imageUrl,
           })),
@@ -181,7 +177,7 @@ export async function POST(request: NextRequest) {
       },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

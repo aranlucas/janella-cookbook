@@ -14,7 +14,7 @@ async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
     const recipes = await prisma.recipe.findMany({
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

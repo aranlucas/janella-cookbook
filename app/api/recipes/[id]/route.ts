@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       where: { id },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         where: { slug: id },
         include: {
           ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { stepNumber: "asc" } },
+          instructions: { orderBy: { sortOrder: "asc" } },
           tags: true,
           images: true,
         },
@@ -155,8 +155,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         ...(body.instructions && {
           instructions: {
             create: body.instructions.map((inst, index) => ({
-              stepNumber: inst.stepNumber ?? index + 1,
               text: inst.text,
+              group: inst.group,
+              sortOrder: inst.sortOrder ?? index,
               duration: inst.duration,
               imageUrl: inst.imageUrl,
             })),
@@ -170,7 +171,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

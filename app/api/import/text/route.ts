@@ -7,7 +7,8 @@ import type { TextImportRequest } from "@/types/recipe";
 
 export async function POST(request: NextRequest) {
   try {
-    const body: TextImportRequest = await request.json();
+    const body: TextImportRequest & { preview?: boolean } =
+      await request.json();
 
     if (!body.text || body.text.trim().length === 0) {
       return NextResponse.json({ error: "Text is required" }, { status: 400 });
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest) {
 
     // Parse recipe from text using OpenRouter
     const parsed = await parseRecipeFromText(body.text);
+
+    // If caller requested a preview, return parsed object without creating DB records
+    if (body.preview) {
+      return NextResponse.json({ data: parsed });
+    }
 
     // Generate slug
     const slug = await generateUniqueSlug(parsed.title);
@@ -78,15 +84,16 @@ export async function POST(request: NextRequest) {
         },
         instructions: {
           create: parsed.instructions.map((inst, index) => ({
-            stepNumber: inst.stepNumber ?? index + 1,
             text: inst.text,
+            group: inst.group,
+            sortOrder: inst.sortOrder ?? index,
             duration: inst.duration,
           })),
         },
       },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

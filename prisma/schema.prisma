@@ -84,10 +84,11 @@ model Instruction {
   recipeId String
   recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  stepNumber Int
-  text       String
-  duration   Int? // minutes for this step
-  imageUrl   String?
+  text      String
+  group     String?
+  sortOrder Int     @default(0)
+  duration  Int? // minutes for this step
+  imageUrl  String?
 
   @@index([recipeId])
 }

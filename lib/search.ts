@@ -126,7 +126,7 @@ export async function semanticSearch(
         }),
         prisma.instruction.findMany({
           where: { recipeId: r.id },
-          orderBy: { stepNumber: "asc" },
+          orderBy: { sortOrder: "asc" },
         }),
         prisma.tag.findMany({ where: { recipes: { some: { id: r.id } } } }),
         prisma.recipeImage.findMany({ where: { recipeId: r.id } }),
@@ -215,7 +215,7 @@ export async function keywordSearch(
       where,
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { stepNumber: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
         tags: true,
         images: true,
       },

@@ -57,8 +57,9 @@ CREATE TABLE "Ingredient" (
 CREATE TABLE "Instruction" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
-    "stepNumber" INTEGER NOT NULL,
     "text" TEXT NOT NULL,
+    "group" TEXT,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "duration" INTEGER,
     "imageUrl" TEXT,
 
