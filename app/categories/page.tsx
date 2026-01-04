@@ -18,7 +18,7 @@ const courseIcons: Record<string, string> = {
   SIDE: "🍟",
 };
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 async function getCategories() {
   const [courses, cuisines] = await Promise.all([

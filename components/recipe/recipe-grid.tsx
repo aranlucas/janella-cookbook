@@ -2,6 +2,17 @@
 
 import { RecipeCard } from "./recipe-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeGridProps {
@@ -27,15 +38,28 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
 
   if (recipes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-center">
-        <span className="mb-2 text-6xl">📚</span>
-        <h3 className="mb-2 font-serif text-xl font-semibold">
-          No recipes yet
-        </h3>
-        <p className="text-muted-foreground">
-          Start building your cookbook by adding your first recipe!
-        </p>
-      </div>
+      <Empty className="py-20">
+        <EmptyMedia variant="icon">
+          <span className="text-4xl">📚</span>
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>No recipes yet</EmptyTitle>
+          <EmptyDescription>
+            Start building your cookbook by adding your first recipe!
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Link
+            href="/add"
+            className={cn(
+              buttonVariants({ variant: "terracotta" as any }),
+              "rounded-full px-8",
+            )}
+          >
+            Add Your First Recipe
+          </Link>
+        </EmptyContent>
+      </Empty>
     );
   }
 

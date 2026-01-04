@@ -2,13 +2,29 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Field,
+  FieldContent,
+  FieldGroup,
+  FieldLabel,
+  FieldError,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -73,13 +89,7 @@ export function ManualRecipeForm({
   // Get import draft once on initial render (only when not editing)
   const importDraft = !initialData ? getImportDraft() : null;
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<RecipeInputSchema>({
+  const form = useForm<RecipeInputSchema>({
     resolver: zodResolver(recipeInputSchema),
     defaultValues: {
       title: initialData?.title || importDraft?.title || "",
@@ -98,44 +108,46 @@ export function ManualRecipeForm({
       tags: initialData?.tags?.map((t) => t.name) || [],
       ingredients: initialData?.ingredients?.length
         ? initialData.ingredients.map((i) => ({
+          quantity: i.quantity || "",
+          unit: i.unit || "",
+          name: i.name,
+          notes: i.notes || "",
+          group: i.group || "",
+        }))
+        : importDraft?.ingredients?.length
+          ? importDraft.ingredients.map((i: IngredientInput) => ({
             quantity: i.quantity || "",
             unit: i.unit || "",
-            name: i.name,
+            name: i.name || "",
             notes: i.notes || "",
             group: i.group || "",
           }))
-        : importDraft?.ingredients?.length
-          ? importDraft.ingredients.map((i: IngredientInput) => ({
-              quantity: i.quantity || "",
-              unit: i.unit || "",
-              name: i.name || "",
-              notes: i.notes || "",
-              group: i.group || "",
-            }))
           : [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
       instructions: initialData?.instructions?.length
         ? initialData.instructions.map((i) => ({
-            text: i.text,
-            group: i.group || "",
-            duration: i.duration || undefined,
-          }))
+          text: i.text,
+          group: i.group || "",
+          duration: i.duration || undefined,
+        }))
         : importDraft?.instructions?.length
           ? importDraft.instructions.map((inst: InstructionInput) => ({
-              text: inst.text || "",
-              group: inst.group || "",
-              duration: inst.duration || undefined,
-            }))
+            text: inst.text || "",
+            group: inst.group || "",
+            duration: inst.duration || undefined,
+          }))
           : [{ text: "", group: "" }],
       sourceType: initialData?.sourceType || "MANUAL",
     },
   });
+
+  const { handleSubmit, register } = form;
 
   const {
     fields: ingredientFields,
     append: appendIngredient,
     remove: removeIngredient,
   } = useFieldArray({
-    control,
+    control: form.control,
     name: "ingredients",
   });
 
@@ -144,7 +156,7 @@ export function ManualRecipeForm({
     append: appendInstruction,
     remove: removeInstruction,
   } = useFieldArray({
-    control,
+    control: form.control,
     name: "instructions",
   });
 
@@ -165,9 +177,9 @@ export function ManualRecipeForm({
     startTransition(async () => {
       const result = isEditing
         ? await updateRecipe(
-            initialData.id,
-            recipeData as unknown as Partial<RecipeInput>,
-          )
+          initialData.id,
+          recipeData as unknown as Partial<RecipeInput>,
+        )
         : await createRecipe(recipeData as unknown as RecipeInput);
 
       if (!result.success) {
@@ -188,339 +200,362 @@ export function ManualRecipeForm({
     });
   };
 
-  const difficultyValue = useWatch({ control, name: "difficulty" });
-  const courseValue = useWatch({ control, name: "course" });
-  const tagsValue = useWatch({ control, name: "tags" });
+  const difficultyValue = useWatch({ control: form.control, name: "difficulty" });
+  const courseValue = useWatch({ control: form.control, name: "course" });
+  const tagsValue = useWatch({ control: form.control, name: "tags" });
 
   return (
     <Card className="bg-warm-white">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold">Basic Info</h3>
-
-            <div className="space-y-2">
-              <Label htmlFor="title">Recipe Title *</Label>
-              <Input
-                id="title"
-                {...register("title")}
-                placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                className="bg-cream border-butter"
-              />
-              {errors.title && (
-                <p className="text-destructive text-sm">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                {...register("description")}
-                placeholder="A brief description of this recipe..."
-                className="bg-cream border-butter"
-              />
-              {errors.description && (
-                <p className="text-destructive text-sm">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <Label htmlFor="prepTime">Prep Time (min)</Label>
-                <Input
-                  id="prepTime"
-                  type="number"
-                  {...register("prepTime", { valueAsNumber: true })}
-                  min="0"
-                  className="bg-cream border-butter"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cookTime">Cook Time (min)</Label>
-                <Input
-                  id="cookTime"
-                  type="number"
-                  {...register("cookTime", { valueAsNumber: true })}
-                  min="0"
-                  className="bg-cream border-butter"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="servings">Servings</Label>
-                <Input
-                  id="servings"
-                  {...register("servings")}
-                  placeholder="e.g., 4-6"
-                  className="bg-cream border-butter"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Difficulty</Label>
-                <Select
-                  value={difficultyValue}
-                  onValueChange={(v) => setValue("difficulty", v as Difficulty)}
-                >
-                  <SelectTrigger className="bg-cream border-butter">
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {difficulties.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d.charAt(0) + d.slice(1).toLowerCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cuisine">Cuisine</Label>
-                <Input
-                  id="cuisine"
-                  {...register("cuisine")}
-                  placeholder="e.g., Italian, Mexican"
-                  className="bg-cream border-butter"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="course">Course</Label>
-                <Select
-                  value={courseValue}
-                  onValueChange={(v) => setValue("course", v as Course)}
-                >
-                  <SelectTrigger className="bg-cream border-butter">
-                    <SelectValue placeholder="Select..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c.charAt(0) + c.slice(1).toLowerCase()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Ingredients */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold">
-                Ingredients *
-              </h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  appendIngredient({
-                    quantity: "",
-                    unit: "",
-                    name: "",
-                    notes: "",
-                    group: "",
-                  })
-                }
-              >
-                + Add Ingredient
-              </Button>
-            </div>
-
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Basic Info */}
             <div className="space-y-4">
-              {ingredientFields.map((field, index) => (
-                <div
-                  key={field.id}
-                  className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+              <h3 className="font-serif text-lg font-semibold">Basic Info</h3>
+
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipe Title *</FormLabel>
+                    <FormControl>
                       <Input
-                        {...register(`ingredients.${index}.quantity`)}
-                        placeholder="Qty"
+                        {...field}
+                        placeholder="e.g., Grandma's Chocolate Chip Cookies"
                         className="bg-cream border-butter"
                       />
-                      <Input
-                        {...register(`ingredients.${index}.unit`)}
-                        placeholder="Unit"
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="A brief description of this recipe..."
                         className="bg-cream border-butter"
                       />
-                      <div className="col-span-2 space-y-1 sm:col-span-2">
-                        <Input
-                          {...register(`ingredients.${index}.name`)}
-                          placeholder="Ingredient name"
-                          className="bg-cream border-butter"
-                        />
-                        {errors.ingredients?.[index]?.name && (
-                          <p className="text-destructive text-xs">
-                            {errors.ingredients[index].name.message}
-                          </p>
-                        )}
-                      </div>
-                      <Input
-                        {...register(`ingredients.${index}.group`)}
-                        placeholder="Group (e.g., Green Salsa)"
-                        className="bg-cream border-butter"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeIngredient(index)}
-                      className="text-muted-foreground hover:text-destructive shrink-0"
-                      disabled={ingredientFields.length === 1}
-                    >
-                      ✕
-                    </Button>
-                  </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prepTime">Prep Time (min)</Label>
                   <Input
-                    {...register(`ingredients.${index}.notes`)}
-                    placeholder="Notes (optional)"
+                    id="prepTime"
+                    type="number"
+                    {...register("prepTime", { valueAsNumber: true })}
+                    min="0"
                     className="bg-cream border-butter"
                   />
                 </div>
-              ))}
-              {errors.ingredients?.root && (
-                <p className="text-destructive text-sm">
-                  {errors.ingredients.root.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Instructions */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold">
-                Instructions *
-              </h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => appendInstruction({ text: "", group: "" })}
-              >
-                + Add Step
-              </Button>
-            </div>
-
-            <div className="space-y-3">
-              {instructionFields.map((field, index) => (
-                <div key={field.id} className="space-y-1">
-                  <div className="flex items-start gap-2">
-                    <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
-                      {index + 1}
-                    </div>
-                    <Textarea
-                      {...register(`instructions.${index}.text`)}
-                      placeholder={`Step ${index + 1}...`}
-                      className="bg-cream border-butter min-h-[80px] flex-1"
-                    />
-                    <div className="ml-2 w-40">
-                      <Input
-                        {...register(`instructions.${index}.group`)}
-                        placeholder="Group (e.g., Green Salsa)"
-                        className="bg-cream border-butter"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeInstruction(index)}
-                      className="text-muted-foreground hover:text-destructive"
-                      disabled={instructionFields.length === 1}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-                  {errors.instructions?.[index]?.text && (
-                    <p className="text-destructive ml-12 text-xs">
-                      {errors.instructions[index].text.message}
-                    </p>
-                  )}
+                <div className="space-y-2">
+                  <Label htmlFor="cookTime">Cook Time (min)</Label>
+                  <Input
+                    id="cookTime"
+                    type="number"
+                    {...register("cookTime", { valueAsNumber: true })}
+                    min="0"
+                    className="bg-cream border-butter"
+                  />
                 </div>
-              ))}
-              {errors.instructions?.root && (
-                <p className="text-destructive text-sm">
-                  {errors.instructions.root.message}
-                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="servings">Servings</Label>
+                  <Input
+                    id="servings"
+                    {...register("servings")}
+                    placeholder="e.g., 4-6"
+                    className="bg-cream border-butter"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="difficulty">Difficulty</Label>
+                  <Select
+                    value={difficultyValue}
+                    onValueChange={(v) =>
+                      form.setValue("difficulty", v as Difficulty)
+                    }
+                  >
+                    <SelectTrigger className="bg-cream border-butter">
+                      <SelectValue>
+                        {difficultyValue
+                          ? difficultyValue.charAt(0) +
+                          difficultyValue.slice(1).toLowerCase()
+                          : "Select..."}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {difficulties.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d.charAt(0) + d.slice(1).toLowerCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cuisine">Cuisine</Label>
+                  <Input
+                    id="cuisine"
+                    {...register("cuisine")}
+                    placeholder="e.g., Italian, Mexican"
+                    className="bg-cream border-butter"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="course">Course</Label>
+                  <Select
+                    value={courseValue}
+                    onValueChange={(v) => form.setValue("course", v as Course)}
+                  >
+                    <SelectTrigger className="bg-cream border-butter">
+                      <SelectValue>
+                        {courseValue
+                          ? courseValue.charAt(0) +
+                          courseValue.slice(1).toLowerCase()
+                          : "Select..."}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c.charAt(0) + c.slice(1).toLowerCase()}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Ingredients */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg font-semibold">
+                  Ingredients *
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    appendIngredient({
+                      quantity: "",
+                      unit: "",
+                      name: "",
+                      notes: "",
+                      group: "",
+                    })
+                  }
+                >
+                  + Add Ingredient
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {ingredientFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+                        <Input
+                          {...register(`ingredients.${index}.quantity`)}
+                          placeholder="Qty"
+                          className="bg-cream border-butter"
+                        />
+                        <Input
+                          {...register(`ingredients.${index}.unit`)}
+                          placeholder="Unit"
+                          className="bg-cream border-butter"
+                        />
+                        <div className="col-span-2 space-y-1 sm:col-span-2">
+                          <Input
+                            {...register(`ingredients.${index}.name`)}
+                            placeholder="Ingredient name"
+                            className="bg-cream border-butter"
+                          />
+                          {form.formState.errors.ingredients?.[index]?.name && (
+                            <p className="text-destructive text-xs">
+                              {
+                                form.formState.errors.ingredients[index].name
+                                  .message
+                              }
+                            </p>
+                          )}
+                        </div>
+                        <Input
+                          {...register(`ingredients.${index}.group`)}
+                          placeholder="Group (e.g., Green Salsa)"
+                          className="bg-cream border-butter"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeIngredient(index)}
+                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        disabled={ingredientFields.length === 1}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    <Input
+                      {...register(`ingredients.${index}.notes`)}
+                      placeholder="Notes (optional)"
+                      className="bg-cream border-butter"
+                    />
+                  </div>
+                ))}
+                {form.formState.errors.ingredients?.root && (
+                  <p className="text-destructive text-sm">
+                    {form.formState.errors.ingredients.root.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Instructions */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif text-lg font-semibold">
+                  Instructions *
+                </h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendInstruction({ text: "", group: "" })}
+                >
+                  + Add Step
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {instructionFields.map((field, index) => (
+                  <div key={field.id} className="space-y-1">
+                    <div className="flex items-start gap-2">
+                      <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
+                        {index + 1}
+                      </div>
+                      <Textarea
+                        {...register(`instructions.${index}.text`)}
+                        placeholder={`Step ${index + 1}...`}
+                        className="bg-cream border-butter min-h-[80px] flex-1"
+                      />
+                      <div className="ml-2 w-40">
+                        <Input
+                          {...register(`instructions.${index}.group`)}
+                          placeholder="Group (e.g., Green Salsa)"
+                          className="bg-cream border-butter"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeInstruction(index)}
+                        className="text-muted-foreground hover:text-destructive"
+                        disabled={instructionFields.length === 1}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                    {form.formState.errors.instructions?.[index]?.text && (
+                      <p className="text-destructive ml-12 text-xs">
+                        {form.formState.errors.instructions[index].text.message}
+                      </p>
+                    )}
+                  </div>
+                ))}
+                {form.formState.errors.instructions?.root && (
+                  <p className="text-destructive text-sm">
+                    {form.formState.errors.instructions.root.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className="space-y-4">
+              <h3 className="font-serif text-lg font-semibold">
+                Additional Info
+              </h3>
+
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input
+                  id="imageUrl"
+                  {...register("imageUrl")}
+                  placeholder="https://example.com/image.jpg"
+                  className="bg-cream border-butter"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Input
+                  id="tags"
+                  value={tagsValue?.join(", ")}
+                  onChange={(e) =>
+                    form.setValue(
+                      "tags",
+                      e.target.value
+                        .split(",")
+                        .map((t) => t.trim())
+                        .filter(Boolean),
+                    )
+                  }
+                  placeholder="e.g., comfort food, family favorite, quick"
+                  className="bg-cream border-butter"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Personal Notes</Label>
+                <Textarea
+                  id="notes"
+                  {...register("notes")}
+                  placeholder="Any personal notes or modifications..."
+                  className="bg-cream border-butter"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  {isEditing ? "Updating..." : "Creating..."}
+                </>
+              ) : isEditing ? (
+                "Update Recipe"
+              ) : (
+                "Create Recipe"
               )}
-            </div>
-          </div>
-
-          {/* Additional Info */}
-          <div className="space-y-4">
-            <h3 className="font-serif text-lg font-semibold">
-              Additional Info
-            </h3>
-
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Image URL</Label>
-              <Input
-                id="imageUrl"
-                {...register("imageUrl")}
-                placeholder="https://example.com/image.jpg"
-                className="bg-cream border-butter"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma-separated)</Label>
-              <Input
-                id="tags"
-                value={tagsValue?.join(", ")}
-                onChange={(e) =>
-                  setValue(
-                    "tags",
-                    e.target.value
-                      .split(",")
-                      .map((t) => t.trim())
-                      .filter(Boolean),
-                  )
-                }
-                placeholder="e.g., comfort food, family favorite, quick"
-                className="bg-cream border-butter"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Personal Notes</Label>
-              <Textarea
-                id="notes"
-                {...register("notes")}
-                placeholder="Any personal notes or modifications..."
-                className="bg-cream border-butter"
-              />
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <span className="mr-2 animate-spin">⏳</span>
-                {isEditing ? "Updating..." : "Creating..."}
-              </>
-            ) : isEditing ? (
-              "Update Recipe"
-            ) : (
-              "Create Recipe"
-            )}
-          </Button>
-        </form>
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

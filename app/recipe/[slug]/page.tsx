@@ -6,14 +6,29 @@ import { Footer } from "@/components/layout/footer";
 import { RecipeMeta } from "@/components/recipe/recipe-meta";
 import { IngredientList } from "@/components/recipe/ingredient-list";
 import { InstructionSteps } from "@/components/recipe/instruction-steps";
-import { RecipeActionsClient } from "./recipe-actions-client";
+import { RecipeEngagementActions } from "./recipe-engagement-actions";
+import { RecipeManagementActions } from "./recipe-management-actions";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { RecipeImage } from "@/components/ui/recipe-image";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-// ISR: Revalidate every 60 seconds, or on-demand via revalidatePath
-export const revalidate = 60;
+// ISR: Revalidate every 24 hours, or on-demand via revalidatePath
+export const revalidate = 86400;
 
 // Allow dynamic params for recipes not generated at build time
 export const dynamicParams = true;
@@ -82,14 +97,24 @@ export default async function RecipePage({ params }: PageProps) {
       <Header />
 
       <main className="flex-1">
-        {/* Back link */}
+        {/* Breadcrumbs */}
         <div className="no-print container py-4">
-          <Link
-            href="/"
-            className="text-muted-foreground hover:text-terracotta inline-flex items-center text-sm transition-colors"
-          >
-            ← Back to recipes
-          </Link>
+          <div className="flex items-center justify-between">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/" className="text-muted-foreground">
+                    Recipes
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{recipe.title}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <RecipeManagementActions recipe={recipe} />
+          </div>
         </div>
 
         {/* Recipe Header */}
@@ -142,10 +167,6 @@ export default async function RecipePage({ params }: PageProps) {
                 cookCount={recipe.cookCount}
               />
 
-              <div className="no-print">
-                <RecipeActionsClient recipe={recipe} />
-              </div>
-
               {recipe.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {recipe.tags.map((tag) => (
@@ -155,6 +176,11 @@ export default async function RecipePage({ params }: PageProps) {
                   ))}
                 </div>
               )}
+
+              {/* Engagement Actions */}
+              <div className="no-print pt-2">
+                <RecipeEngagementActions recipe={recipe} />
+              </div>
             </div>
           </div>
         </section>
@@ -191,34 +217,35 @@ export default async function RecipePage({ params }: PageProps) {
           <>
             <Separator className="container" />
             <section className="container py-6 md:py-8">
-              <div className="max-w-2xl space-y-4 md:space-y-6">
-                {recipe.notes && (
-                  <div>
-                    <h3 className="mb-2 font-serif text-lg font-semibold md:text-xl">
+              {recipe.notes && (
+                <Accordion className="max-w-2xl">
+                  <AccordionItem value="notes" className="border-none">
+                    <AccordionTrigger className="font-serif text-lg font-semibold md:text-xl py-2">
                       Notes
-                    </h3>
-                    <p className="text-muted-foreground text-sm whitespace-pre-wrap md:text-base">
+                    </AccordionTrigger>
+                    <AccordionContent className="text-muted-foreground text-sm whitespace-pre-wrap md:text-base">
                       {recipe.notes}
-                    </p>
-                  </div>
-                )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              )}
 
-                {recipe.sourceUrl && (
-                  <div>
-                    <h3 className="mb-2 font-serif text-lg font-semibold md:text-xl">
-                      Source
-                    </h3>
-                    <a
-                      href={recipe.sourceUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-terracotta text-sm break-all hover:underline md:text-base"
-                    >
-                      {recipe.sourceUrl}
-                    </a>
-                  </div>
-                )}
-              </div>
+              {recipe.sourceUrl && (
+                <div className="mt-8 border-t pt-8">
+                  <h3 className="font-serif text-lg font-semibold md:text-xl mb-2">
+                    Original Source
+                  </h3>
+                  <a
+                    href={recipe.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-terracotta hover:text-rust text-sm break-all md:text-base hover:underline flex items-center gap-2"
+                  >
+                    <span className="shrink-0 text-xl">🔗</span>
+                    {recipe.sourceUrl}
+                  </a>
+                </div>
+              )}
             </section>
           </>
         )}

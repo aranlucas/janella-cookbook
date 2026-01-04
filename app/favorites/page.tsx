@@ -6,7 +6,7 @@ import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 async function getFavoriteRecipes(): Promise<RecipeWithRelations[]> {
   try {

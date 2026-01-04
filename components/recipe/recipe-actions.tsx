@@ -122,15 +122,17 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
       </Button>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-destructive gap-1"
-          >
-            <span>🗑️</span>
-            Delete
-          </Button>
+        <DialogTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive gap-1"
+            />
+          }
+        >
+          <span>🗑️</span>
+          Delete
         </DialogTrigger>
         <DialogContent>
           <DialogHeader>

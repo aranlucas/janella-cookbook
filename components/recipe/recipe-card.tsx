@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { RecipeImage } from "@/components/ui/recipe-image";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { RecipeWithRelations } from "@/types/recipe";
 
@@ -16,12 +17,12 @@ export function RecipeCard({
   className,
   priority = false,
 }: RecipeCardProps) {
-  const difficultyColor = {
-    EASY: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100",
-    MEDIUM: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100",
-    HARD: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100",
-    EXPERT: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100",
-  };
+  const difficultyVariant = {
+    EASY: "secondary",
+    MEDIUM: "default",
+    HARD: "destructive",
+    EXPERT: "destructive",
+  } as const;
 
   return (
     <Link href={`/recipe/${recipe.slug}`} className="group block h-full">
@@ -52,15 +53,12 @@ export function RecipeCard({
         <div className="flex flex-1 flex-col p-4">
           <div className="mb-1 flex items-center justify-between">
             {recipe.difficulty && (
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase",
-                  difficultyColor[recipe.difficulty] ||
-                    "bg-secondary text-secondary-foreground",
-                )}
+              <Badge
+                variant={difficultyVariant[recipe.difficulty] || "secondary"}
+                className="text-[10px] font-bold tracking-wider uppercase"
               >
                 {recipe.difficulty}
-              </span>
+              </Badge>
             )}
             {recipe.totalTime && (
               <span className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
@@ -79,11 +77,14 @@ export function RecipeCard({
             </p>
           )}
 
-          <div className="text-muted-foreground/80 mt-auto flex items-center gap-3 text-xs">
+          <div className="text-muted-foreground/80 mt-auto flex items-center justify-between gap-3 text-xs">
             {recipe.cuisine && (
-              <span className="font-medium tracking-wider uppercase">
+              <Badge
+                variant="outline"
+                className="bg-background/50 border-border/50 text-[10px] font-medium tracking-wider uppercase"
+              >
                 {recipe.cuisine}
-              </span>
+              </Badge>
             )}
             {recipe.servings && (
               <>

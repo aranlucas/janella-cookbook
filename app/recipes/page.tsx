@@ -5,13 +5,21 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { RecipeWithRelations } from "@/types/recipe";
+import { cn } from "@/lib/utils";
 
-export const revalidate = 60;
+export const revalidate = 86400;
 
 interface RecipesPageProps {
   searchParams: Promise<{
@@ -110,31 +118,33 @@ function PaginationControls({
 
   return (
     <div className="mt-12 flex items-center justify-center gap-4">
-      <Button
-        variant="outline"
-        disabled={currentPage <= 1}
-        asChild={currentPage > 1}
-      >
-        {currentPage > 1 ? (
-          <Link href={`${baseUrl}&page=${currentPage - 1}`}>Previous</Link>
-        ) : (
-          "Previous"
-        )}
-      </Button>
+      {currentPage > 1 ? (
+        <Link
+          href={`${baseUrl}&page=${currentPage - 1}`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Previous
+        </Link>
+      ) : (
+        <Button variant="outline" disabled>
+          Previous
+        </Button>
+      )}
       <span className="text-muted-foreground text-sm font-medium">
         Page {currentPage} of {totalPages}
       </span>
-      <Button
-        variant="outline"
-        disabled={currentPage >= totalPages}
-        asChild={currentPage < totalPages}
-      >
-        {currentPage < totalPages ? (
-          <Link href={`${baseUrl}&page=${currentPage + 1}`}>Next</Link>
-        ) : (
-          "Next"
-        )}
-      </Button>
+      {currentPage < totalPages ? (
+        <Link
+          href={`${baseUrl}&page=${currentPage + 1}`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          Next
+        </Link>
+      ) : (
+        <Button variant="outline" disabled>
+          Next
+        </Button>
+      )}
     </div>
   );
 }
@@ -152,15 +162,30 @@ async function RecipeList({
 
   if (recipes.length === 0) {
     return (
-      <EmptyState
-        title="No recipes found"
-        description={
-          query
-            ? `We couldn't find anything matching "${query}".`
-            : "Try adjusting your filters or search terms."
-        }
-        action={{ label: "View All Recipes", href: "/recipes" }}
-      />
+      <Empty className="py-20">
+        <EmptyMedia variant="icon">
+          <span className="text-4xl">🔍</span>
+        </EmptyMedia>
+        <EmptyHeader>
+          <EmptyTitle>No recipes found</EmptyTitle>
+          <EmptyDescription>
+            {query
+              ? `We couldn't find anything matching "${query}".`
+              : "Try adjusting your filters or search terms."}
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Link
+            href="/recipes"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "rounded-full px-8",
+            )}
+          >
+            View All Recipes
+          </Link>
+        </EmptyContent>
+      </Empty>
     );
   }
 

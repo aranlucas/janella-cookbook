@@ -87,12 +87,13 @@ export function FilterPanel({
         </Label>
         <Slider
           value={[filters.maxTime || options.maxTotalTime]}
-          onValueChange={([value]) =>
+          onValueChange={(values) => {
+            const value = Array.isArray(values) ? values[0] : values;
             onChange({
               ...filters,
               maxTime: value < options.maxTotalTime ? value : undefined,
-            })
-          }
+            });
+          }}
           max={options.maxTotalTime}
           min={5}
           step={5}

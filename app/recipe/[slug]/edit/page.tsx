@@ -6,8 +6,8 @@ import { Footer } from "@/components/layout/footer";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-// ISR: Revalidate every 60 seconds, or on-demand via revalidatePath
-export const revalidate = 60;
+// ISR: Revalidate every 24 hours, or on-demand via revalidatePath
+export const revalidate = 86400;
 
 interface PageProps {
   params: Promise<{ slug: string }>;

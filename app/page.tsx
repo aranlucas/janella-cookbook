@@ -4,11 +4,19 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
+import { RecipeCard } from "@/components/recipe/recipe-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-// Revalidate every 60 seconds, or on-demand via revalidatePath("/")
-export const revalidate = 60;
+// Revalidate every 24 hours, or on-demand via revalidatePath("/")
+export const revalidate = 86400;
 
 async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
   try {
@@ -45,7 +53,47 @@ function RecipeGridSkeleton() {
 
 async function RecipeList() {
   const recipes = await getRecentRecipes();
-  return <RecipeGrid recipes={recipes} />;
+
+  if (recipes.length === 0) {
+    return <RecipeGrid recipes={[]} />;
+  }
+
+  return (
+    <div className="space-y-12">
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-4">
+          {recipes.slice(0, 10).map((recipe) => (
+            <CarouselItem
+              key={recipe.id}
+              className="pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
+            >
+              <RecipeCard recipe={recipe} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <div className="mt-8 flex justify-center gap-2">
+          <CarouselPrevious className="static translate-y-0" />
+          <CarouselNext className="static translate-y-0" />
+        </div>
+      </Carousel>
+
+      {/* Show more recipes in a grid below the carousel if needed */}
+      {recipes.length > 10 && (
+        <div className="space-y-8 pt-8">
+          <h3 className="text-charcoal font-serif text-2xl font-bold">
+            Explore More
+          </h3>
+          <RecipeGrid recipes={recipes.slice(10)} />
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default async function HomePage() {
@@ -102,13 +150,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Recipe Grid */}
-        <section className="py-6 sm:py-4 md:py-10">
+        {/* Recipe Section */}
+        <section className="py-12 md:py-16">
           <div className="container">
-            <div className="mb-6 flex items-center justify-center text-center sm:mb-8">
-              <h2 className="text-charcoal font-serif text-3xl font-bold sm:text-4xl">
+            <div className="mb-10 text-center">
+              <h2 className="text-charcoal font-serif text-3xl font-bold sm:text-4xl md:text-5xl">
                 Recent Recipes
               </h2>
+              <p className="text-muted-foreground mt-2 text-lg">
+                The latest creations from Janella&apos;s kitchen.
+              </p>
             </div>
             <Suspense fallback={<RecipeGridSkeleton />}>
               <RecipeList />

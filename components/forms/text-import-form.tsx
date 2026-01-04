@@ -6,8 +6,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { toast } from "sonner";
 import { importFromText } from "@/lib/actions";
 import { textImportSchema, type TextImportSchema } from "@/lib/validations";
@@ -21,12 +28,7 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-  } = useForm<TextImportSchema>({
+  const form = useForm<TextImportSchema>({
     resolver: zodResolver(textImportSchema),
     defaultValues: {
       text: "",
@@ -38,7 +40,7 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
       const result = await importFromText(data.text);
 
       if (!result.success) {
-        setError("text", { type: "manual", message: result.error });
+        form.setError("text", { type: "manual", message: result.error });
         toast.error(result.error);
         return;
       }
@@ -55,13 +57,18 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
   return (
     <Card className="bg-warm-white">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="text">Recipe Text</Label>
-            <Textarea
-              id="text"
-              {...register("text")}
-              placeholder={`Paste your recipe here. For example:
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="text"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipe Text</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder={`Paste your recipe here. For example:
 
 Grandma's Chocolate Chip Cookies
 
@@ -80,36 +87,38 @@ Instructions:
 4. Gradually add flour
 5. Fold in chocolate chips
 6. Bake for 9-11 minutes`}
-              className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
-              disabled={isPending}
+                      className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.text && (
-              <p className="text-destructive text-sm">{errors.text.message}</p>
-            )}
-          </div>
 
-          <div className="text-muted-foreground text-sm">
-            <p>
-              Paste any recipe text - from a cookbook, email, or anywhere else.
-              We&apos;ll use AI to extract and organize it automatically.
-            </p>
-          </div>
+            <div className="text-muted-foreground text-sm">
+              <p>
+                Paste any recipe text - from a cookbook, email, or anywhere else.
+                We&apos;ll use AI to extract and organize it automatically.
+              </p>
+            </div>
 
-          <Button
-            type="submit"
-            className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <span className="mr-2 animate-spin">⏳</span>
-                Parsing...
-              </>
-            ) : (
-              "Parse Recipe"
-            )}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  Parsing...
+                </>
+              ) : (
+                "Parse Recipe"
+              )}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

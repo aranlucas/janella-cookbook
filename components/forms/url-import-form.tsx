@@ -6,8 +6,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { toast } from "sonner";
 import { importFromUrl } from "@/lib/actions";
 import { urlImportSchema, type UrlImportSchema } from "@/lib/validations";
@@ -21,12 +28,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-  } = useForm<UrlImportSchema>({
+  const form = useForm<UrlImportSchema>({
     resolver: zodResolver(urlImportSchema),
     defaultValues: {
       url: "",
@@ -38,7 +40,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
       const result = await importFromUrl(data.url);
 
       if (!result.success) {
-        setError("url", { type: "manual", message: result.error });
+        form.setError("url", { type: "manual", message: result.error });
         toast.error(result.error);
         return;
       }
@@ -55,51 +57,58 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
   return (
     <Card className="bg-warm-white">
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="url">Recipe URL</Label>
-            <Input
-              id="url"
-              type="url"
-              {...register("url")}
-              placeholder="https://example.com/recipe/delicious-pasta"
-              className="bg-cream border-butter focus:border-terracotta"
-              disabled={isPending}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recipe URL</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="url"
+                      placeholder="https://example.com/recipe/delicious-pasta"
+                      className="bg-cream border-butter focus:border-terracotta"
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.url && (
-              <p className="text-destructive text-sm">{errors.url.message}</p>
-            )}
-          </div>
 
-          <div className="text-muted-foreground text-sm">
-            <p>
-              Paste a URL from your favorite recipe site. We&apos;ll
-              automatically extract:
-            </p>
-            <ul className="mt-2 list-inside list-disc space-y-1">
-              <li>Recipe title and description</li>
-              <li>Ingredients with quantities</li>
-              <li>Step-by-step instructions</li>
-              <li>Cooking times and servings</li>
-              <li>Recipe image</li>
-            </ul>
-          </div>
+            <div className="text-muted-foreground text-sm">
+              <p>
+                Paste a URL from your favorite recipe site. We&apos;ll
+                automatically extract:
+              </p>
+              <ul className="mt-2 list-inside list-disc space-y-1">
+                <li>Recipe title and description</li>
+                <li>Ingredients with quantities</li>
+                <li>Step-by-step instructions</li>
+                <li>Cooking times and servings</li>
+                <li>Recipe image</li>
+              </ul>
+            </div>
 
-          <Button
-            type="submit"
-            className="bg-terracotta hover:bg-rust text-warm-white w-full"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <span className="mr-2 animate-spin">⏳</span>
-                Importing...
-              </>
-            ) : (
-              "Import Recipe"
-            )}
-          </Button>
-        </form>
+            <Button
+              type="submit"
+              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <span className="mr-2 animate-spin">⏳</span>
+                  Importing...
+                </>
+              ) : (
+                "Import Recipe"
+              )}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );
