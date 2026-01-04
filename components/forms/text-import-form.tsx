@@ -83,7 +83,9 @@ Instructions:
               className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
               disabled={isPending}
             />
-            {errors.text && <p className="text-destructive text-sm">{errors.text.message}</p>}
+            {errors.text && (
+              <p className="text-destructive text-sm">{errors.text.message}</p>
+            )}
           </div>
 
           <div className="text-muted-foreground text-sm">
@@ -112,4 +114,3 @@ Instructions:
     </Card>
   );
 }
-

@@ -330,16 +330,16 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     // Create or find tags
     const tagConnections = input.tags
       ? await Promise.all(
-        input.tags.map(async (tagName) => {
-          const tagSlug = generateTagSlug(tagName);
-          const tag = await prisma.tag.upsert({
-            where: { slug: tagSlug },
-            create: { name: tagName, slug: tagSlug },
-            update: {},
-          });
-          return { id: tag.id };
-        }),
-      )
+          input.tags.map(async (tagName) => {
+            const tagSlug = generateTagSlug(tagName);
+            const tag = await prisma.tag.upsert({
+              where: { slug: tagSlug },
+              create: { name: tagName, slug: tagSlug },
+              update: {},
+            });
+            return { id: tag.id };
+          }),
+        )
       : [];
 
     // Generate embedding
@@ -450,7 +450,7 @@ export async function updateRecipe(
     const totalTime =
       input.totalTime ||
       (input.prepTime ?? existing.prepTime ?? 0) +
-      (input.cookTime ?? existing.cookTime ?? 0) ||
+        (input.cookTime ?? existing.cookTime ?? 0) ||
       undefined;
 
     // Handle tags

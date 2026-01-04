@@ -11,6 +11,7 @@ interface SearchBarProps {
   placeholder?: string;
   autoFocus?: boolean;
   size?: "default" | "large";
+  redirectTo?: string;
 }
 
 export function SearchBar({
@@ -18,6 +19,7 @@ export function SearchBar({
   placeholder = "Search recipes...",
   autoFocus = false,
   size = "default",
+  redirectTo = "/search",
 }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,15 +29,17 @@ export function SearchBar({
     (e: React.FormEvent) => {
       e.preventDefault();
       if (query.trim()) {
-        router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+        const target = redirectTo || "/search";
+        // If we represent the current page, we might ideally just push params, but full path is safe.
+        router.push(`${target}?q=${encodeURIComponent(query.trim())}`);
       }
     },
-    [query, router],
+    [query, router, redirectTo],
   );
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <div className="relative flex gap-2">
+      <div className="relative flex gap-1.5">
         <div className="relative flex-1">
           <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
             🔍
@@ -48,7 +52,7 @@ export function SearchBar({
             autoFocus={autoFocus}
             className={cn(
               "bg-warm-white border-butter focus:border-terracotta pl-10",
-              size === "large" && "h-14 rounded-xl text-lg",
+              size === "large" && "h-12 rounded-xl text-lg",
             )}
           />
         </div>
@@ -56,7 +60,7 @@ export function SearchBar({
           type="submit"
           className={cn(
             "bg-terracotta hover:bg-rust text-warm-white",
-            size === "large" && "h-14 rounded-xl px-8 text-lg",
+            size === "large" && "h-12 rounded-xl px-8 text-lg",
           )}
         >
           Search

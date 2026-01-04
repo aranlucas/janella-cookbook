@@ -280,10 +280,7 @@ async function extractRecipeWithAI(
   }
 
   // Clean and limit content length
-  const cleanedContent = content
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 12000);
+  const cleanedContent = content.replace(/\s+/g, " ").trim().slice(0, 12000);
 
   if (cleanedContent.length < 50) {
     throw new RecipeParseError(

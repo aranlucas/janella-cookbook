@@ -112,9 +112,7 @@ function buildFilterConditions(filters: SearchFilters): {
 
   if (filters.cuisine && filters.cuisine.length > 0) {
     // Validate that cuisines are safe strings (alphanumeric + spaces)
-    const safeCuisines = filters.cuisine.filter((c) =>
-      /^[\w\s-]+$/i.test(c),
-    );
+    const safeCuisines = filters.cuisine.filter((c) => /^[\w\s-]+$/i.test(c));
     if (safeCuisines.length > 0) {
       const placeholders = safeCuisines
         .map((_, i) => `$cuisine${i}`)
@@ -165,20 +163,17 @@ export async function semanticSearch(
 
   let queryEmbedding: number[];
   try {
-    queryEmbedding = await withRetry(
-      () => generateEmbedding(enhancedQuery),
-      {
-        maxRetries: 2,
-        initialDelayMs: 500,
-        shouldRetry: (error) => {
-          // Retry on network errors, not on auth errors
-          if (error instanceof Error) {
-            return !error.message.includes("401");
-          }
-          return true;
-        },
+    queryEmbedding = await withRetry(() => generateEmbedding(enhancedQuery), {
+      maxRetries: 2,
+      initialDelayMs: 500,
+      shouldRetry: (error) => {
+        // Retry on network errors, not on auth errors
+        if (error instanceof Error) {
+          return !error.message.includes("401");
+        }
+        return true;
       },
-    );
+    });
   } catch (error) {
     throw new ExternalApiError(
       "Hugging Face",
@@ -484,7 +479,7 @@ function generateHighlights(
   ) {
     highlights.push(
       recipe.description.slice(0, 150) +
-      (recipe.description.length > 150 ? "..." : ""),
+        (recipe.description.length > 150 ? "..." : ""),
     );
   }
 

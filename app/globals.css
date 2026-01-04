@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  
+
   /* Typography map to new CSS variables from next/font */
   --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-heading), ui-serif, Georgia, serif;
@@ -64,38 +64,38 @@
   /* Modern Rustic Palette - Light Mode */
   --background: #f4f1ea; /* Warm Alabaster */
   --foreground: #2a2826; /* Warm Ink */
-  
+
   --card: #efede6; /* Paper */
   --card-foreground: #2a2826;
-  
+
   --popover: #efede6;
   --popover-foreground: #2a2826;
-  
+
   --primary: #c45d3e; /* Spiced Terracotta */
   --primary-foreground: #f4f1ea;
-  
+
   --secondary: #d6cfc2; /* Sand */
   --secondary-foreground: #2a2826;
-  
+
   --muted: #e8ded1; /* Butter/Beige */
   --muted-foreground: #756f68; /* Warm Grey */
-  
+
   --accent: #5d6b54; /* Deep Moss */
   --accent-foreground: #f4f1ea;
-  
+
   --destructive: #be3931; /* Burnt Red */
   --destructive-foreground: #f4f1ea;
-  
+
   --border: #d6cfc2;
   --input: #d6cfc2;
   --ring: #c45d3e;
-  
+
   --chart-1: #c45d3e;
   --chart-2: #5d6b54;
   --chart-3: #d6cfc2;
   --chart-4: #e8ded1;
   --chart-5: #2a2826;
-  
+
   --sidebar: #efede6;
   --sidebar-foreground: #2a2826;
   --sidebar-primary: #c45d3e;
@@ -110,38 +110,38 @@
   /* Modern Rustic Palette - Dark Mode */
   --background: #1c1b19; /* Deep Warm Black */
   --foreground: #efede6; /* Paper White */
-  
+
   --card: #2a2826; /* Charcoal */
   --card-foreground: #efede6;
-  
+
   --popover: #2a2826;
   --popover-foreground: #efede6;
-  
+
   --primary: #c45d3e;
   --primary-foreground: #f4f1ea;
-  
+
   --secondary: #3e3b38;
   --secondary-foreground: #efede6;
-  
+
   --muted: #3e3b38;
   --muted-foreground: #99938d;
-  
+
   --accent: #5d6b54;
   --accent-foreground: #f4f1ea;
-  
+
   --destructive: #be3931;
   --destructive-foreground: #f4f1ea;
-  
+
   --border: #3e3b38;
   --input: #3e3b38;
   --ring: #c45d3e;
-  
+
   --chart-1: #c45d3e;
   --chart-2: #5d6b54;
   --chart-3: #99938d;
   --chart-4: #3e3b38;
   --chart-5: #efede6;
-  
+
   --sidebar: #2a2826;
   --sidebar-foreground: #efede6;
   --sidebar-primary: #c45d3e;
@@ -185,24 +185,29 @@
   }
 
   /* Typography base styles */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-serif);
     font-weight: 600;
     letter-spacing: -0.02em; /* Tighter headings for editorial look */
   }
 
   h1 {
-    @apply text-5xl md:text-6xl lg:text-7xl font-bold leading-[0.95];
+    @apply text-5xl leading-[0.95] font-bold md:text-6xl lg:text-7xl;
   }
 
   h2 {
-    @apply text-3xl md:text-4xl lg:text-5xl font-semibold leading-tight;
+    @apply text-3xl leading-tight font-semibold md:text-4xl lg:text-5xl;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl font-medium;
+    @apply text-2xl font-medium md:text-3xl;
   }
-  
+
   p {
     @apply leading-relaxed;
   }

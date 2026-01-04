@@ -27,8 +27,8 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
 
   if (recipes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <span className="mb-4 text-6xl">📚</span>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <span className="mb-2 text-6xl">📚</span>
         <h3 className="mb-2 font-serif text-xl font-semibold">
           No recipes yet
         </h3>
@@ -40,11 +40,11 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
   }
 
   return (
-    <div className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {recipes.map((recipe, index) => (
         <div
           key={recipe.id}
-          className="animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-both"
+          className="animate-in fade-in slide-in-from-bottom-8 fill-mode-both duration-700"
           style={{ animationDelay: `${index * 100}ms` }}
         >
           <RecipeCard recipe={recipe} priority={index < 4} />

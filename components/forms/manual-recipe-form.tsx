@@ -19,7 +19,15 @@ import {
 import { toast } from "sonner";
 import { createRecipe, updateRecipe } from "@/lib/actions";
 import { recipeInputSchema, type RecipeInputSchema } from "@/lib/validations";
-import type { RecipeWithRelations, Difficulty, Course, ParsedRecipe, IngredientInput, InstructionInput, RecipeInput } from "@/types/recipe";
+import type {
+  RecipeWithRelations,
+  Difficulty,
+  Course,
+  ParsedRecipe,
+  IngredientInput,
+  InstructionInput,
+  RecipeInput,
+} from "@/types/recipe";
 
 interface ManualRecipeFormProps {
   initialData?: RecipeWithRelations;
@@ -81,39 +89,42 @@ export function ManualRecipeForm({
       servings: initialData?.servings || importDraft?.servings || "",
       difficulty: initialData?.difficulty || undefined,
       cuisine: initialData?.cuisine || importDraft?.cuisine || "",
-      course: (initialData?.course as Course) || (importDraft?.course as Course) || undefined,
+      course:
+        (initialData?.course as Course) ||
+        (importDraft?.course as Course) ||
+        undefined,
       imageUrl: initialData?.imageUrl || importDraft?.imageUrl || "",
       notes: initialData?.notes || "",
       tags: initialData?.tags?.map((t) => t.name) || [],
       ingredients: initialData?.ingredients?.length
         ? initialData.ingredients.map((i) => ({
-          quantity: i.quantity || "",
-          unit: i.unit || "",
-          name: i.name,
-          notes: i.notes || "",
-          group: i.group || "",
-        }))
-        : importDraft?.ingredients?.length
-          ? importDraft.ingredients.map((i: IngredientInput) => ({
             quantity: i.quantity || "",
             unit: i.unit || "",
-            name: i.name || "",
+            name: i.name,
             notes: i.notes || "",
             group: i.group || "",
           }))
+        : importDraft?.ingredients?.length
+          ? importDraft.ingredients.map((i: IngredientInput) => ({
+              quantity: i.quantity || "",
+              unit: i.unit || "",
+              name: i.name || "",
+              notes: i.notes || "",
+              group: i.group || "",
+            }))
           : [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
       instructions: initialData?.instructions?.length
         ? initialData.instructions.map((i) => ({
-          text: i.text,
-          group: i.group || "",
-          duration: i.duration || undefined,
-        }))
+            text: i.text,
+            group: i.group || "",
+            duration: i.duration || undefined,
+          }))
         : importDraft?.instructions?.length
           ? importDraft.instructions.map((inst: InstructionInput) => ({
-            text: inst.text || "",
-            group: inst.group || "",
-            duration: inst.duration || undefined,
-          }))
+              text: inst.text || "",
+              group: inst.group || "",
+              duration: inst.duration || undefined,
+            }))
           : [{ text: "", group: "" }],
       sourceType: initialData?.sourceType || "MANUAL",
     },
@@ -141,13 +152,22 @@ export function ManualRecipeForm({
     // Add sortOrder to ingredients and instructions
     const recipeData: RecipeInputSchema = {
       ...data,
-      ingredients: data.ingredients.map((ing, idx) => ({ ...ing, sortOrder: idx })),
-      instructions: data.instructions.map((inst, idx) => ({ ...inst, sortOrder: idx })),
+      ingredients: data.ingredients.map((ing, idx) => ({
+        ...ing,
+        sortOrder: idx,
+      })),
+      instructions: data.instructions.map((inst, idx) => ({
+        ...inst,
+        sortOrder: idx,
+      })),
     };
 
     startTransition(async () => {
       const result = isEditing
-        ? await updateRecipe(initialData.id, recipeData as unknown as Partial<RecipeInput>)
+        ? await updateRecipe(
+            initialData.id,
+            recipeData as unknown as Partial<RecipeInput>,
+          )
         : await createRecipe(recipeData as unknown as RecipeInput);
 
       if (!result.success) {
@@ -188,7 +208,11 @@ export function ManualRecipeForm({
                 placeholder="e.g., Grandma's Chocolate Chip Cookies"
                 className="bg-cream border-butter"
               />
-              {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
+              {errors.title && (
+                <p className="text-destructive text-sm">
+                  {errors.title.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -199,7 +223,11 @@ export function ManualRecipeForm({
                 placeholder="A brief description of this recipe..."
                 className="bg-cream border-butter"
               />
-              {errors.description && <p className="text-destructive text-sm">{errors.description.message}</p>}
+              {errors.description && (
+                <p className="text-destructive text-sm">
+                  {errors.description.message}
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -293,7 +321,15 @@ export function ManualRecipeForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendIngredient({ quantity: "", unit: "", name: "", notes: "", group: "" })}
+                onClick={() =>
+                  appendIngredient({
+                    quantity: "",
+                    unit: "",
+                    name: "",
+                    notes: "",
+                    group: "",
+                  })
+                }
               >
                 + Add Ingredient
               </Button>
@@ -317,14 +353,16 @@ export function ManualRecipeForm({
                         placeholder="Unit"
                         className="bg-cream border-butter"
                       />
-                      <div className="col-span-2 sm:col-span-2 space-y-1">
+                      <div className="col-span-2 space-y-1 sm:col-span-2">
                         <Input
                           {...register(`ingredients.${index}.name`)}
                           placeholder="Ingredient name"
                           className="bg-cream border-butter"
                         />
                         {errors.ingredients?.[index]?.name && (
-                          <p className="text-destructive text-xs">{errors.ingredients[index].name.message}</p>
+                          <p className="text-destructive text-xs">
+                            {errors.ingredients[index].name.message}
+                          </p>
                         )}
                       </div>
                       <Input
@@ -352,7 +390,9 @@ export function ManualRecipeForm({
                 </div>
               ))}
               {errors.ingredients?.root && (
-                <p className="text-destructive text-sm">{errors.ingredients.root.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.ingredients.root.message}
+                </p>
               )}
             </div>
           </div>
@@ -404,12 +444,16 @@ export function ManualRecipeForm({
                     </Button>
                   </div>
                   {errors.instructions?.[index]?.text && (
-                    <p className="text-destructive text-xs ml-12">{errors.instructions[index].text.message}</p>
+                    <p className="text-destructive ml-12 text-xs">
+                      {errors.instructions[index].text.message}
+                    </p>
                   )}
                 </div>
               ))}
               {errors.instructions?.root && (
-                <p className="text-destructive text-sm">{errors.instructions.root.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.instructions.root.message}
+                </p>
               )}
             </div>
           </div>
@@ -435,7 +479,15 @@ export function ManualRecipeForm({
               <Input
                 id="tags"
                 value={tagsValue?.join(", ")}
-                onChange={(e) => setValue("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
+                onChange={(e) =>
+                  setValue(
+                    "tags",
+                    e.target.value
+                      .split(",")
+                      .map((t) => t.trim())
+                      .filter(Boolean),
+                  )
+                }
                 placeholder="e.g., comfort food, family favorite, quick"
                 className="bg-cream border-butter"
               />
@@ -473,4 +525,3 @@ export function ManualRecipeForm({
     </Card>
   );
 }
-

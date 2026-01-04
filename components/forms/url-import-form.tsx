@@ -66,7 +66,9 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
               className="bg-cream border-butter focus:border-terracotta"
               disabled={isPending}
             />
-            {errors.url && <p className="text-destructive text-sm">{errors.url.message}</p>}
+            {errors.url && (
+              <p className="text-destructive text-sm">{errors.url.message}</p>
+            )}
           </div>
 
           <div className="text-muted-foreground text-sm">
@@ -102,4 +104,3 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
     </Card>
   );
 }
-

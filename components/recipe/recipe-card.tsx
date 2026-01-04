@@ -11,7 +11,11 @@ interface RecipeCardProps {
   priority?: boolean;
 }
 
-export function RecipeCard({ recipe, className, priority = false }: RecipeCardProps) {
+export function RecipeCard({
+  recipe,
+  className,
+  priority = false,
+}: RecipeCardProps) {
   const difficultyColor = {
     EASY: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100",
     MEDIUM: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100",
@@ -23,11 +27,11 @@ export function RecipeCard({ recipe, className, priority = false }: RecipeCardPr
     <Link href={`/recipe/${recipe.slug}`} className="group block h-full">
       <div
         className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-2xl bg-card border-none shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl dark:bg-card/40",
+          "bg-card dark:bg-card/40 relative flex h-full flex-col overflow-hidden rounded-2xl border-none shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl",
           className,
         )}
       >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+        <div className="bg-muted relative aspect-[4/3] w-full overflow-hidden">
           {/* Image Overlay for text readout if needed, or just grain */}
           <div className="absolute inset-0 z-10 bg-black/5 opacity-0 transition-opacity duration-500 group-hover:opacity-10 dark:bg-white/5" />
 
@@ -45,38 +49,41 @@ export function RecipeCard({ recipe, className, priority = false }: RecipeCardPr
           )}
         </div>
 
-        <div className="flex flex-1 flex-col p-5">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="flex flex-1 flex-col p-4">
+          <div className="mb-1 flex items-center justify-between">
             {recipe.difficulty && (
               <span
                 className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
-                  difficultyColor[recipe.difficulty] || "bg-secondary text-secondary-foreground"
+                  "rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase",
+                  difficultyColor[recipe.difficulty] ||
+                    "bg-secondary text-secondary-foreground",
                 )}
               >
                 {recipe.difficulty}
               </span>
             )}
             {recipe.totalTime && (
-              <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+              <span className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
                 {recipe.totalTime}m
               </span>
             )}
           </div>
 
-          <h3 className="mb-2 font-serif text-xl font-bold leading-tight text-card-foreground group-hover:text-primary transition-colors duration-300">
+          <h3 className="text-card-foreground group-hover:text-primary mb-1 font-serif text-xl leading-tight font-bold transition-colors duration-300">
             {recipe.title}
           </h3>
 
           {recipe.description && (
-            <p className="mb-4 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+            <p className="text-muted-foreground mb-2 line-clamp-2 text-sm leading-relaxed">
               {recipe.description}
             </p>
           )}
 
-          <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground/80">
+          <div className="text-muted-foreground/80 mt-auto flex items-center gap-3 text-xs">
             {recipe.cuisine && (
-              <span className="font-medium uppercase tracking-wider">{recipe.cuisine}</span>
+              <span className="font-medium tracking-wider uppercase">
+                {recipe.cuisine}
+              </span>
             )}
             {recipe.servings && (
               <>

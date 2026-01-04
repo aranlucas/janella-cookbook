@@ -54,23 +54,22 @@ export default async function HomePage() {
       <Header />
 
       <main className="flex-1">
-        <section className="bg-gradient-to-b from-primary/10 via-background to-background grain relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden py-20 px-4">
-
+        <section className="from-primary/10 via-background to-background grain relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-b px-4 py-12">
           <div className="relative z-10 container">
             <div className="mx-auto max-w-4xl text-center">
-              <span className="mb-6 inline-block rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold tracking-wider text-primary uppercase">
+              <span className="border-primary/20 bg-primary/5 text-primary mb-2 inline-block rounded-full border px-4 py-1.5 text-xs font-semibold tracking-wider uppercase">
                 The Cookbook Collection
               </span>
-              <h1 className="mb-6 font-serif text-6xl font-black tracking-tight text-foreground sm:text-7xl md:text-8xl lg:text-9xl">
+              <h1 className="text-foreground mb-2 font-serif text-5xl font-black tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
                 Janella&apos;s <br />
                 <span className="text-primary italic">Kitchen.</span>
               </h1>
-              <p className="mx-auto max-w-2xl text-lg font-light leading-relaxed text-muted-foreground sm:text-x1 md:text-2xl">
-                A curated collection of recipes, organized with care and discovered with intelligence.
-                Good food, simply found.
+              <p className="text-muted-foreground mx-auto max-w-2xl text-lg leading-relaxed font-light sm:text-xl md:text-2xl">
+                A curated collection of recipes, organized with care and
+                discovered with intelligence. Good food, simply found.
               </p>
 
-              <div className="mt-10 sm:mt-12">
+              <div className="mt-6 sm:mt-8">
                 <Suspense fallback={<div className="h-14 sm:h-16" />}>
                   <SearchBar
                     size="large"
@@ -78,16 +77,36 @@ export default async function HomePage() {
                     className="mx-auto max-w-2xl"
                   />
                 </Suspense>
+
+                {/* Quick Tags */}
+                <div className="text-muted-foreground mt-6 flex flex-wrap justify-center gap-2 text-sm">
+                  <span className="mr-1 py-1">Popular:</span>
+                  {[
+                    "Breakfast",
+                    "Pasta",
+                    "Dessert",
+                    "Vegan",
+                    "Quick & Easy",
+                  ].map((tag) => (
+                    <a
+                      key={tag}
+                      href={`/recipes?q=${encodeURIComponent(tag)}`}
+                      className="hover:text-primary hover:bg-primary/5 bg-background/50 border-border/50 rounded-full border px-3 py-1 transition-colors"
+                    >
+                      {tag}
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Recipe Grid */}
-        <section className="py-8 sm:py-6 md:py-16">
+        <section className="py-6 sm:py-4 md:py-10">
           <div className="container">
-            <div className="mb-6 flex items-center justify-between sm:mb-8">
-              <h2 className="text-charcoal font-serif text-xl font-semibold sm:text-2xl">
+            <div className="mb-6 flex items-center justify-center text-center sm:mb-8">
+              <h2 className="text-charcoal font-serif text-3xl font-bold sm:text-4xl">
                 Recent Recipes
               </h2>
             </div>
