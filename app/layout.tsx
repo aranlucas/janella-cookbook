@@ -7,11 +7,6 @@ export const metadata: Metadata = {
   description:
     "A modern cookbook app to collect, organize, and discover recipes with intelligent semantic search.",
   keywords: ["cookbook", "recipes", "cooking", "meal planning", "food"],
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
 };
 
 export default function RootLayout({
