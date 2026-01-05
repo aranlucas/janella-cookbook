@@ -1,12 +1,14 @@
-import { ContentPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function TermsPage() {
   return (
-    <ContentPageLayout
+    <AppLayout
+      contentType="default"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Terms of Service", active: true },
       ]}
+      contentMaxWidth="3xl"
     >
       <h1 className="text-foreground mb-8 font-serif text-4xl font-bold">
         Terms of Service
@@ -42,6 +44,6 @@ export default function TermsPage() {
           We reserve the right to modify or replace these Terms at any time.
         </p>
       </div>
-    </ContentPageLayout>
+    </AppLayout>
   );
 }

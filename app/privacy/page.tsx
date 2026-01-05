@@ -1,8 +1,9 @@
-import { ContentPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function PrivacyPage() {
   return (
-    <ContentPageLayout
+    <AppLayout
+      contentType="default"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Privacy Policy", active: true },
@@ -44,6 +45,6 @@ export default function PrivacyPage() {
           us.
         </p>
       </div>
-    </ContentPageLayout>
+    </AppLayout>
   );
 }

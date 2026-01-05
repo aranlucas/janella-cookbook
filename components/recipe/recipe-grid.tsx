@@ -52,7 +52,7 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
           <Link
             href="/recipes/new"
             className={cn(
-              buttonVariants({ variant: "terracotta" as any }),
+              buttonVariants({ variant: "default" }),
               "rounded-full px-8",
             )}
           >

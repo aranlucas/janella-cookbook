@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { cn } from "@/lib/utils";
-import { ListingPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export const revalidate = 86400;
 
@@ -221,27 +221,9 @@ export default async function RecipesPage(props: RecipesPageProps) {
     ? `Browsing all ${category.toLowerCase()} recipes.`
     : "Explore the complete collection of tried and true favorites.";
 
-  const breadcrumbs = [
-    { label: "Home", href: "/" },
-    {
-      label: "Recipes",
-      active: !category && !q,
-      href: category || q ? "/recipes" : undefined,
-    },
-    ...(category
-      ? [
-          {
-            label: `${category.charAt(0).toUpperCase() + category.slice(1)}`,
-            active: true,
-          },
-        ]
-      : []),
-    ...(q ? [{ label: `Search: "${q}"`, active: true }] : []),
-  ];
-
   return (
-    <ListingPageLayout
-      breadcrumbs={breadcrumbs}
+    <AppLayout
+      contentType="table"
       title={title}
       description={description}
       headerChildren={
@@ -259,6 +241,6 @@ export default async function RecipesPage(props: RecipesPageProps) {
       <Suspense fallback={<RecipeGridSkeleton />}>
         <RecipeList query={q} category={category} page={currentPage} />
       </Suspense>
-    </ListingPageLayout>
+    </AppLayout>
   );
 }

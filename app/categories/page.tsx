@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
-import { ListingPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 const courseIcons: Record<string, string> = {
   BREAKFAST: "🍳",
@@ -58,7 +58,8 @@ export default async function CategoriesPage() {
   const categories = await getCategories();
 
   return (
-    <ListingPageLayout
+    <AppLayout
+      contentType="cards"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Categories", active: true },
@@ -99,6 +100,6 @@ export default async function CategoriesPage() {
           ))}
         </div>
       )}
-    </ListingPageLayout>
+    </AppLayout>
   );
 }

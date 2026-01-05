@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
-import { FormPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 export const revalidate = 86400;
@@ -50,7 +50,8 @@ export default async function EditRecipePage({ params }: PageProps) {
   }
 
   return (
-    <FormPageLayout
+    <AppLayout
+      contentType="form"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Recipes", href: "/recipes" },
@@ -58,9 +59,8 @@ export default async function EditRecipePage({ params }: PageProps) {
         { label: "Edit", active: true },
       ]}
       title="Edit Recipe"
-      maxWidth="6xl"
     >
       <ManualRecipeForm initialData={recipe} />
-    </FormPageLayout>
+    </AppLayout>
   );
 }

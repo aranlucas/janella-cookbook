@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { SearchBar } from "@/components/search/search-bar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 import { SearchResults } from "./search-results";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const query = params.q || "";
 
   return (
-    <PageLayout
+    <AppLayout
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Search", active: true },
@@ -85,6 +85,6 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </p>
         </div>
       )}
-    </PageLayout>
+    </AppLayout>
   );
 }

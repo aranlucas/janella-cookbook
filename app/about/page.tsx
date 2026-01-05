@@ -1,13 +1,14 @@
-import { ContentPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export default function AboutPage() {
   return (
-    <ContentPageLayout
+    <AppLayout
+      contentType="default"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "About", active: true },
       ]}
-      maxWidth="5xl"
+      contentMaxWidth="5xl"
     >
       <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
         <div className="bg-muted relative aspect-[3/4] w-full overflow-hidden rounded-2xl">
@@ -61,6 +62,6 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-    </ContentPageLayout>
+    </AppLayout>
   );
 }

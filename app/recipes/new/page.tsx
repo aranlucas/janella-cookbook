@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UrlImportForm } from "@/components/forms/url-import-form";
 import { TextImportForm } from "@/components/forms/text-import-form";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
-import { FormPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 
 export const metadata = {
   title: "Add Recipe | Cookbook",
@@ -11,7 +11,8 @@ export const metadata = {
 
 export default function AddRecipePage() {
   return (
-    <FormPageLayout
+    <AppLayout
+      contentType="form"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Recipes", href: "/recipes" },
@@ -54,6 +55,6 @@ export default function AddRecipePage() {
           <ManualRecipeForm />
         </TabsContent>
       </Tabs>
-    </FormPageLayout>
+    </AppLayout>
   );
 }

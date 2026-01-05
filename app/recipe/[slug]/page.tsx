@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
-import { PageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 export const revalidate = 86400;
@@ -79,7 +79,7 @@ export default async function RecipePage({ params }: PageProps) {
   }
 
   return (
-    <PageLayout customContent>
+    <AppLayout customContent>
       {/* Breadcrumbs and Actions */}
       <div className="no-print container flex items-center justify-between py-4">
         <BreadcrumbNav
@@ -225,6 +225,6 @@ export default async function RecipePage({ params }: PageProps) {
           </section>
         </>
       )}
-    </PageLayout>
+    </AppLayout>
   );
 }

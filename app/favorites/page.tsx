@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ListingPageLayout } from "@/components/layout/page-layout";
+import { AppLayout } from "@/components/layout/app-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 export const revalidate = 86400;
@@ -62,7 +62,8 @@ async function RecipeList() {
 
 export default async function FavoritesPage() {
   return (
-    <ListingPageLayout
+    <AppLayout
+      contentType="cards"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Your Favorites", active: true },
@@ -73,6 +74,6 @@ export default async function FavoritesPage() {
       <Suspense fallback={<RecipeGridSkeleton />}>
         <RecipeList />
       </Suspense>
-    </ListingPageLayout>
+    </AppLayout>
   );
 }
