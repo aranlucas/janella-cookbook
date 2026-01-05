@@ -1,8 +1,6 @@
 import { Suspense } from "react";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import {
@@ -18,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { cn } from "@/lib/utils";
+import { ListingPageLayout } from "@/components/layout/page-layout";
 
 export const revalidate = 86400;
 
@@ -190,7 +189,6 @@ async function RecipeList({
   }
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
-  // Base URL construction is a bit simplified here; robustness could be improved with dedicated util
   const baseParams = new URLSearchParams();
   if (query) baseParams.set("q", query);
   if (category) baseParams.set("category", category);
@@ -219,43 +217,48 @@ export default async function RecipesPage(props: RecipesPageProps) {
       ? `Search: "${q}"`
       : "All Recipes";
 
+  const description = category
+    ? `Browsing all ${category.toLowerCase()} recipes.`
+    : "Explore the complete collection of tried and true favorites.";
+
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    {
+      label: "Recipes",
+      active: !category && !q,
+      href: category || q ? "/recipes" : undefined,
+    },
+    ...(category
+      ? [
+          {
+            label: `${category.charAt(0).toUpperCase() + category.slice(1)}`,
+            active: true,
+          },
+        ]
+      : []),
+    ...(q ? [{ label: `Search: "${q}"`, active: true }] : []),
+  ];
+
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
-      <Header />
-
-      <main className="flex-1">
-        <section className="bg-muted/30 py-12 sm:py-16">
-          <div className="container text-center">
-            <h1 className="text-foreground mb-4 font-serif text-4xl font-bold sm:text-5xl">
-              {title}
-            </h1>
-            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-              {category
-                ? `Browsing all ${category.toLowerCase()} recipes.`
-                : "Explore the complete collection of tried and true favorites."}
-            </p>
-            <div className="mx-auto mt-8 max-w-2xl">
-              <Suspense>
-                <SearchBar
-                  placeholder="Search within collection..."
-                  redirectTo="/recipes"
-                  size="large"
-                />
-              </Suspense>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-12">
-          <div className="container">
-            <Suspense fallback={<RecipeGridSkeleton />}>
-              <RecipeList query={q} category={category} page={currentPage} />
-            </Suspense>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+    <ListingPageLayout
+      breadcrumbs={breadcrumbs}
+      title={title}
+      description={description}
+      headerChildren={
+        <div className="mx-auto mt-8 max-w-2xl">
+          <Suspense>
+            <SearchBar
+              placeholder="Search within collection..."
+              redirectTo="/recipes"
+              size="large"
+            />
+          </Suspense>
+        </div>
+      }
+    >
+      <Suspense fallback={<RecipeGridSkeleton />}>
+        <RecipeList query={q} category={category} page={currentPage} />
+      </Suspense>
+    </ListingPageLayout>
   );
 }

@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ListingPageLayout } from "@/components/layout/page-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 export const revalidate = 86400;
@@ -63,31 +62,17 @@ async function RecipeList() {
 
 export default async function FavoritesPage() {
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
-      <Header />
-
-      <main className="flex-1">
-        <section className="bg-muted/30 py-12 sm:py-16">
-          <div className="container text-center">
-            <h1 className="text-foreground mb-4 font-serif text-4xl font-bold sm:text-5xl">
-              Your Favorites
-            </h1>
-            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-              A curated list of your most loved dishes.
-            </p>
-          </div>
-        </section>
-
-        <section className="py-12">
-          <div className="container">
-            <Suspense fallback={<RecipeGridSkeleton />}>
-              <RecipeList />
-            </Suspense>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </div>
+    <ListingPageLayout
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Your Favorites", active: true },
+      ]}
+      title="Your Favorites"
+      description="A curated list of your most loved dishes."
+    >
+      <Suspense fallback={<RecipeGridSkeleton />}>
+        <RecipeList />
+      </Suspense>
+    </ListingPageLayout>
   );
 }

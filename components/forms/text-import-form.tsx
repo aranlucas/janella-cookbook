@@ -98,8 +98,9 @@ Instructions:
 
             <div className="text-muted-foreground text-sm">
               <p>
-                Paste any recipe text - from a cookbook, email, or anywhere else.
-                We&apos;ll use AI to extract and organize it automatically.
+                Paste any recipe text - from a cookbook, email, or anywhere
+                else. We&apos;ll use AI to extract and organize it
+                automatically.
               </p>
             </div>
 

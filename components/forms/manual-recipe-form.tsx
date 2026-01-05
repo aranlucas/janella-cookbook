@@ -2,7 +2,12 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, useWatch, useFormContext } from "react-hook-form";
+import {
+  useForm,
+  useFieldArray,
+  useWatch,
+  useFormContext,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,33 +113,33 @@ export function ManualRecipeForm({
       tags: initialData?.tags?.map((t) => t.name) || [],
       ingredients: initialData?.ingredients?.length
         ? initialData.ingredients.map((i) => ({
-          quantity: i.quantity || "",
-          unit: i.unit || "",
-          name: i.name,
-          notes: i.notes || "",
-          group: i.group || "",
-        }))
-        : importDraft?.ingredients?.length
-          ? importDraft.ingredients.map((i: IngredientInput) => ({
             quantity: i.quantity || "",
             unit: i.unit || "",
-            name: i.name || "",
+            name: i.name,
             notes: i.notes || "",
             group: i.group || "",
           }))
+        : importDraft?.ingredients?.length
+          ? importDraft.ingredients.map((i: IngredientInput) => ({
+              quantity: i.quantity || "",
+              unit: i.unit || "",
+              name: i.name || "",
+              notes: i.notes || "",
+              group: i.group || "",
+            }))
           : [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
       instructions: initialData?.instructions?.length
         ? initialData.instructions.map((i) => ({
-          text: i.text,
-          group: i.group || "",
-          duration: i.duration || undefined,
-        }))
+            text: i.text,
+            group: i.group || "",
+            duration: i.duration || undefined,
+          }))
         : importDraft?.instructions?.length
           ? importDraft.instructions.map((inst: InstructionInput) => ({
-            text: inst.text || "",
-            group: inst.group || "",
-            duration: inst.duration || undefined,
-          }))
+              text: inst.text || "",
+              group: inst.group || "",
+              duration: inst.duration || undefined,
+            }))
           : [{ text: "", group: "" }],
       sourceType: initialData?.sourceType || "MANUAL",
     },
@@ -177,9 +182,9 @@ export function ManualRecipeForm({
     startTransition(async () => {
       const result = isEditing
         ? await updateRecipe(
-          initialData.id,
-          recipeData as unknown as Partial<RecipeInput>,
-        )
+            initialData.id,
+            recipeData as unknown as Partial<RecipeInput>,
+          )
         : await createRecipe(recipeData as unknown as RecipeInput);
 
       if (!result.success) {
@@ -200,7 +205,10 @@ export function ManualRecipeForm({
     });
   };
 
-  const difficultyValue = useWatch({ control: form.control, name: "difficulty" });
+  const difficultyValue = useWatch({
+    control: form.control,
+    name: "difficulty",
+  });
   const courseValue = useWatch({ control: form.control, name: "course" });
   const tagsValue = useWatch({ control: form.control, name: "tags" });
 
@@ -291,7 +299,7 @@ export function ManualRecipeForm({
                       <SelectValue>
                         {difficultyValue
                           ? difficultyValue.charAt(0) +
-                          difficultyValue.slice(1).toLowerCase()
+                            difficultyValue.slice(1).toLowerCase()
                           : "Select..."}
                       </SelectValue>
                     </SelectTrigger>
@@ -326,7 +334,7 @@ export function ManualRecipeForm({
                       <SelectValue>
                         {courseValue
                           ? courseValue.charAt(0) +
-                          courseValue.slice(1).toLowerCase()
+                            courseValue.slice(1).toLowerCase()
                           : "Select..."}
                       </SelectValue>
                     </SelectTrigger>
