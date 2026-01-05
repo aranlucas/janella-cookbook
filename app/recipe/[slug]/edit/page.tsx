@@ -1,12 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
+import { AppLayout } from "@/components/layout/app-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
-// ISR: Revalidate every 24 hours, or on-demand via revalidatePath
 export const revalidate = 86400;
 
 interface PageProps {
@@ -53,27 +50,17 @@ export default async function EditRecipePage({ params }: PageProps) {
   }
 
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
-      <Header />
-
-      <main className="container flex-1 py-8">
-        <div className="mx-auto max-w-3xl">
-          <Link
-            href={`/recipe/${recipe.slug}`}
-            className="text-muted-foreground hover:text-terracotta mb-6 inline-flex items-center text-sm transition-colors"
-          >
-            ← Back to recipe
-          </Link>
-
-          <h1 className="text-charcoal mb-8 font-serif text-3xl font-bold">
-            Edit Recipe
-          </h1>
-
-          <ManualRecipeForm initialData={recipe} />
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    <AppLayout
+      contentType="form"
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Recipes", href: "/recipes" },
+        { label: recipe.title, href: `/recipe/${recipe.slug}` },
+        { label: "Edit", active: true },
+      ]}
+      title="Edit Recipe"
+    >
+      <ManualRecipeForm initialData={recipe} />
+    </AppLayout>
   );
 }

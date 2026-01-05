@@ -17,7 +17,7 @@ export function AddRecipeButton({
   if (variant === "icon") {
     // Compact icon-only button for small screens
     return (
-      <Link href="/add" onClick={onClick}>
+      <Link href="/recipes/new" onClick={onClick}>
         <Button
           size="icon"
           className={cn("h-9 w-9", className)}
@@ -43,7 +43,7 @@ export function AddRecipeButton({
 
   // Standard desktop button
   return (
-    <Link href="/add" className={className}>
+    <Link href="/recipes/new" className={className}>
       <Button className="gap-2">
         <Plus className="h-4 w-4" />
         New Recipe

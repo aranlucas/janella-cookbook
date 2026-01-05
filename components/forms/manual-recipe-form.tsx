@@ -2,7 +2,11 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useFieldArray, useWatch, useFormContext } from "react-hook-form";
+import {
+  useForm,
+  useFieldArray,
+  useWatch,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,19 +16,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Field,
-  FieldContent,
-  FieldGroup,
-  FieldLabel,
-  FieldError,
-} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -200,7 +196,10 @@ export function ManualRecipeForm({
     });
   };
 
-  const difficultyValue = useWatch({ control: form.control, name: "difficulty" });
+  const difficultyValue = useWatch({
+    control: form.control,
+    name: "difficulty",
+  });
   const courseValue = useWatch({ control: form.control, name: "course" });
   const tagsValue = useWatch({ control: form.control, name: "tags" });
 

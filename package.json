@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "railway-build": "railway run npm run build",
     "start": "next start",
     "lint": "eslint --fix",
     "format": "prettier --write",

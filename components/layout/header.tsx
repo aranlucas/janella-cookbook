@@ -4,7 +4,7 @@ import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
 
-const navItems = [{ href: "/", label: "Recipes" }];
+const navItems = [{ href: "/recipes", label: "Recipes" }];
 
 export function Header() {
   return (

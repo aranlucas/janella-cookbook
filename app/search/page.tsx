@@ -1,11 +1,9 @@
 import { Suspense } from "react";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { SearchBar } from "@/components/search/search-bar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AppLayout } from "@/components/layout/app-layout";
 import { SearchResults } from "./search-results";
 
-// Search must be dynamic - depends on query params and calls external embedding API
 export const dynamic = "force-dynamic";
 
 interface PageProps {
@@ -44,50 +42,49 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const query = params.q || "";
 
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
-      <Header />
+    <AppLayout
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Search", active: true },
+      ]}
+      contentMaxWidth="4xl"
+      contentClassName="py-6 sm:py-8"
+    >
+      <h1 className="text-charcoal mb-4 font-serif text-2xl font-bold sm:mb-6 sm:text-3xl">
+        Search Recipes
+      </h1>
 
-      <main className="container flex-1 py-6 sm:py-8">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="text-charcoal mb-4 font-serif text-2xl font-bold sm:mb-6 sm:text-3xl">
-            Search Recipes
-          </h1>
+      <Suspense fallback={<div className="mb-6 h-12 sm:mb-8 sm:h-14" />}>
+        <SearchBar
+          size="large"
+          placeholder="Search for recipes..."
+          autoFocus
+          className="mb-6 sm:mb-8"
+        />
+      </Suspense>
 
-          <Suspense fallback={<div className="mb-6 h-12 sm:mb-8 sm:h-14" />}>
-            <SearchBar
-              size="large"
-              placeholder="Search for recipes..."
-              autoFocus
-              className="mb-6 sm:mb-8"
-            />
+      {query ? (
+        <div>
+          <p className="text-muted-foreground mb-6 text-sm">
+            Showing results for &quot;{query}&quot;
+          </p>
+          <Suspense fallback={<SearchResultsSkeleton />}>
+            <SearchResults query={query} />
           </Suspense>
-
-          {query ? (
-            <div>
-              <p className="text-muted-foreground mb-6 text-sm">
-                Showing results for &quot;{query}&quot;
-              </p>
-              <Suspense fallback={<SearchResultsSkeleton />}>
-                <SearchResults query={query} />
-              </Suspense>
-            </div>
-          ) : (
-            <div className="py-16 text-center">
-              <span className="mb-4 block text-6xl">🔍</span>
-              <h2 className="mb-2 font-serif text-xl font-semibold">
-                Start searching
-              </h2>
-              <p className="text-muted-foreground mx-auto max-w-md">
-                Try natural language queries like &quot;quick weeknight
-                dinner&quot;, &quot;something with chicken and lemon&quot;, or
-                &quot;healthy meal prep ideas&quot;.
-              </p>
-            </div>
-          )}
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      ) : (
+        <div className="py-16 text-center">
+          <span className="mb-4 block text-6xl">🔍</span>
+          <h2 className="mb-2 font-serif text-xl font-semibold">
+            Start searching
+          </h2>
+          <p className="text-muted-foreground mx-auto max-w-md">
+            Try natural language queries like &quot;quick weeknight
+            dinner&quot;, &quot;something with chicken and lemon&quot;, or
+            &quot;healthy meal prep ideas&quot;.
+          </p>
+        </div>
+      )}
+    </AppLayout>
   );
 }
