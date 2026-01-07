@@ -194,7 +194,7 @@ export function AppLayout({
                 className={cn(
                   "container",
                   contentMaxWidth !== "full" &&
-                  maxWidthClasses[contentMaxWidth],
+                    maxWidthClasses[contentMaxWidth],
                   contentMaxWidth !== "full" && "mx-auto",
                 )}
               >
