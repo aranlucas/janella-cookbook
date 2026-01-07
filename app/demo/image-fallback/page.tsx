@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/layout/app-layout";
 import { RecipeImage } from "@/components/ui/recipe-image";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 
 export const metadata = {
@@ -128,21 +129,81 @@ export default function ImageFallbackDemo() {
             </div>
           </section>
 
-          {/* Usage Example */}
+          {/* New Simple Component Examples */}
+          <section className="space-y-4 border-t pt-12">
+            <div>
+              <h2 className="font-serif text-3xl font-semibold mb-2">
+                ImageWithFallback Component (Simple)
+              </h2>
+              <p className="text-muted-foreground">
+                A minimal, clean implementation that follows the Vercel Solutions pattern exactly.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Working image */}
+              <div className="space-y-2">
+                <h3 className="font-semibold">Working Image</h3>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border">
+                  <ImageWithFallback
+                    src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop"
+                    alt="Delicious salad"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Broken image with fallback */}
+              <div className="space-y-2">
+                <h3 className="font-semibold">Broken → Fallback</h3>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border">
+                  <ImageWithFallback
+                    src="https://invalid-url.example.com/broken.jpg"
+                    fallback="https://placehold.co/600x400/e8b4b8/4a4a4a?text=Fallback+Image"
+                    alt="Broken image with fallback"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Usage Examples */}
           <section className="space-y-4">
             <div>
               <h2 className="font-serif text-2xl font-semibold mb-2">
                 Usage
               </h2>
-              <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
-                <code className="text-sm">{`<RecipeImage
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-2">ImageWithFallback (Simple)</h3>
+                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                    <code className="text-sm">{`<ImageWithFallback
+  src={recipe.imageUrl}
+  alt={recipe.title}
+  fallback="https://example.com/default.jpg"
+  fill
+  className="object-cover"
+/>`}</code>
+                  </pre>
+                </div>
+
+                <div>
+                  <h3 className="font-medium mb-2">RecipeImage (Advanced)</h3>
+                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                    <code className="text-sm">{`<RecipeImage
   src={recipe.imageUrl}
   alt={recipe.title}
   fallback="https://example.com/default-recipe.jpg"
   fallbackEmoji="🍽️"
   priority={true}
 />`}</code>
-              </pre>
+                  </pre>
+                </div>
+              </div>
             </div>
           </section>
         </div>
