@@ -76,12 +76,17 @@ This project uses the **App Router** (not Pages Router). Key patterns:
   - Interactive components (Header, SearchBar, filters)
   - No global state management (Redux/Zustand) - uses React hooks
 
-- **API Routes**: RESTful endpoints in `app/api/`
-  - `/api/recipes` - CRUD operations
-  - `/api/search` - Hybrid semantic + keyword search
-  - `/api/import` - URL and text recipe parsing
-  - `/api/filters` - Dynamic filter options
-  - `/api/tags` - Tag management
+- **Server Actions**: Primary data mutation method in `lib/actions.ts`
+  - `createRecipe()` - Create new recipe
+  - `updateRecipe()` - Update existing recipe
+  - `deleteRecipe()` - Delete recipe
+  - `importFromUrl()` - Import recipe from URL
+  - `importFromText()` - Import recipe from natural language text
+  - `toggleFavorite()` - Toggle favorite status
+  - `markAsCooked()` - Increment cook count
+
+- **API Routes**: Minimal API surface in `app/api/`
+  - `/api/search` - Hybrid semantic + keyword search (GET only)
 
 ### Database Architecture (PostgreSQL + pgvector)
 
@@ -150,19 +155,25 @@ export default async function RecipePage({ params }) {
 }
 ```
 
-### Recipe Creation Flow
+### Recipe Creation Flow (Server Actions)
 
 ```
 Client Form Submit
-  → POST /api/recipes
+  → Server Action: createRecipe() or importFromUrl()
     → Generate unique slug
     → Upsert tags by name
-    → Generate OpenAI embedding (if available)
+    → Generate HuggingFace embedding (if available)
     → Prisma create with nested relations
     → Raw SQL to update embedding vector
   → Return full recipe
   → Navigate to /recipe/[slug]
 ```
+
+**URL Import with Duplicate Detection:**
+- Checks if `sourceUrl` exists before creating recipe
+- If exists: Updates existing recipe (same slug)
+- If new: Creates new recipe with unique slug
+- This ensures each URL maps to exactly one recipe
 
 ### Component Organization
 
