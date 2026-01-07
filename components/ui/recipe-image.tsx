@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import { useState } from "react";
+import { ImageWithFallback } from "./image-with-fallback";
 import { cn } from "@/lib/utils";
 
 interface RecipeImageProps {
@@ -19,9 +19,11 @@ interface RecipeImageProps {
 }
 
 /**
- * Optimized recipe image component with fallback handling
- * Uses Next.js Image for automatic optimization, lazy loading, and responsive sizing
- * Supports fallback image URL that will be tried if the primary image fails to load
+ * Enhanced recipe image component with fallback handling
+ * Built on top of ImageWithFallback with additional features:
+ * - Loading states with skeleton animation
+ * - Emoji fallback when no image source or all images fail
+ * - Custom container styling
  */
 export function RecipeImage({
   src,
@@ -36,20 +38,10 @@ export function RecipeImage({
   fallback,
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
-  const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Reset error state when src changes
-  useEffect(() => {
-    setError(false);
-    setIsLoading(true);
-  }, [src]);
-
-  // Determine which image to show
-  const imageSrc = error && fallback ? fallback : src;
-
-  // Show emoji fallback if no src or if image(s) failed to load
-  if (!imageSrc || (error && !fallback)) {
+  // Show emoji fallback if no src provided
+  if (!src) {
     return (
       <div
         className={cn(
@@ -64,26 +56,28 @@ export function RecipeImage({
     );
   }
 
+  // Use emoji as final fallback if no fallback image provided
+  const finalFallback = fallback || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f1e8' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='64' opacity='0.3'%3E${fallbackEmoji}%3C/text%3E%3C/svg%3E`;
+
   // For fill mode (most common use case)
-  // Container uses absolute positioning to fill parent - parent MUST have position:relative and defined dimensions
   if (fill) {
     return (
       <div
         className={cn("absolute inset-0 overflow-hidden", containerClassName)}
       >
-        <Image
-          src={imageSrc}
+        <ImageWithFallback
+          src={src}
           alt={alt}
           fill
           sizes={sizes}
           priority={priority}
+          fallback={finalFallback}
           className={cn(
             "object-cover transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
             className,
           )}
           onLoad={() => setIsLoading(false)}
-          onError={() => setError(true)}
         />
         {isLoading && (
           <div className="bg-butter/30 absolute inset-0 animate-pulse" />
@@ -95,20 +89,20 @@ export function RecipeImage({
   // For fixed dimensions
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
-      <Image
-        src={imageSrc}
+      <ImageWithFallback
+        src={src}
         alt={alt}
         width={width || 400}
         height={height || 300}
         sizes={sizes}
         priority={priority}
+        fallback={finalFallback}
         className={cn(
           "object-cover transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",
           className,
         )}
         onLoad={() => setIsLoading(false)}
-        onError={() => setError(true)}
       />
       {isLoading && (
         <div
