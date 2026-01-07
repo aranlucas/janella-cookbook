@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
 import { hybridSearch } from "@/lib/search";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
@@ -49,7 +50,6 @@ async function getAllRecipes(
     }
 
     // If no search query, fall back to fetching all recipes (existing behavior)
-    const { prisma } = await import("@/lib/prisma");
     const [recipes, total] = await Promise.all([
       prisma.recipe.findMany({
         include: {
