@@ -120,6 +120,9 @@ async function createRecipeInDb(data: {
 }
 
 // Import recipe from URL
+// NOTE: This function supports importing the same URL multiple times.
+// Each import creates a new recipe with a unique slug (e.g., recipe-name, recipe-name-1, recipe-name-2)
+// This allows users to import and modify different versions of the same recipe.
 export async function importFromUrl(url: string): Promise<ActionResult> {
   try {
     // Validate URL
@@ -133,7 +136,8 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
     // Parse recipe from URL
     const parsed = await parseRecipeFromUrl(parsedUrl.toString());
 
-    // Generate slug
+    // Generate unique slug - supports multiple imports from same URL
+    // Each import gets a distinct slug to create a separate recipe entry
     const slug = await generateUniqueSlug(parsed.title);
 
     // Generate embedding

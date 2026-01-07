@@ -5,6 +5,8 @@ import { generateUniqueSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
 import type { UrlImportRequest } from "@/types/recipe";
 
+// API route for importing recipes from URLs
+// Supports importing the same URL multiple times - each import creates a new recipe
 export async function POST(request: NextRequest) {
   try {
     const body: UrlImportRequest & { preview?: boolean } = await request.json();
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: parsed });
     }
 
-    // Generate slug
+    // Generate unique slug - allows multiple imports from the same URL
     const slug = await generateUniqueSlug(parsed.title);
 
     // Generate embedding
