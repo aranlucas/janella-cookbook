@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { hybridSearch } from "@/lib/search";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import {
@@ -36,40 +36,22 @@ async function getAllRecipes(
   page: number = 1,
 ): Promise<{ recipes: RecipeWithRelations[]; total: number }> {
   try {
-    const where: Prisma.RecipeWhereInput = {};
-
-    if (query) {
-      where.OR = [
-        { title: { contains: query, mode: "insensitive" } },
-        { description: { contains: query, mode: "insensitive" } },
-      ];
+    // Use hybridSearch for sophisticated search capabilities
+    if (query || category) {
+      const searchQuery = query || category || "";
+      const offset = (page - 1) * ITEMS_PER_PAGE;
+      const { results, total } = await hybridSearch(
+        searchQuery,
+        {},
+        ITEMS_PER_PAGE,
+        offset,
+      );
+      return { recipes: results.map((r) => r.recipe), total };
     }
 
-    if (category) {
-      const categoryFilter = {
-        contains: category,
-        mode: "insensitive",
-      } as const;
-      const existingAnd = where.AND;
-      where.AND = [
-        ...(Array.isArray(existingAnd)
-          ? existingAnd
-          : existingAnd
-            ? [existingAnd]
-            : []),
-        {
-          OR: [
-            { tags: { some: { name: categoryFilter } } },
-            { cuisine: categoryFilter },
-            { title: { contains: category, mode: "insensitive" as const } },
-          ],
-        },
-      ];
-    }
-
+    // If no search query, fall back to fetching all recipes (existing behavior)
     const [recipes, total] = await Promise.all([
       prisma.recipe.findMany({
-        where,
         include: {
           ingredients: { orderBy: { sortOrder: "asc" } },
           instructions: { orderBy: { sortOrder: "asc" } },
@@ -80,7 +62,7 @@ async function getAllRecipes(
         take: ITEMS_PER_PAGE,
         skip: (page - 1) * ITEMS_PER_PAGE,
       }),
-      prisma.recipe.count({ where }),
+      prisma.recipe.count(),
     ]);
 
     return { recipes: recipes as unknown as RecipeWithRelations[], total };
