@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ImageWithFallback } from "./image-with-fallback";
 import { cn } from "@/lib/utils";
 
@@ -39,9 +39,10 @@ export function RecipeImage({
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
   const [isLoading, setIsLoading] = useState(true);
+  const [showEmojiFallback, setShowEmojiFallback] = useState(false);
 
-  // Show emoji fallback if no src provided
-  if (!src) {
+  // Show emoji fallback if no src provided or if all images failed
+  if (!src || showEmojiFallback) {
     return (
       <div
         className={cn(
@@ -58,6 +59,12 @@ export function RecipeImage({
 
   // Use emoji as final fallback if no fallback image provided
   const finalFallback = fallback || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f1e8' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='64' opacity='0.3'%3E${fallbackEmoji}%3C/text%3E%3C/svg%3E`;
+
+  // Handle case where both primary and fallback images fail
+  const handleImageError = () => {
+    setShowEmojiFallback(true);
+    setIsLoading(false);
+  };
 
   // For fill mode (most common use case)
   if (fill) {
@@ -78,6 +85,7 @@ export function RecipeImage({
             className,
           )}
           onLoad={() => setIsLoading(false)}
+          onError={handleImageError}
         />
         {isLoading && (
           <div className="bg-butter/30 absolute inset-0 animate-pulse" />
@@ -103,6 +111,7 @@ export function RecipeImage({
           className,
         )}
         onLoad={() => setIsLoading(false)}
+        onError={handleImageError}
       />
       {isLoading && (
         <div
