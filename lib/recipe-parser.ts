@@ -279,8 +279,8 @@ async function extractRecipeWithAI(
     else content = $("body").text() || "";
   }
 
-  // Clean and limit content length
-  const cleanedContent = content.replace(/\s+/g, " ").trim().slice(0, 12000);
+  // Clean and limit content length - increased to capture more complete recipes
+  const cleanedContent = content.replace(/\s+/g, " ").trim().slice(0, 15000);
 
   if (cleanedContent.length < 50) {
     throw new RecipeParseError(
@@ -296,8 +296,19 @@ async function extractRecipeWithAI(
           model: model,
           output: Output.object({ schema: recipeSchema }),
           system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
-Be accurate and only include information present in the content. Extract all ingredients and instructions even if formatting is messy. Output in structured JSON format.`,
-          prompt: `Extract the recipe from this content:\n\n${cleanedContent}`,
+
+IMPORTANT INSTRUCTIONS:
+- Be accurate and only include information present in the content
+- Extract ALL ingredients with their exact quantities, units, and any preparation notes
+- Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
+- If ingredients are grouped (e.g., "For the avocado topping"), preserve that group information
+- Include prep time, cook time, and total time if mentioned
+- Extract servings/yield information
+- Identify the cuisine type and meal course if evident
+- Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
+- For instructions, maintain the original step numbering and any substeps
+- Output in structured JSON format`,
+          prompt: `Extract the complete recipe from this webpage content. Make sure to capture every ingredient and instruction step:\n\n${cleanedContent}`,
         });
       },
       {

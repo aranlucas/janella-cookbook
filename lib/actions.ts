@@ -120,6 +120,9 @@ async function createRecipeInDb(data: {
 }
 
 // Import recipe from URL
+// NOTE: This function checks if the URL has been imported before.
+// If the same URL is imported again, it updates the existing recipe instead of creating a duplicate.
+// This ensures each URL always maps to the same recipe/slug.
 export async function importFromUrl(url: string): Promise<ActionResult> {
   try {
     // Validate URL
@@ -130,10 +133,37 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
       return { success: false, error: "Invalid URL" };
     }
 
+    // Check if this URL has been imported before
+    const existingRecipe = await prisma.recipe.findFirst({
+      where: { sourceUrl: parsedUrl.toString() },
+      select: { id: true, slug: true },
+    });
+
     // Parse recipe from URL
     const parsed = await parseRecipeFromUrl(parsedUrl.toString());
 
-    // Generate slug
+    // If recipe exists, update it; otherwise create new one
+    if (existingRecipe) {
+      // Update existing recipe
+      const result = await updateRecipe(existingRecipe.id, {
+        title: parsed.title,
+        description: parsed.description,
+        prepTime: parsed.prepTime,
+        cookTime: parsed.cookTime,
+        totalTime: parsed.totalTime,
+        servings: parsed.servings,
+        difficulty: parsed.difficulty,
+        cuisine: parsed.cuisine,
+        course: parsed.course,
+        imageUrl: parsed.imageUrl,
+        ingredients: parsed.ingredients,
+        instructions: parsed.instructions,
+      });
+
+      return result;
+    }
+
+    // Generate unique slug for new recipe
     const slug = await generateUniqueSlug(parsed.title);
 
     // Generate embedding
