@@ -6,7 +6,7 @@ import { generateRecipeEmbedding } from "@/lib/embeddings";
 import type { UrlImportRequest } from "@/types/recipe";
 
 // API route for importing recipes from URLs
-// Supports importing the same URL multiple times - each import creates a new recipe
+// If the same URL is imported again, it updates the existing recipe instead of creating a duplicate
 export async function POST(request: NextRequest) {
   try {
     const body: UrlImportRequest & { preview?: boolean } = await request.json();
@@ -31,7 +31,104 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: parsed });
     }
 
-    // Generate unique slug - allows multiple imports from the same URL
+    // Check if this URL has been imported before
+    const existingRecipe = await prisma.recipe.findFirst({
+      where: { sourceUrl: url.toString() },
+      select: { id: true, slug: true },
+    });
+
+    // If recipe exists, update it
+    if (existingRecipe) {
+      // Delete existing ingredients and instructions
+      await prisma.ingredient.deleteMany({
+        where: { recipeId: existingRecipe.id },
+      });
+      await prisma.instruction.deleteMany({
+        where: { recipeId: existingRecipe.id },
+      });
+
+      // Generate embedding
+      let searchText: string | undefined;
+      let embeddingData: number[] | undefined;
+
+      if (process.env.HUGGINGFACE_API_KEY) {
+        try {
+          const embedResult = await generateRecipeEmbedding({
+            title: parsed.title,
+            description: parsed.description,
+            cuisine: parsed.cuisine,
+            course: parsed.course,
+            ingredients: parsed.ingredients,
+            instructions: parsed.instructions,
+            totalTime: parsed.totalTime,
+            difficulty: parsed.difficulty,
+          });
+          searchText = embedResult.searchText;
+          embeddingData = embedResult.embedding;
+        } catch (e) {
+          console.error("Failed to generate embedding:", e);
+        }
+      }
+
+      // Update the recipe
+      const recipe = await prisma.recipe.update({
+        where: { id: existingRecipe.id },
+        data: {
+          title: parsed.title,
+          description: parsed.description,
+          prepTime: parsed.prepTime,
+          cookTime: parsed.cookTime,
+          totalTime:
+            parsed.totalTime ||
+            (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+            undefined,
+          servings: parsed.servings,
+          difficulty: parsed.difficulty || "MEDIUM",
+          cuisine: parsed.cuisine,
+          course: parsed.course,
+          imageUrl: parsed.imageUrl,
+          searchText,
+          ingredients: {
+            create: parsed.ingredients.map((ing, index) => ({
+              quantity: ing.quantity,
+              unit: ing.unit,
+              name: ing.name,
+              notes: ing.notes,
+              group: ing.group,
+              sortOrder: ing.sortOrder ?? index,
+            })),
+          },
+          instructions: {
+            create: parsed.instructions.map((inst, index) => ({
+              text: inst.text,
+              group: inst.group,
+              sortOrder: inst.sortOrder ?? index,
+              duration: inst.duration,
+            })),
+          },
+        },
+        include: {
+          ingredients: { orderBy: { sortOrder: "asc" } },
+          instructions: { orderBy: { sortOrder: "asc" } },
+          tags: true,
+          images: true,
+        },
+      });
+
+      // Update embedding
+      if (embeddingData) {
+        const embeddingString = `[${embeddingData.join(",")}]`;
+        await prisma.$executeRaw`
+          UPDATE "Recipe"
+          SET embedding = ${embeddingString}::vector
+          WHERE id = ${recipe.id}
+        `;
+      }
+
+      return NextResponse.json({ data: recipe }, { status: 200 });
+    }
+
+    // Create new recipe
     const slug = await generateUniqueSlug(parsed.title);
 
     // Generate embedding

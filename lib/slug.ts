@@ -3,7 +3,6 @@ import { prisma } from "./prisma";
 
 /**
  * Generate a unique slug for a recipe
- * For duplicate imports (when counter > 0), creates more distinct slugs
  */
 export async function generateUniqueSlug(
   title: string,
@@ -30,23 +29,12 @@ export async function generateUniqueSlug(
       return slug;
     }
 
-    // Try with counter suffix - this allows multiple imports of the same recipe
-    // Each import gets a unique slug: recipe-name, recipe-name-1, recipe-name-2, etc.
+    // Try with counter suffix
     slug = `${baseSlug}-${counter}`;
     counter++;
 
-    // Safety limit to prevent infinite loops
-    if (counter > 1000) {
-      // Use timestamp as fallback to ensure uniqueness
-      const timestamp = Date.now();
-      slug = `${baseSlug}-${timestamp}`;
-      const finalCheck = await prisma.recipe.findUnique({
-        where: { slug },
-        select: { id: true },
-      });
-      if (!finalCheck) {
-        return slug;
-      }
+    // Safety limit
+    if (counter > 100) {
       throw new Error("Could not generate unique slug");
     }
   }
