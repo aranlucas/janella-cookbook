@@ -74,7 +74,6 @@ Format your response in a clear, easy-to-read way. Be realistic with estimates a
       model: model,
       prompt: prompt,
       temperature: 0.7,
-      maxTokens: 800,
     });
 
     return result.toDataStreamResponse();
