@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ImageWithFallback } from "./image-with-fallback";
 import { cn } from "@/lib/utils";
 
@@ -57,10 +57,7 @@ export function RecipeImage({
     );
   }
 
-  // Use emoji as final fallback if no fallback image provided
-  const finalFallback = fallback || `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23f5f1e8' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='64' opacity='0.3'%3E${fallbackEmoji}%3C/text%3E%3C/svg%3E`;
-
-  // Handle case where both primary and fallback images fail
+  // Handle case where image fails (after trying unoptimized)
   const handleImageError = () => {
     setShowEmojiFallback(true);
     setIsLoading(false);
@@ -78,7 +75,7 @@ export function RecipeImage({
           fill
           sizes={sizes}
           priority={priority}
-          fallback={finalFallback}
+          fallback={fallback}
           className={cn(
             "object-cover transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
@@ -104,7 +101,7 @@ export function RecipeImage({
         height={height || 300}
         sizes={sizes}
         priority={priority}
-        fallback={finalFallback}
+        fallback={fallback}
         className={cn(
           "object-cover transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",
