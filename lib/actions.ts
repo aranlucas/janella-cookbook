@@ -695,3 +695,55 @@ export async function deleteRecipe(
     return { success: false, error: "Failed to delete recipe" };
   }
 }
+
+// Regenerate recipe from its source URL
+export async function regenerateFromSource(
+  id: string,
+): Promise<ActionResult> {
+  try {
+    // Fetch the recipe to get its source URL
+    const existing = await prisma.recipe.findUnique({
+      where: { id },
+      select: { sourceUrl: true, slug: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Recipe not found" };
+    }
+
+    if (!existing.sourceUrl) {
+      return {
+        success: false,
+        error: "Recipe does not have a source URL to regenerate from",
+      };
+    }
+
+    // Parse the recipe from the source URL again
+    const parsed = await parseRecipeFromUrl(existing.sourceUrl);
+
+    // Update the recipe with the newly parsed data
+    const result = await updateRecipe(id, {
+      title: parsed.title,
+      description: parsed.description,
+      prepTime: parsed.prepTime,
+      cookTime: parsed.cookTime,
+      totalTime: parsed.totalTime,
+      servings: parsed.servings,
+      difficulty: parsed.difficulty,
+      cuisine: parsed.cuisine,
+      course: parsed.course,
+      imageUrl: parsed.imageUrl,
+      ingredients: parsed.ingredients,
+      instructions: parsed.instructions,
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error regenerating recipe from source:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to regenerate recipe",
+    };
+  }
+}
