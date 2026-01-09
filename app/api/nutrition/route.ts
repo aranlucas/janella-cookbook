@@ -76,7 +76,7 @@ Format your response in a clear, easy-to-read way. Be realistic with estimates a
       temperature: 0.7,
     });
 
-    return result.toDataStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Error generating nutrition facts:", error);
     return new Response(
