@@ -697,9 +697,7 @@ export async function deleteRecipe(
 }
 
 // Regenerate recipe from its source URL
-export async function regenerateFromSource(
-  id: string,
-): Promise<ActionResult> {
+export async function regenerateFromSource(id: string): Promise<ActionResult> {
   try {
     // Fetch the recipe to get its source URL
     const existing = await prisma.recipe.findUnique({

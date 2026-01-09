@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { RecipeMeta } from "@/components/recipe/recipe-meta";
 import { IngredientList } from "@/components/recipe/ingredient-list";
 import { InstructionSteps } from "@/components/recipe/instruction-steps";
+import { NutritionFacts } from "@/components/recipe/nutrition-facts";
 import { RecipeEngagementActions } from "./recipe-engagement-actions";
 import { RecipeManagementActions } from "./recipe-management-actions";
 import { Badge } from "@/components/ui/badge";
@@ -177,12 +178,19 @@ export default async function RecipePage({ params }: PageProps) {
           </div>
 
           {/* Instructions */}
-          <div>
-            <h2 className="mb-3 font-serif text-xl font-semibold md:mb-4 md:text-2xl">
-              Instructions
-            </h2>
-            <div className="bg-warm-white recipe-content rounded-lg p-4 shadow-sm md:p-6">
-              <InstructionSteps instructions={recipe.instructions} />
+          <div className="space-y-6 md:space-y-8">
+            <div>
+              <h2 className="mb-3 font-serif text-xl font-semibold md:mb-4 md:text-2xl">
+                Instructions
+              </h2>
+              <div className="bg-warm-white recipe-content rounded-lg p-4 shadow-sm md:p-6">
+                <InstructionSteps instructions={recipe.instructions} />
+              </div>
+            </div>
+
+            {/* Nutrition Facts */}
+            <div className="no-print">
+              <NutritionFacts recipe={recipe} />
             </div>
           </div>
         </div>
