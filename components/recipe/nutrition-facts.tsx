@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useCompletion } from "@ai-sdk/react";
+import { Streamdown } from "streamdown";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { RecipeWithRelations } from "@/types/recipe";
@@ -75,8 +76,8 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
 
       {completion && (
         <div className="bg-warm-white rounded-lg p-4 shadow-sm md:p-6">
-          <div className="text-charcoal prose prose-sm max-w-none text-sm whitespace-pre-wrap md:text-base">
-            {completion}
+          <div className="text-charcoal prose prose-sm max-w-none">
+            <Streamdown mode="streaming">{completion}</Streamdown>
           </div>
           <p className="text-muted-foreground mt-4 border-t pt-4 text-xs">
             <strong>Note:</strong> Nutritional information is AI-generated and
