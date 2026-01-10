@@ -76,7 +76,7 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
 
       {completion && (
         <div className="bg-warm-white rounded-lg p-4 shadow-sm md:p-6">
-          <div className="text-charcoal prose prose-sm max-w-none">
+          <div className="text-charcoal prose prose-sm max-w-none overflow-x-auto">
             <Streamdown mode="streaming">{completion}</Streamdown>
           </div>
           <p className="text-muted-foreground mt-4 border-t pt-4 text-xs">
