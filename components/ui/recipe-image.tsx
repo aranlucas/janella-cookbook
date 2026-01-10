@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import { ImageWithFallback } from "./image-with-fallback";
 import { cn } from "@/lib/utils";
 
 interface RecipeImageProps {
@@ -14,12 +14,16 @@ interface RecipeImageProps {
   priority?: boolean;
   className?: string;
   containerClassName?: string;
+  fallback?: string; // Fallback image URL
   fallbackEmoji?: string;
 }
 
 /**
- * Optimized recipe image component with fallback handling
- * Uses Next.js Image for automatic optimization, lazy loading, and responsive sizing
+ * Enhanced recipe image component with fallback handling
+ * Built on top of ImageWithFallback with additional features:
+ * - Loading states with skeleton animation
+ * - Emoji fallback when no image source or all images fail
+ * - Custom container styling
  */
 export function RecipeImage({
   src,
@@ -31,13 +35,14 @@ export function RecipeImage({
   priority = false,
   className,
   containerClassName,
+  fallback,
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
-  const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showEmojiFallback, setShowEmojiFallback] = useState(false);
 
-  // Show fallback if no src or if image failed to load
-  if (!src || hasError) {
+  // Show emoji fallback if no src provided or if all images failed
+  if (!src || showEmojiFallback) {
     return (
       <div
         className={cn(
@@ -52,26 +57,32 @@ export function RecipeImage({
     );
   }
 
+  // Handle case where image fails (after trying unoptimized)
+  const handleImageError = () => {
+    setShowEmojiFallback(true);
+    setIsLoading(false);
+  };
+
   // For fill mode (most common use case)
-  // Container uses absolute positioning to fill parent - parent MUST have position:relative and defined dimensions
   if (fill) {
     return (
       <div
         className={cn("absolute inset-0 overflow-hidden", containerClassName)}
       >
-        <Image
+        <ImageWithFallback
           src={src}
           alt={alt}
           fill
           sizes={sizes}
           priority={priority}
+          fallback={fallback}
           className={cn(
             "object-cover transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
             className,
           )}
           onLoad={() => setIsLoading(false)}
-          onError={() => setHasError(true)}
+          onError={handleImageError}
         />
         {isLoading && (
           <div className="bg-butter/30 absolute inset-0 animate-pulse" />
@@ -83,20 +94,21 @@ export function RecipeImage({
   // For fixed dimensions
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
-      <Image
+      <ImageWithFallback
         src={src}
         alt={alt}
         width={width || 400}
         height={height || 300}
         sizes={sizes}
         priority={priority}
+        fallback={fallback}
         className={cn(
           "object-cover transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",
           className,
         )}
         onLoad={() => setIsLoading(false)}
-        onError={() => setHasError(true)}
+        onError={handleImageError}
       />
       {isLoading && (
         <div
