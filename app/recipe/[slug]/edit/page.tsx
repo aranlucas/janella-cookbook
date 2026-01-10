@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
+import { RecipeEditWithChat } from "@/components/recipe/recipe-edit-with-chat";
 import { AppLayout } from "@/components/layout/app-layout";
 import type { RecipeWithRelations } from "@/types/recipe";
 
@@ -60,7 +60,7 @@ export default async function EditRecipePage({ params }: PageProps) {
       ]}
       title="Edit Recipe"
     >
-      <ManualRecipeForm initialData={recipe} />
+      <RecipeEditWithChat recipe={recipe} />
     </AppLayout>
   );
 }
