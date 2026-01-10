@@ -4,6 +4,7 @@ import { z } from "zod";
 import { load } from "cheerio";
 import { parseHTML } from "linkedom";
 import { Readability } from "@mozilla/readability";
+import { encode } from "gpt-tokenizer";
 import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 
@@ -14,6 +15,42 @@ const openrouter = createOpenAI({
 });
 
 const model = openrouter("mistralai/devstral-2512:free");
+
+// Model context window configuration
+const MAX_CONTEXT_TOKENS = 256000; // Devstral 2512 supports 256K tokens
+const SYSTEM_PROMPT_TOKENS = 500; // Estimate for system prompt
+const RESPONSE_TOKENS = 2000; // Estimate for structured recipe response
+const SAFETY_BUFFER = 3500; // Safety buffer
+const MAX_INPUT_TOKENS =
+  MAX_CONTEXT_TOKENS - SYSTEM_PROMPT_TOKENS - RESPONSE_TOKENS - SAFETY_BUFFER; // ~250K tokens
+
+/**
+ * Validate and truncate content to fit within token limits
+ * @param content - The content to validate
+ * @param maxTokens - Maximum allowed tokens (defaults to MAX_INPUT_TOKENS)
+ * @returns Validated content truncated to fit within token limits
+ */
+function validateAndTruncateContent(
+  content: string,
+  maxTokens: number = MAX_INPUT_TOKENS,
+): string {
+  const tokens = encode(content);
+
+  if (tokens.length <= maxTokens) {
+    return content;
+  }
+
+  // Truncate by decoding only the allowed number of tokens
+  // Since we can't easily decode back to string, we'll estimate character-to-token ratio
+  const charToTokenRatio = content.length / tokens.length;
+  const maxChars = Math.floor(maxTokens * charToTokenRatio);
+
+  console.warn(
+    `Content exceeds token limit (${tokens.length} > ${maxTokens}). Truncating from ${content.length} to ~${maxChars} characters.`,
+  );
+
+  return content.slice(0, maxChars);
+}
 
 // Zod schema for recipe parsing
 const recipeSchema = z.object({
@@ -279,8 +316,8 @@ async function extractRecipeWithAI(
     else content = $("body").text() || "";
   }
 
-  // Clean and limit content length - increased to capture more complete recipes
-  const cleanedContent = content.replace(/\s+/g, " ").trim().slice(0, 15000);
+  // Clean content and validate token count
+  const cleanedContent = content.replace(/\s+/g, " ").trim();
 
   if (cleanedContent.length < 50) {
     throw new RecipeParseError(
@@ -288,6 +325,9 @@ async function extractRecipeWithAI(
       sourceUrl,
     );
   }
+
+  // Validate and truncate to fit within model's context window
+  const validatedContent = validateAndTruncateContent(cleanedContent);
 
   try {
     const { output: parsed } = await withRetry(
@@ -297,7 +337,8 @@ async function extractRecipeWithAI(
           output: Output.object({ schema: recipeSchema }),
           system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
 
-IMPORTANT INSTRUCTIONS:
+CRITICAL INSTRUCTIONS - READ FULL CONTENT:
+- You have access to the COMPLETE webpage content - read and process ALL of it thoroughly
 - Be accurate and only include information present in the content
 - Extract ALL ingredients with their exact quantities, units, and any preparation notes
 - Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
@@ -307,8 +348,9 @@ IMPORTANT INSTRUCTIONS:
 - Identify the cuisine type and meal course if evident
 - Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
 - For instructions, maintain the original step numbering and any substeps
+- Look for recipe variations, notes, or tips mentioned throughout the content
 - Output in structured JSON format`,
-          prompt: `Extract the complete recipe from this webpage content. Make sure to capture every ingredient and instruction step:\n\n${cleanedContent}`,
+          prompt: `Extract the complete recipe from this webpage content. Make sure to capture every ingredient and instruction step:\n\n${validatedContent}`,
         });
       },
       {
@@ -378,6 +420,9 @@ export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
     throw new RecipeParseError("Please provide more recipe text to parse");
   }
 
+  // Validate and truncate to fit within model's context window
+  const validatedText = validateAndTruncateContent(text.trim());
+
   try {
     const { output: parsed } = await withRetry(
       async () => {
@@ -386,7 +431,7 @@ export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
           output: Output.object({ schema: recipeSchema }),
           system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
-          prompt: text.slice(0, 15000), // Limit input size
+          prompt: validatedText,
         });
       },
       {
