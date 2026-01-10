@@ -297,13 +297,6 @@ async function extractRecipeWithAI(
   // Clean and validate HTML - send full page content to LLM
   const cleanedHtml = html.replace(/\s+/g, " ").trim();
 
-  if (cleanedHtml.length < 100) {
-    throw new RecipeParseError(
-      "Could not extract enough content from the page to parse a recipe",
-      sourceUrl,
-    );
-  }
-
   // Validate and truncate to fit within model's context window
   const validatedContent = validateAndTruncateContent(cleanedHtml);
 
