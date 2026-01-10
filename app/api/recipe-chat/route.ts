@@ -34,7 +34,7 @@ When suggesting modifications, be specific about what should change. For example
 Keep responses concise and actionable. Focus on practical cooking advice.`;
 
     // Convert UIMessages from useChat to ModelMessages for streamText
-    const modelMessages = convertToModelMessages(messages);
+    const modelMessages = await convertToModelMessages(messages);
 
     const result = streamText({
       model,
