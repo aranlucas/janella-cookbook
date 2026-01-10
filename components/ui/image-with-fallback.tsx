@@ -19,8 +19,10 @@ export const ImageWithFallback = ({
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    setError(false);
-  }, [src]);
+    if (error) {
+      setError(false);
+    }
+  }, [src, error]);
 
   const handleError = () => {
     if (!error) {
