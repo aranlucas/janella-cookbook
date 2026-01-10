@@ -40,7 +40,7 @@ Keep responses concise and actionable. Focus on practical cooking advice.`;
       temperature: 0.7,
     });
 
-    return result.toTextStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Recipe chat error:", error);
     return new Response(
