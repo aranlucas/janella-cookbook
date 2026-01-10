@@ -90,8 +90,8 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       {!hasGenerated && !isLoading && !completion && (
         <div className="bg-muted/50 rounded-lg p-6 text-center">
           <p className="text-muted-foreground text-sm">
-            Click "Generate with AI" to get estimated nutritional information
-            for this recipe.
+            Click &quot;Generate with AI&quot; to get estimated nutritional
+            information for this recipe.
           </p>
         </div>
       )}
