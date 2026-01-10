@@ -151,7 +151,7 @@ export default async function HomePage() {
         </section>
 
         {/* Recipe Section */}
-        <section className="py-12 md:py-16">
+        <section className="overflow-hidden py-12 md:py-16">
           <div className="container">
             <div className="mb-10 text-center">
               <h2 className="text-charcoal font-serif text-3xl font-bold sm:text-4xl md:text-5xl">
