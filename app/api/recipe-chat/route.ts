@@ -1,6 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, convertToCoreMessages } from "ai";
-import { z } from "zod";
+import { streamText } from "ai";
 
 export const maxDuration = 30;
 
@@ -36,18 +35,18 @@ Keep responses concise and actionable. Focus on practical cooking advice.`;
 
     const result = streamText({
       model,
-      messages: convertToCoreMessages(messages),
+      messages,
       system: systemPrompt,
       temperature: 0.7,
-      maxTokens: 1000,
     });
 
-    return result.toDataStreamResponse();
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error("Recipe chat error:", error);
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "Failed to process chat",
+        error:
+          error instanceof Error ? error.message : "Failed to process chat",
       }),
       {
         status: 500,

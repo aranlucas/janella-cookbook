@@ -1,7 +1,8 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
-import { useEffect, useRef } from "react";
+import { useChat, Chat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,34 +19,45 @@ export function RecipeChatAssistant({
   onApplySuggestion,
 }: RecipeChatAssistantProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState("");
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } =
-    useChat({
-      api: "/api/recipe-chat",
-      body: {
-        recipeData: {
-          title: recipe.title,
-          description: recipe.description,
-          prepTime: recipe.prepTime,
-          cookTime: recipe.cookTime,
-          servings: recipe.servings,
-          difficulty: recipe.difficulty,
-          cuisine: recipe.cuisine,
-          course: recipe.course,
-          ingredients: recipe.ingredients.map((ing) => ({
-            quantity: ing.quantity,
-            unit: ing.unit,
-            name: ing.name,
-            notes: ing.notes,
-            group: ing.group,
-          })),
-          instructions: recipe.instructions.map((inst) => ({
-            text: inst.text,
-            group: inst.group,
-          })),
-        },
-      },
-    });
+  // Create chat instance with configuration
+  const chat = useMemo(
+    () =>
+      new Chat({
+        transport: new DefaultChatTransport({
+          api: "/api/recipe-chat",
+          body: {
+            recipeData: {
+              title: recipe.title,
+              description: recipe.description,
+              prepTime: recipe.prepTime,
+              cookTime: recipe.cookTime,
+              servings: recipe.servings,
+              difficulty: recipe.difficulty,
+              cuisine: recipe.cuisine,
+              course: recipe.course,
+              ingredients: recipe.ingredients.map((ing) => ({
+                quantity: ing.quantity,
+                unit: ing.unit,
+                name: ing.name,
+                notes: ing.notes,
+                group: ing.group,
+              })),
+              instructions: recipe.instructions.map((inst) => ({
+                text: inst.text,
+                group: inst.group,
+              })),
+            },
+          },
+        }),
+      }),
+    [recipe],
+  );
+
+  const { messages, sendMessage, status, error } = useChat({ chat });
+
+  const isLoading = status === "submitted" || status === "streaming";
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -65,8 +77,8 @@ export function RecipeChatAssistant({
 
       <CardContent className="flex flex-1 flex-col gap-4 overflow-hidden p-4">
         {/* Messages area */}
-        <ScrollArea className="flex-1 pr-4" ref={scrollRef}>
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div ref={scrollRef} className="space-y-4">
             {messages.length === 0 && (
               <div className="text-muted-foreground flex h-full items-center justify-center text-center text-sm">
                 <div className="space-y-2">
@@ -91,8 +103,12 @@ export function RecipeChatAssistant({
                       : "bg-cream border-butter border"
                   }`}
                 >
-                  <div className="whitespace-pre-wrap break-words text-sm">
-                    {message.content}
+                  <div className="text-sm break-words whitespace-pre-wrap">
+                    {message.parts
+                      .filter((part) => part.type === "text")
+                      .map((part, idx) => (
+                        <span key={idx}>{"text" in part ? part.text : ""}</span>
+                      ))}
                   </div>
                 </div>
               </div>
@@ -119,17 +135,29 @@ export function RecipeChatAssistant({
         </ScrollArea>
 
         {/* Input area */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (input.trim()) {
+              sendMessage({ text: input });
+              setInput("");
+            }
+          }}
+          className="flex gap-2"
+        >
           <Textarea
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about the recipe or request changes..."
             className="bg-cream border-butter min-h-[60px] resize-none"
             disabled={isLoading}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit(e);
+                if (input.trim()) {
+                  sendMessage({ text: input });
+                  setInput("");
+                }
               }
             }}
           />

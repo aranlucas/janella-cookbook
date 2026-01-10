@@ -1,19 +1,14 @@
 import type { Metadata } from "next";
-import { Fraunces, Outfit } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-});
+// Fallback to system fonts when Google Fonts is not accessible
+const fontVariables = {
+  "--font-heading":
+    "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
+  "--font-body":
+    "ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+};
 
 export const metadata: Metadata = {
   title: "Cookbook - Your Personal Recipe Collection",
@@ -30,7 +25,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${outfit.variable} ${fraunces.variable} font-sans antialiased`}
+        className="font-sans antialiased"
+        style={fontVariables as React.CSSProperties}
       >
         {children}
         <Toaster />

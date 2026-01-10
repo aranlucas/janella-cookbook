@@ -17,7 +17,7 @@ export function RecipeEditWithChat({ recipe }: RecipeEditWithChatProps) {
       </div>
 
       {/* AI Chat Assistant */}
-      <div className="lg:order-2 lg:sticky lg:top-4 lg:self-start">
+      <div className="lg:sticky lg:top-4 lg:order-2 lg:self-start">
         <RecipeChatAssistant recipe={recipe} />
       </div>
     </div>
