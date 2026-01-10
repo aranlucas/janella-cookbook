@@ -32,7 +32,7 @@ export const ImageWithFallback = ({
   };
 
   // Use fallback (or original src as fallback) with unoptimized flag
-  const imageSrc = error ? (fallback || src) : src;
+  const imageSrc = error ? fallback || src : src;
   const isUnoptimized = error;
 
   return (
