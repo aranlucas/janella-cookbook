@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText } from "ai";
+import { streamText, convertToModelMessages } from "ai";
 
 export const maxDuration = 30;
 
@@ -33,9 +33,12 @@ When suggesting modifications, be specific about what should change. For example
 
 Keep responses concise and actionable. Focus on practical cooking advice.`;
 
+    // Convert UIMessages from useChat to ModelMessages for streamText
+    const modelMessages = convertToModelMessages(messages);
+
     const result = streamText({
       model,
-      messages,
+      messages: modelMessages,
       system: systemPrompt,
       temperature: 0.7,
     });
