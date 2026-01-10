@@ -1,4 +1,4 @@
-import { prisma, isSQLite } from "./prisma";
+import { prisma, isSQLite, getSQLiteDb } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
 import { ExternalApiError, DatabaseError, withRetry } from "./errors";
 import type {
@@ -158,11 +158,6 @@ export async function semanticSearch(
   limit = 20,
   offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
-  // SQLite doesn't support vector operations, fall back to keyword search
-  if (isSQLite()) {
-    return keywordSearch(query, filters, limit, offset);
-  }
-
   // Enhance and generate embedding for the query with retry logic
   const enhancedQuery = enhanceSearchQuery(query);
 
@@ -186,8 +181,6 @@ export async function semanticSearch(
       error,
     );
   }
-
-  const embeddingString = `[${queryEmbedding.join(",")}]`;
 
   // Build safe filter conditions
   const { conditions } = buildFilterConditions(filters);
@@ -220,39 +213,100 @@ export async function semanticSearch(
   }>;
 
   try {
-    results = await prisma.$queryRaw`
-      SELECT * FROM (
-        SELECT
-          r.id,
-          r.title,
-          r.slug,
-          r.description,
-          r."prepTime",
-          r."cookTime",
-          r."totalTime",
-          r.servings,
-          r.difficulty,
-          r.cuisine,
-          r.course,
-          r."sourceUrl",
-          r."sourceType",
-          r."imageUrl",
-          r.notes,
-          r.rating,
-          r."isFavorite",
-          r."cookCount",
-          r."lastCooked",
-          r."createdAt",
-          r."updatedAt",
-          1 - (r.embedding <=> ${embeddingString}::vector) as similarity
-        FROM "Recipe" r
-        WHERE ${Prisma.raw(whereClause)}
-      ) AS sub
-      WHERE similarity > 0.35
-      ORDER BY similarity DESC
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
+    if (isSQLite()) {
+      // For SQLite with sqlite-vec, use virtual table for vector search
+      const db = getSQLiteDb();
+      if (!db) {
+        throw new Error("SQLite database not initialized");
+      }
+
+      // Query virtual table for similar vectors
+      const queryEmbeddingBuffer = Buffer.from(
+        new Float32Array(queryEmbedding).buffer,
+      );
+      const vectorResults = db
+        .prepare(
+          `
+          SELECT recipe_id, distance
+          FROM vec_recipes
+          WHERE embedding MATCH ?
+          AND k = ?
+          ORDER BY distance
+        `,
+        )
+        .all(queryEmbeddingBuffer, limit + offset) as Array<{
+        recipe_id: string;
+        distance: number;
+      }>;
+
+      // Get recipe IDs and calculate similarity (1 - distance for cosine similarity)
+      const recipeIds = vectorResults
+        .slice(offset, offset + limit)
+        .map((r) => r.recipe_id);
+      const similarityMap = new Map(
+        vectorResults.map((r) => [r.recipe_id, 1 - r.distance]),
+      );
+
+      // Fetch full recipe details
+      const recipes = await prisma.recipe.findMany({
+        where: {
+          id: { in: recipeIds },
+          ...(filters.cuisine && { cuisine: filters.cuisine }),
+          ...(filters.course && { course: filters.course }),
+          ...(filters.difficulty && { difficulty: filters.difficulty }),
+          ...(filters.tags && {
+            tags: { some: { slug: { in: filters.tags } } },
+          }),
+          ...(filters.isFavorite !== undefined && {
+            isFavorite: filters.isFavorite,
+          }),
+        },
+      });
+
+      // Map to results with similarity scores
+      results = recipes
+        .map((r) => ({
+          ...r,
+          similarity: similarityMap.get(r.id) || 0,
+        }))
+        .sort((a, b) => b.similarity - a.similarity);
+    } else {
+      // For PostgreSQL with pgvector
+      const embeddingString = `[${queryEmbedding.join(",")}]`;
+      results = await prisma.$queryRaw`
+        SELECT * FROM (
+          SELECT
+            r.id,
+            r.title,
+            r.slug,
+            r.description,
+            r."prepTime",
+            r."cookTime",
+            r."totalTime",
+            r.servings,
+            r.difficulty,
+            r.cuisine,
+            r.course,
+            r."sourceUrl",
+            r."sourceType",
+            r."imageUrl",
+            r.notes,
+            r.rating,
+            r."isFavorite",
+            r."cookCount",
+            r."lastCooked",
+            r."createdAt",
+            r."updatedAt",
+            1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+          FROM "Recipe" r
+          WHERE ${Prisma.raw(whereClause)}
+        ) AS sub
+        WHERE similarity > 0.35
+        ORDER BY similarity DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `;
+    }
   } catch (error) {
     throw new DatabaseError("semantic search", String(error));
   }
@@ -260,15 +314,39 @@ export async function semanticSearch(
   // Get total count with similarity threshold
   let total: number;
   try {
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
-      SELECT COUNT(*) as count FROM (
-        SELECT 1 - (r.embedding <=> ${embeddingString}::vector) as similarity
-        FROM "Recipe" r
-        WHERE ${Prisma.raw(whereClause)}
-      ) AS sub
-      WHERE similarity > 0.35
-    `;
-    total = Number(countResult[0].count);
+    if (isSQLite()) {
+      // For SQLite, total is based on vector search results
+      const db = getSQLiteDb();
+      if (!db) {
+        throw new Error("SQLite database not initialized");
+      }
+
+      const queryEmbeddingBuffer = Buffer.from(
+        new Float32Array(queryEmbedding).buffer,
+      );
+      const countResults = db
+        .prepare(
+          `
+          SELECT COUNT(*) as count
+          FROM vec_recipes
+          WHERE embedding MATCH ?
+        `,
+        )
+        .get(queryEmbeddingBuffer) as { count: number };
+      total = countResults.count;
+    } else {
+      // For PostgreSQL
+      const embeddingString = `[${queryEmbedding.join(",")}]`;
+      const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) as count FROM (
+          SELECT 1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+          FROM "Recipe" r
+          WHERE ${Prisma.raw(whereClause)}
+        ) AS sub
+        WHERE similarity > 0.35
+      `;
+      total = Number(countResult[0].count);
+    }
   } catch (error) {
     throw new DatabaseError("count query", String(error));
   }

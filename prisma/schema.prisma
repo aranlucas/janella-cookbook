@@ -46,8 +46,8 @@ model Recipe {
   images   RecipeImage[]
 
   // Search
-  // Note: In SQLite mode, embedding is stored as JSON text; in PostgreSQL with pgvector, it's a vector
-  embedding  String? // JSON array for SQLite, vector for PostgreSQL
+  // Note: In SQLite mode, embedding is stored as BLOB with sqlite-vec; in PostgreSQL, it's a pgvector type
+  embedding  Bytes? // BLOB for SQLite with sqlite-vec, vector for PostgreSQL
   searchText String? // Concatenated searchable text
 
   // User interaction

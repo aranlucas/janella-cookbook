@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma, isSQLite } from "@/lib/prisma";
+import { prisma, isSQLite, getSQLiteDb } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
 import { parseRecipeFromUrl, parseRecipeFromText } from "@/lib/recipe-parser";
@@ -227,12 +227,25 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
     // Update embedding
     if (embeddingData) {
       if (isSQLite()) {
-        // For SQLite, store as JSON string
-        const embeddingString = JSON.stringify(embeddingData);
+        // For SQLite with sqlite-vec, store as BLOB and update virtual table
+        const embeddingBuffer = new Float32Array(embeddingData).buffer;
         await prisma.recipe.update({
           where: { id: recipe.id },
-          data: { embedding: embeddingString },
+          data: { embedding: Buffer.from(embeddingBuffer) },
         });
+
+        // Insert/update into virtual vector table
+        const db = getSQLiteDb();
+        if (db) {
+          const stmt = db.prepare(`
+            INSERT OR REPLACE INTO vec_recipes (recipe_id, embedding)
+            VALUES (?, ?)
+          `);
+          stmt.run(
+            recipe.id,
+            Buffer.from(new Float32Array(embeddingData).buffer),
+          );
+        }
       } else {
         // For PostgreSQL with pgvector, use vector type
         const embeddingString = `[${embeddingData.join(",")}]`;
@@ -333,12 +346,25 @@ export async function importFromText(text: string): Promise<ActionResult> {
     // Update embedding
     if (embeddingData) {
       if (isSQLite()) {
-        // For SQLite, store as JSON string
-        const embeddingString = JSON.stringify(embeddingData);
+        // For SQLite with sqlite-vec, store as BLOB and update virtual table
+        const embeddingBuffer = new Float32Array(embeddingData).buffer;
         await prisma.recipe.update({
           where: { id: recipe.id },
-          data: { embedding: embeddingString },
+          data: { embedding: Buffer.from(embeddingBuffer) },
         });
+
+        // Insert/update into virtual vector table
+        const db = getSQLiteDb();
+        if (db) {
+          const stmt = db.prepare(`
+            INSERT OR REPLACE INTO vec_recipes (recipe_id, embedding)
+            VALUES (?, ?)
+          `);
+          stmt.run(
+            recipe.id,
+            Buffer.from(new Float32Array(embeddingData).buffer),
+          );
+        }
       } else {
         // For PostgreSQL with pgvector, use vector type
         const embeddingString = `[${embeddingData.join(",")}]`;
@@ -455,12 +481,25 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     // Update embedding
     if (embeddingData) {
       if (isSQLite()) {
-        // For SQLite, store as JSON string
-        const embeddingString = JSON.stringify(embeddingData);
+        // For SQLite with sqlite-vec, store as BLOB and update virtual table
+        const embeddingBuffer = new Float32Array(embeddingData).buffer;
         await prisma.recipe.update({
           where: { id: recipe.id },
-          data: { embedding: embeddingString },
+          data: { embedding: Buffer.from(embeddingBuffer) },
         });
+
+        // Insert/update into virtual vector table
+        const db = getSQLiteDb();
+        if (db) {
+          const stmt = db.prepare(`
+            INSERT OR REPLACE INTO vec_recipes (recipe_id, embedding)
+            VALUES (?, ?)
+          `);
+          stmt.run(
+            recipe.id,
+            Buffer.from(new Float32Array(embeddingData).buffer),
+          );
+        }
       } else {
         // For PostgreSQL with pgvector, use vector type
         const embeddingString = `[${embeddingData.join(",")}]`;
@@ -634,12 +673,22 @@ export async function updateRecipe(
           await generateRecipeEmbedding(recipeForEmbedding);
 
         if (isSQLite()) {
-          // For SQLite, store as JSON string
-          const embeddingString = JSON.stringify(embedding);
+          // For SQLite with sqlite-vec, store as BLOB and update virtual table
+          const embeddingBuffer = new Float32Array(embedding).buffer;
           await prisma.recipe.update({
             where: { id },
-            data: { searchText, embedding: embeddingString },
+            data: { searchText, embedding: Buffer.from(embeddingBuffer) },
           });
+
+          // Insert/update into virtual vector table
+          const db = getSQLiteDb();
+          if (db) {
+            const stmt = db.prepare(`
+              INSERT OR REPLACE INTO vec_recipes (recipe_id, embedding)
+              VALUES (?, ?)
+            `);
+            stmt.run(id, Buffer.from(new Float32Array(embedding).buffer));
+          }
         } else {
           // For PostgreSQL with pgvector, use vector type
           const embeddingString = `[${embedding.join(",")}]`;
