@@ -1,0 +1,135 @@
+name: Translate Recipes
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_locales:
+        description: 'Target locales (comma-separated, e.g., "es,fr,de")'
+        required: true
+        default: "es,fr,de"
+      recipe_ids:
+        description: "Specific recipe IDs to translate (comma-separated, leave empty for all)"
+        required: false
+        default: ""
+  schedule:
+    # Run weekly on Sunday at 2 AM UTC
+    - cron: "0 2 * * 0"
+
+env:
+  # Production URL for the API
+  API_URL: ${{ secrets.PRODUCTION_URL || 'https://janella-cookbook.railway.app' }}
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get all recipe IDs (if not specified)
+        id: get-recipes
+        run: |
+          if [ -z "${{ github.event.inputs.recipe_ids }}" ]; then
+            echo "Fetching all recipe IDs..."
+            RECIPE_IDS=$(node -e "
+              const fetch = require('node-fetch');
+              (async () => {
+                const response = await fetch('${{ env.API_URL }}/api/recipes?limit=1000');
+                const data = await response.json();
+                const ids = data.data.map(r => r.id).join(',');
+                console.log(ids);
+              })();
+            ")
+            echo "recipe_ids=$RECIPE_IDS" >> $GITHUB_OUTPUT
+          else
+            echo "recipe_ids=${{ github.event.inputs.recipe_ids }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Translate recipes
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          # Parse target locales
+          IFS=',' read -ra LOCALES <<< "${{ github.event.inputs.target_locales || 'es,fr,de' }}"
+
+          # Parse recipe IDs
+          IFS=',' read -ra RECIPE_IDS <<< "${{ steps.get-recipes.outputs.recipe_ids }}"
+
+          echo "Translating ${#RECIPE_IDS[@]} recipes to ${#LOCALES[@]} locales..."
+
+          # Counter for tracking
+          total=0
+          success=0
+          failed=0
+          skipped=0
+
+          # Translate each recipe to each locale
+          for recipe_id in "${RECIPE_IDS[@]}"; do
+            for locale in "${LOCALES[@]}"; do
+              total=$((total + 1))
+
+              echo "Translating recipe $recipe_id to $locale..."
+
+              # Make API call
+              response=$(curl -s -w "\n%{http_code}" -X POST "${{ env.API_URL }}/api/translate" \
+                -H "Content-Type: application/json" \
+                -d "{\"recipeId\": \"$recipe_id\", \"targetLocale\": \"$locale\", \"apiKey\": \"$OPENROUTER_API_KEY\"}")
+
+              # Extract HTTP status code (last line)
+              http_code=$(echo "$response" | tail -n1)
+              body=$(echo "$response" | head -n-1)
+
+              if [ "$http_code" -eq 200 ]; then
+                success=$((success + 1))
+                echo "✅ Success: $recipe_id → $locale"
+              elif [ "$http_code" -eq 409 ]; then
+                skipped=$((skipped + 1))
+                echo "⏭️  Skipped: $recipe_id → $locale (already exists)"
+              else
+                failed=$((failed + 1))
+                echo "❌ Failed: $recipe_id → $locale (HTTP $http_code)"
+                echo "Response: $body"
+              fi
+
+              # Rate limiting: sleep for 2 seconds between requests
+              sleep 2
+            done
+          done
+
+          echo "-----------------------------------"
+          echo "Translation Summary:"
+          echo "Total attempts: $total"
+          echo "Success: $success"
+          echo "Skipped: $skipped"
+          echo "Failed: $failed"
+          echo "-----------------------------------"
+
+          # Create summary for GitHub Actions
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          ## Translation Results
+
+          - **Total attempts**: $total
+          - **Success**: ✅ $success
+          - **Skipped**: ⏭️ $skipped
+          - **Failed**: ❌ $failed
+
+          ### Configuration
+          - Locales: ${{ github.event.inputs.target_locales || 'es,fr,de' }}
+          - Recipes: ${#RECIPE_IDS[@]} recipes
+          EOF
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Translation workflow failed!"
+          echo "Please check the logs above for details."

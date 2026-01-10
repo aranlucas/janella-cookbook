@@ -268,3 +268,73 @@ This ensures that the generated Prisma Client is compatible with the ES Module e
 - Mobile-first approach with Tailwind breakpoints
 - Mobile menu in Header component
 - Responsive grid layouts for recipe cards
+
+## Internationalization (i18n)
+
+The application supports multiple languages through a hybrid approach:
+
+**UI Translations (next-intl):**
+
+- Configured in `i18n.ts` and `middleware.ts`
+- Message files in `messages/{locale}.json`
+- Supported locales: en, es, fr, de, it, pt, ja, ko, zh
+- Use `useTranslations()` hook in client components
+- Automatic locale routing via middleware
+
+**Recipe Content Translations (Database):**
+
+- Recipes stored with original `locale` field
+- Translations stored in `RecipeTranslation` table
+- Ingredients and instructions translated separately
+- Maintains original sort order via reference IDs
+- Quantities preserved (no unit conversion)
+
+**Key Files:**
+
+- `lib/i18n-helpers.ts` - Helper functions for localized recipes
+- `lib/translate.ts` - Translation API using OpenRouter/Claude
+- `app/api/translate/route.ts` - REST API for translations
+- `components/language-switcher.tsx` - Language selector component
+- `types/recipe.ts` - Translation types and interfaces
+
+**Getting Localized Recipes:**
+
+```typescript
+import {
+  getLocalizedRecipe,
+  getLocalizedRecipeBySlug,
+} from "@/lib/i18n-helpers";
+
+// Get recipe in Spanish
+const recipe = await getLocalizedRecipe(recipeId, "es");
+
+// Falls back to original if translation doesn't exist
+const recipe = await getLocalizedRecipeBySlug("chocolate-cake", "fr");
+```
+
+**Translation API:**
+
+```bash
+# Translate a recipe
+POST /api/translate
+Body: { "recipeId": "xxx", "targetLocale": "es" }
+
+# Get translation
+GET /api/translate?recipeId=xxx&locale=es
+```
+
+**Automated Translations:**
+
+- GitHub Action: `.github/workflows/translate-recipes.yml`
+- Runs weekly or manually triggered
+- Uses Claude 3.5 Sonnet via OpenRouter
+- Translates all new recipes automatically
+- Skips existing translations
+
+**Environment Variables:**
+
+- `OPENROUTER_API_KEY` - For AI-powered translations
+
+**Documentation:**
+
+See `docs/I18N.md` for comprehensive usage guide, best practices, and troubleshooting.

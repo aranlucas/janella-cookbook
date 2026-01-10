@@ -1,0 +1,143 @@
+{
+  "common": {
+    "recipes": "Recipes",
+    "favorites": "Favorites",
+    "dashboard": "Dashboard",
+    "categories": "Categories",
+    "search": "Search",
+    "searchPlaceholder": "Search recipes...",
+    "addRecipe": "Add Recipe",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "noResults": "No results found",
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
+  "home": {
+    "title": "The Cookbook Collection",
+    "subtitle": "Janella's Kitchen",
+    "recentRecipes": "Recent Recipes",
+    "quickTags": {
+      "breakfast": "Breakfast",
+      "pasta": "Pasta",
+      "dessert": "Dessert",
+      "vegan": "Vegan",
+      "quickEasy": "Quick & Easy"
+    }
+  },
+  "recipe": {
+    "ingredients": "Ingredients",
+    "instructions": "Instructions",
+    "notes": "Notes",
+    "originalSource": "Original Source",
+    "viewSource": "View Source",
+    "prepTime": "Prep",
+    "cookTime": "Cook",
+    "totalTime": "Total",
+    "servings": "Servings",
+    "difficulty": "Difficulty",
+    "cuisine": "Cuisine",
+    "course": "Course",
+    "rating": "Rating",
+    "cookCount": "Times Cooked",
+    "lastCooked": "Last Cooked",
+    "favorite": "Favorite",
+    "addToFavorites": "Add to Favorites",
+    "removeFromFavorites": "Remove from Favorites",
+    "markAsCooked": "Mark as Cooked",
+    "regenerate": "Regenerate from Source"
+  },
+  "difficulty": {
+    "EASY": "Easy",
+    "MEDIUM": "Medium",
+    "HARD": "Hard",
+    "EXPERT": "Expert"
+  },
+  "course": {
+    "BREAKFAST": "Breakfast",
+    "LUNCH": "Lunch",
+    "DINNER": "Dinner",
+    "APPETIZER": "Appetizer",
+    "SIDE": "Side Dish",
+    "DESSERT": "Dessert",
+    "SNACK": "Snack",
+    "DRINK": "Drink",
+    "SAUCE": "Sauce",
+    "BREAD": "Bread"
+  },
+  "filters": {
+    "title": "Filters",
+    "cuisine": "Cuisine",
+    "course": "Course",
+    "difficulty": "Difficulty",
+    "tags": "Tags",
+    "allCuisines": "All Cuisines",
+    "allCourses": "All Courses",
+    "allDifficulties": "All Difficulties",
+    "clearFilters": "Clear Filters",
+    "applyFilters": "Apply Filters"
+  },
+  "forms": {
+    "createRecipe": "Create Recipe",
+    "editRecipe": "Edit Recipe",
+    "title": "Title",
+    "description": "Description",
+    "importFromUrl": "Import from URL",
+    "importFromText": "Import from Text",
+    "manualEntry": "Manual Entry",
+    "url": "URL",
+    "pasteRecipeText": "Paste recipe text...",
+    "import": "Import",
+    "importing": "Importing...",
+    "addIngredient": "Add Ingredient",
+    "addInstruction": "Add Instruction",
+    "ingredient": "Ingredient",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "name": "Name",
+    "instruction": "Instruction",
+    "step": "Step",
+    "group": "Group",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "to": "to",
+    "results": "results"
+  },
+  "time": {
+    "minutes": "min",
+    "hours": "hr",
+    "days": "days",
+    "weeks": "weeks",
+    "months": "months",
+    "years": "years",
+    "ago": "ago",
+    "justNow": "just now"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong",
+    "recipeNotFound": "Recipe not found",
+    "failedToLoad": "Failed to load",
+    "failedToSave": "Failed to save",
+    "invalidUrl": "Invalid URL",
+    "requiredField": "This field is required"
+  },
+  "meta": {
+    "siteTitle": "Janella's Kitchen - Recipe Collection",
+    "siteDescription": "A modern recipe management application with AI-powered recipe parsing and semantic search",
+    "recipeTitle": "{title} - Recipe",
+    "recipesTitle": "All Recipes - Janella's Kitchen"
+  }
+}

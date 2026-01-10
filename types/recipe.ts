@@ -4,6 +4,9 @@ import type {
   Instruction as PrismaInstruction,
   Tag as PrismaTag,
   RecipeImage as PrismaRecipeImage,
+  RecipeTranslation as PrismaRecipeTranslation,
+  IngredientTranslation as PrismaIngredientTranslation,
+  InstructionTranslation as PrismaInstructionTranslation,
   Difficulty,
   Course,
   SourceType,
@@ -18,6 +21,9 @@ export type Ingredient = PrismaIngredient;
 export type Instruction = PrismaInstruction;
 export type Tag = PrismaTag;
 export type RecipeImage = PrismaRecipeImage;
+export type RecipeTranslation = PrismaRecipeTranslation;
+export type IngredientTranslation = PrismaIngredientTranslation;
+export type InstructionTranslation = PrismaInstructionTranslation;
 
 // Extended recipe with relations
 export interface RecipeWithRelations extends Omit<Recipe, "embedding"> {
@@ -141,4 +147,43 @@ export interface FilterOptions {
   difficulties: { value: Difficulty; count: number }[];
   tags: { value: string; slug: string; count: number }[];
   maxTotalTime: number;
+}
+
+// Translation types
+export interface RecipeTranslationWithRelations extends RecipeTranslation {
+  ingredients: IngredientTranslation[];
+  instructions: InstructionTranslation[];
+}
+
+export interface RecipeWithTranslations extends RecipeWithRelations {
+  translations: RecipeTranslationWithRelations[];
+}
+
+// Localized recipe (merged original + translation)
+export interface LocalizedRecipe extends Omit<Recipe, "embedding"> {
+  title: string;
+  description?: string;
+  servings?: string;
+  notes?: string;
+  ingredients: Array<{
+    id: string;
+    quantity?: string;
+    unit?: string;
+    name: string;
+    notes?: string;
+    group?: string;
+    sortOrder: number;
+  }>;
+  instructions: Array<{
+    id: string;
+    text: string;
+    group?: string;
+    sortOrder: number;
+    duration?: number;
+    imageUrl?: string;
+  }>;
+  tags: Tag[];
+  images: RecipeImage[];
+  locale: string;
+  isTranslated: boolean;
 }

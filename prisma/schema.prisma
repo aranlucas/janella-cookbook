@@ -58,10 +58,15 @@ model Recipe {
   cookCount  Int       @default(0)
   lastCooked DateTime?
 
+  // i18n
+  locale       String              @default("en") // Original language of the recipe
+  translations RecipeTranslation[]
+
   @@index([slug])
   @@index([cuisine])
   @@index([course])
   @@index([isFavorite])
+  @@index([locale])
 }
 
 model Ingredient {
@@ -135,4 +140,61 @@ enum SourceType {
   NATURAL_LANGUAGE // Parsed from text/AI
   PHOTO // OCR from photo
   API // External recipe API
+}
+
+// i18n Translation Models
+model RecipeTranslation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  locale      String // ISO 639-1 language code (e.g., "es", "fr", "de", "ja")
+  title       String
+  description String?
+  servings    String?
+  notes       String?
+
+  // Search text in translated language
+  searchText String?
+
+  // Relations
+  ingredients  IngredientTranslation[]
+  instructions InstructionTranslation[]
+
+  @@unique([recipeId, locale])
+  @@index([locale])
+  @@index([recipeId])
+}
+
+model IngredientTranslation {
+  id          String            @id @default(cuid())
+  translationId String
+  translation RecipeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  // Reference to original ingredient for ordering
+  originalIngredientId String
+
+  name  String
+  unit  String?
+  notes String?
+  group String?
+
+  @@index([translationId])
+}
+
+model InstructionTranslation {
+  id          String            @id @default(cuid())
+  translationId String
+  translation RecipeTranslation @relation(fields: [translationId], references: [id], onDelete: Cascade)
+
+  // Reference to original instruction for ordering
+  originalInstructionId String
+
+  text  String
+  group String?
+
+  @@index([translationId])
 }
