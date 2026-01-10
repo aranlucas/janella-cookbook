@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { prisma, isSQLite } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
 import { parseRecipeFromUrl, parseRecipeFromText } from "@/lib/recipe-parser";
@@ -226,12 +226,22 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
 
     // Update embedding
     if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
+      if (isSQLite()) {
+        // For SQLite, store as JSON string
+        const embeddingString = JSON.stringify(embeddingData);
+        await prisma.recipe.update({
+          where: { id: recipe.id },
+          data: { embedding: embeddingString },
+        });
+      } else {
+        // For PostgreSQL with pgvector, use vector type
+        const embeddingString = `[${embeddingData.join(",")}]`;
+        await prisma.$executeRaw`
+          UPDATE "Recipe"
+          SET embedding = ${embeddingString}::vector
+          WHERE id = ${recipe.id}
+        `;
+      }
     }
 
     revalidateRecipes(slug);
@@ -322,12 +332,22 @@ export async function importFromText(text: string): Promise<ActionResult> {
 
     // Update embedding
     if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
+      if (isSQLite()) {
+        // For SQLite, store as JSON string
+        const embeddingString = JSON.stringify(embeddingData);
+        await prisma.recipe.update({
+          where: { id: recipe.id },
+          data: { embedding: embeddingString },
+        });
+      } else {
+        // For PostgreSQL with pgvector, use vector type
+        const embeddingString = `[${embeddingData.join(",")}]`;
+        await prisma.$executeRaw`
+          UPDATE "Recipe"
+          SET embedding = ${embeddingString}::vector
+          WHERE id = ${recipe.id}
+        `;
+      }
     }
 
     revalidateRecipes(slug);
@@ -434,12 +454,22 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
 
     // Update embedding
     if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
+      if (isSQLite()) {
+        // For SQLite, store as JSON string
+        const embeddingString = JSON.stringify(embeddingData);
+        await prisma.recipe.update({
+          where: { id: recipe.id },
+          data: { embedding: embeddingString },
+        });
+      } else {
+        // For PostgreSQL with pgvector, use vector type
+        const embeddingString = `[${embeddingData.join(",")}]`;
+        await prisma.$executeRaw`
+          UPDATE "Recipe"
+          SET embedding = ${embeddingString}::vector
+          WHERE id = ${recipe.id}
+        `;
+      }
     }
 
     revalidateRecipes(slug);
@@ -602,13 +632,23 @@ export async function updateRecipe(
 
         const { searchText, embedding } =
           await generateRecipeEmbedding(recipeForEmbedding);
-        const embeddingString = `[${embedding.join(",")}]`;
 
-        await prisma.$executeRaw`
-          UPDATE "Recipe"
-          SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
-          WHERE id = ${id}
-        `;
+        if (isSQLite()) {
+          // For SQLite, store as JSON string
+          const embeddingString = JSON.stringify(embedding);
+          await prisma.recipe.update({
+            where: { id },
+            data: { searchText, embedding: embeddingString },
+          });
+        } else {
+          // For PostgreSQL with pgvector, use vector type
+          const embeddingString = `[${embedding.join(",")}]`;
+          await prisma.$executeRaw`
+            UPDATE "Recipe"
+            SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
+            WHERE id = ${id}
+          `;
+        }
       } catch (e) {
         console.error("Failed to regenerate embedding:", e);
       }

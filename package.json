@@ -18,7 +18,10 @@
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "db:sqlite:push": "DATABASE_URL=file:./dev.db prisma db push",
+    "db:sqlite:studio": "DATABASE_URL=file:./dev.db prisma studio",
+    "db:sqlite:seed": "DATABASE_URL=file:./dev.db prisma db seed"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.2",

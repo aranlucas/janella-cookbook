@@ -2,15 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
   // Add this line for ES Module compatibility
-  moduleFormat    = "esm"
+  moduleFormat = "esm"
 }
 
 datasource db {
-  provider   = "postgresql"
-  extensions = [vector]
+  provider = "sqlite"
 }
 
 model Recipe {
@@ -48,7 +46,8 @@ model Recipe {
   images   RecipeImage[]
 
   // Search
-  embedding  Unsupported("vector(768)")?
+  // Note: In SQLite mode, embedding is stored as JSON text; in PostgreSQL with pgvector, it's a vector
+  embedding  String? // JSON array for SQLite, vector for PostgreSQL
   searchText String? // Concatenated searchable text
 
   // User interaction

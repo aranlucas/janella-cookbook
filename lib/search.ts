@@ -1,4 +1,4 @@
-import { prisma } from "./prisma";
+import { prisma, isSQLite } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
 import { ExternalApiError, DatabaseError, withRetry } from "./errors";
 import type {
@@ -158,6 +158,11 @@ export async function semanticSearch(
   limit = 20,
   offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
+  // SQLite doesn't support vector operations, fall back to keyword search
+  if (isSQLite()) {
+    return keywordSearch(query, filters, limit, offset);
+  }
+
   // Enhance and generate embedding for the query with retry logic
   const enhancedQuery = enhanceSearchQuery(query);
 
