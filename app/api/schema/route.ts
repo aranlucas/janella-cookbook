@@ -99,7 +99,8 @@ const API_SCHEMA = {
           },
           maxTime: {
             type: "number",
-            description: "Filter recipes with totalTime <= maxTime (in minutes)",
+            description:
+              "Filter recipes with totalTime <= maxTime (in minutes)",
           },
         },
       },
@@ -266,10 +267,19 @@ const API_SCHEMA = {
 
     Ingredient: {
       id: { type: "string", format: "uuid" },
-      quantity: { type: "string | null", description: "Amount (e.g., '2', '1/2')" },
-      unit: { type: "string | null", description: "Unit of measure (e.g., 'cups', 'tbsp')" },
+      quantity: {
+        type: "string | null",
+        description: "Amount (e.g., '2', '1/2')",
+      },
+      unit: {
+        type: "string | null",
+        description: "Unit of measure (e.g., 'cups', 'tbsp')",
+      },
       name: { type: "string", description: "Ingredient name" },
-      notes: { type: "string | null", description: "Additional notes (e.g., 'diced', 'optional')" },
+      notes: {
+        type: "string | null",
+        description: "Additional notes (e.g., 'diced', 'optional')",
+      },
       group: { type: "string | null", description: "Ingredient group header" },
       sortOrder: { type: "number" },
     },
@@ -278,7 +288,10 @@ const API_SCHEMA = {
       id: { type: "string", format: "uuid" },
       text: { type: "string", description: "Step instruction text" },
       group: { type: "string | null", description: "Instruction group header" },
-      duration: { type: "number | null", description: "Step duration in minutes" },
+      duration: {
+        type: "number | null",
+        description: "Step duration in minutes",
+      },
       sortOrder: { type: "number" },
     },
 
@@ -344,13 +357,37 @@ const API_SCHEMA = {
   },
 
   errorCodes: [
-    { code: "VALIDATION_ERROR", status: 400, description: "Invalid request parameters" },
+    {
+      code: "VALIDATION_ERROR",
+      status: 400,
+      description: "Invalid request parameters",
+    },
     { code: "NOT_FOUND", status: 404, description: "Resource not found" },
-    { code: "RECIPE_NOT_FOUND", status: 404, description: "Recipe does not exist" },
-    { code: "RECIPE_PARSE_ERROR", status: 400, description: "Failed to parse recipe from URL or text" },
-    { code: "EXTERNAL_API_ERROR", status: 502, description: "External service (AI, embedding) failed" },
-    { code: "DATABASE_ERROR", status: 500, description: "Database operation failed" },
-    { code: "UNKNOWN_ERROR", status: 500, description: "Unexpected server error" },
+    {
+      code: "RECIPE_NOT_FOUND",
+      status: 404,
+      description: "Recipe does not exist",
+    },
+    {
+      code: "RECIPE_PARSE_ERROR",
+      status: 400,
+      description: "Failed to parse recipe from URL or text",
+    },
+    {
+      code: "EXTERNAL_API_ERROR",
+      status: 502,
+      description: "External service (AI, embedding) failed",
+    },
+    {
+      code: "DATABASE_ERROR",
+      status: 500,
+      description: "Database operation failed",
+    },
+    {
+      code: "UNKNOWN_ERROR",
+      status: 500,
+      description: "Unexpected server error",
+    },
   ],
 };
 

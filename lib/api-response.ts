@@ -79,12 +79,16 @@ export function apiPaginated<T>(
   pagination: { total: number; limit: number; offset: number },
   status: number = 200,
 ): NextResponse<ApiSuccessResponse<T[]>> {
-  return apiSuccess(data, {
-    pagination: {
-      ...pagination,
-      hasMore: pagination.offset + data.length < pagination.total,
+  return apiSuccess(
+    data,
+    {
+      pagination: {
+        ...pagination,
+        hasMore: pagination.offset + data.length < pagination.total,
+      },
     },
-  }, status);
+    status,
+  );
 }
 
 /**

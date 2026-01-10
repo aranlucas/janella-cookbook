@@ -108,7 +108,8 @@ export async function POST(request: NextRequest) {
         results,
         total,
         query: body.query,
-        suggestedFilters: suggestedFilters.length > 0 ? suggestedFilters : undefined,
+        suggestedFilters:
+          suggestedFilters.length > 0 ? suggestedFilters : undefined,
       },
       {
         pagination: {

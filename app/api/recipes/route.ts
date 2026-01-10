@@ -81,7 +81,9 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get("order") === "asc" ? "asc" : "desc";
 
     if (
-      !VALID_SORT_FIELDS.includes(sortField as (typeof VALID_SORT_FIELDS)[number])
+      !VALID_SORT_FIELDS.includes(
+        sortField as (typeof VALID_SORT_FIELDS)[number],
+      )
     ) {
       return apiValidationError(
         `Invalid sort field: ${sortField}. Valid fields: ${VALID_SORT_FIELDS.join(", ")}`,
@@ -90,8 +92,12 @@ export async function GET(request: NextRequest) {
 
     // Parse filters
     const cuisine = searchParams.get("cuisine");
-    const courseParam = searchParams.get("course")?.toUpperCase() as Course | undefined;
-    const difficultyParam = searchParams.get("difficulty")?.toUpperCase() as Difficulty | undefined;
+    const courseParam = searchParams.get("course")?.toUpperCase() as
+      | Course
+      | undefined;
+    const difficultyParam = searchParams.get("difficulty")?.toUpperCase() as
+      | Difficulty
+      | undefined;
     const tagSlug = searchParams.get("tag");
     const favoriteParam = searchParams.get("favorite");
     const maxTimeParam = searchParams.get("maxTime");
