@@ -2,8 +2,6 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
-import { parseHTML } from "linkedom";
-import { Readability } from "@mozilla/readability";
 import { encode } from "gpt-tokenizer";
 import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
@@ -296,38 +294,11 @@ async function extractRecipeWithAI(
   // Extract the main image before processing content
   const imageUrl = extractImageFromHtml(html, sourceUrl);
 
-  // First try Readability (linkedom provides a lightweight DOM for Readability)
-  let content = "";
-  try {
-    const { document } = parseHTML(html);
-    const reader = new Readability(document as unknown as Document);
-    const article = reader.parse();
-    if (article?.textContent) content = article.textContent;
-  } catch {
-    // ignore and fall back to selector heuristics
-  }
-
-  if (!content) {
-    const $ = load(html);
-    const articleEl = $("article").first();
-    if (articleEl.length) content = articleEl.text();
-    else if ($("main").length) content = $("main").text();
-    else if ($("[role=main]").length) content = $("[role=main]").text();
-    else content = $("body").text() || "";
-  }
-
-  // Clean content and validate token count
-  const cleanedContent = content.replace(/\s+/g, " ").trim();
-
-  if (cleanedContent.length < 50) {
-    throw new RecipeParseError(
-      "Could not extract enough content from the page to parse a recipe",
-      sourceUrl,
-    );
-  }
+  // Clean and validate HTML - send full page content to LLM
+  const cleanedHtml = html.replace(/\s+/g, " ").trim();
 
   // Validate and truncate to fit within model's context window
-  const validatedContent = validateAndTruncateContent(cleanedContent);
+  const validatedContent = validateAndTruncateContent(cleanedHtml);
 
   try {
     const { output: parsed } = await withRetry(
@@ -335,11 +306,12 @@ async function extractRecipeWithAI(
         return await generateText({
           model: model,
           output: Output.object({ schema: recipeSchema }),
-          system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content.
+          system: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
 
-CRITICAL INSTRUCTIONS - READ FULL CONTENT:
-- You have access to the COMPLETE webpage content - read and process ALL of it thoroughly
-- Be accurate and only include information present in the content
+CRITICAL INSTRUCTIONS:
+- You will receive the FULL HTML of a webpage - ignore all irrelevant content like navigation menus, advertisements, footers, sidebars, social media widgets, and promotional content
+- Focus ONLY on the actual recipe content (ingredients, instructions, title, description, etc.)
+- Be accurate and only include information that is part of the recipe itself
 - Extract ALL ingredients with their exact quantities, units, and any preparation notes
 - Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
 - If ingredients are grouped (e.g., "For the avocado topping"), preserve that group information
@@ -348,9 +320,10 @@ CRITICAL INSTRUCTIONS - READ FULL CONTENT:
 - Identify the cuisine type and meal course if evident
 - Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
 - For instructions, maintain the original step numbering and any substeps
-- Look for recipe variations, notes, or tips mentioned throughout the content
+- Look for recipe variations, notes, or tips that are part of the recipe
+- Ignore any user comments, related recipes, or other non-recipe content
 - Output in structured JSON format`,
-          prompt: `Extract the complete recipe from this webpage content. Make sure to capture every ingredient and instruction step:\n\n${validatedContent}`,
+          prompt: `Extract the complete recipe from this webpage HTML. Ignore navigation, ads, and other irrelevant content. Focus only on the recipe itself:\n\n${validatedContent}`,
         });
       },
       {
