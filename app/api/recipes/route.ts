@@ -33,7 +33,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiPaginated, apiError, apiValidationError } from "@/lib/api-response";
-import type { Course, Difficulty } from "@prisma/client";
+import type { Course, Difficulty, Prisma } from "@prisma/client";
 
 const VALID_SORT_FIELDS = [
   "createdAt",
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build where clause
-    const where: Parameters<typeof prisma.recipe.findMany>[0]["where"] = {};
+    const where: Prisma.RecipeWhereInput = {};
 
     if (cuisine) {
       where.cuisine = { equals: cuisine, mode: "insensitive" };

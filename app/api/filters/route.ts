@@ -54,10 +54,9 @@ export async function GET() {
           results.map((r) => r.cuisine).filter((c): c is string => c !== null),
         ),
 
-      // Get courses with recipes
+      // Get courses with recipes (filter nulls in post-processing)
       prisma.recipe
         .findMany({
-          where: { course: { not: null } },
           select: { course: true },
           distinct: ["course"],
         })
@@ -65,10 +64,9 @@ export async function GET() {
           results.map((r) => r.course).filter((c): c is Course => c !== null),
         ),
 
-      // Get difficulties with recipes
+      // Get difficulties with recipes (filter nulls in post-processing)
       prisma.recipe
         .findMany({
-          where: { difficulty: { not: null } },
           select: { difficulty: true },
           distinct: ["difficulty"],
         })
@@ -102,18 +100,16 @@ export async function GET() {
       // Get favorite count
       prisma.recipe.count({ where: { isFavorite: true } }),
 
-      // Get counts by course
+      // Get counts by course (filter nulls in post-processing)
       prisma.recipe.groupBy({
         by: ["course"],
         _count: { course: true },
-        where: { course: { not: null } },
       }),
 
-      // Get counts by difficulty
+      // Get counts by difficulty (filter nulls in post-processing)
       prisma.recipe.groupBy({
         by: ["difficulty"],
         _count: { difficulty: true },
-        where: { difficulty: { not: null } },
       }),
     ]);
 
