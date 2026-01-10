@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image, { ImageProps } from "next/image";
 
 interface ImageWithFallbackProps extends Omit<ImageProps, "src" | "onError"> {
@@ -17,10 +17,13 @@ export const ImageWithFallback = ({
   ...props
 }: ImageWithFallbackProps) => {
   const [error, setError] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState(src);
 
-  useEffect(() => {
+  // Reset error state when src changes
+  if (src !== currentSrc) {
+    setCurrentSrc(src);
     setError(false);
-  }, [src]);
+  }
 
   const handleError = () => {
     if (!error) {
@@ -32,7 +35,7 @@ export const ImageWithFallback = ({
   };
 
   // Use fallback (or original src as fallback) with unoptimized flag
-  const imageSrc = error ? (fallback || src) : src;
+  const imageSrc = error ? fallback || src : src;
   const isUnoptimized = error;
 
   return (
