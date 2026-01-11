@@ -147,8 +147,8 @@ export default async function RecipePage({ params }: PageProps) {
             {recipe.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {recipe.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline">
-                    {tag.name}
+                  <Badge key={tag.id} variant="outline" className="max-w-full">
+                    <span className="truncate">{tag.name}</span>
                   </Badge>
                 ))}
               </div>
