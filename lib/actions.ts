@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
-import { parseRecipeFromUrl, parseRecipeFromText } from "@/lib/recipe-parser";
+import {
+  parseRecipeFromUrl,
+  parseRecipeFromText,
+  parseRecipeFromYouTube,
+} from "@/lib/recipe-parser";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
 
 export type ActionResult<T = RecipeWithRelations> =
@@ -337,6 +341,136 @@ export async function importFromText(text: string): Promise<ActionResult> {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to parse recipe",
+    };
+  }
+}
+
+// Import recipe from YouTube video
+export async function importFromYouTube(url: string): Promise<ActionResult> {
+  try {
+    // Validate URL
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return { success: false, error: "Invalid URL" };
+    }
+
+    if (!process.env.OPENROUTER_API_KEY) {
+      return {
+        success: false,
+        error: "YouTube import requires OpenRouter API configuration",
+      };
+    }
+
+    // Check if this YouTube URL has been imported before
+    const existingRecipe = await prisma.recipe.findFirst({
+      where: { sourceUrl: parsedUrl.toString() },
+      select: { id: true, slug: true },
+    });
+
+    // Parse recipe from YouTube video
+    const parsed = await parseRecipeFromYouTube(parsedUrl.toString());
+
+    // If recipe exists, update it; otherwise create new one
+    if (existingRecipe) {
+      // Update existing recipe
+      const result = await updateRecipe(existingRecipe.id, {
+        title: parsed.title,
+        description: parsed.description,
+        prepTime: parsed.prepTime,
+        cookTime: parsed.cookTime,
+        totalTime: parsed.totalTime,
+        servings: parsed.servings,
+        difficulty: parsed.difficulty,
+        cuisine: parsed.cuisine,
+        course: parsed.course,
+        imageUrl: parsed.imageUrl,
+        ingredients: parsed.ingredients,
+        instructions: parsed.instructions,
+      });
+
+      return result;
+    }
+
+    // Generate unique slug for new recipe
+    const slug = await generateUniqueSlug(parsed.title);
+
+    // Generate embedding
+    let searchText: string | undefined;
+    let embeddingData: number[] | undefined;
+
+    if (process.env.HUGGINGFACE_API_KEY) {
+      try {
+        const embedResult = await generateRecipeEmbedding({
+          title: parsed.title,
+          description: parsed.description,
+          cuisine: parsed.cuisine,
+          course: parsed.course,
+          ingredients: parsed.ingredients,
+          instructions: parsed.instructions,
+          totalTime: parsed.totalTime,
+          difficulty: parsed.difficulty,
+        });
+        searchText = embedResult.searchText;
+        embeddingData = embedResult.embedding;
+      } catch (e) {
+        console.error("Failed to generate embedding:", e);
+      }
+    }
+
+    // Create recipe
+    const recipe = await createRecipeInDb({
+      title: parsed.title,
+      slug,
+      description: parsed.description,
+      prepTime: parsed.prepTime,
+      cookTime: parsed.cookTime,
+      totalTime:
+        parsed.totalTime ||
+        (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
+        undefined,
+      servings: parsed.servings,
+      difficulty: parsed.difficulty || "MEDIUM",
+      cuisine: parsed.cuisine,
+      course: parsed.course,
+      sourceUrl: parsedUrl.toString(),
+      sourceType: "URL_IMPORT",
+      imageUrl: parsed.imageUrl,
+      searchText,
+      ingredients: parsed.ingredients.map((ing, index) => ({
+        quantity: ing.quantity,
+        unit: ing.unit,
+        name: ing.name,
+        notes: ing.notes,
+        group: ing.group,
+        sortOrder: ing.sortOrder ?? index,
+      })),
+      instructions: parsed.instructions.map((inst, index) => ({
+        text: inst.text,
+        group: inst.group,
+        sortOrder: inst.sortOrder ?? index,
+        duration: inst.duration,
+      })),
+    });
+
+    // Update embedding
+    if (embeddingData) {
+      const embeddingString = `[${embeddingData.join(",")}]`;
+      await prisma.$executeRaw`
+        UPDATE "Recipe"
+        SET embedding = ${embeddingString}::vector
+        WHERE id = ${recipe.id}
+      `;
+    }
+
+    revalidateRecipes(slug);
+    return { success: true, data: recipe, slug };
+  } catch (error) {
+    console.error("Error importing recipe from YouTube:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to import recipe",
     };
   }
 }

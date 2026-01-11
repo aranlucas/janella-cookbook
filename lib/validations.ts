@@ -112,6 +112,33 @@ export const textImportSchema = z.object({
 export type TextImportSchema = z.infer<typeof textImportSchema>;
 
 /**
+ * YouTube import schema
+ */
+export const youtubeImportSchema = z.object({
+  url: z
+    .string()
+    .url("Please enter a valid URL")
+    .refine(
+      (url) => {
+        try {
+          const parsedUrl = new URL(url);
+          return (
+            parsedUrl.hostname === "www.youtube.com" ||
+            parsedUrl.hostname === "youtube.com" ||
+            parsedUrl.hostname === "youtu.be" ||
+            parsedUrl.hostname === "m.youtube.com"
+          );
+        } catch {
+          return false;
+        }
+      },
+      { message: "Please enter a valid YouTube URL" },
+    ),
+});
+
+export type YouTubeImportSchema = z.infer<typeof youtubeImportSchema>;
+
+/**
  * Search filters schema
  */
 export const searchFiltersSchema = z.object({
@@ -205,6 +232,30 @@ export function validateTextImport(data: unknown):
       error: string;
     } {
   const result = textImportSchema.safeParse(data);
+
+  if (result.success) {
+    return { success: true, data: result.data };
+  }
+
+  return {
+    success: false,
+    error: result.error.issues[0]?.message || "Invalid input",
+  };
+}
+
+/**
+ * Validate YouTube import input
+ */
+export function validateYouTubeImport(data: unknown):
+  | {
+      success: true;
+      data: YouTubeImportSchema;
+    }
+  | {
+      success: false;
+      error: string;
+    } {
+  const result = youtubeImportSchema.safeParse(data);
 
   if (result.success) {
     return { success: true, data: result.data };
