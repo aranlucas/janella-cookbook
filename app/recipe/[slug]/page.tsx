@@ -165,7 +165,9 @@ export default async function RecipePage({ params }: PageProps) {
       <Separator className="container" />
 
       {/* Recipe Content */}
-      <section className="container py-6 md:py-8">
+      <section
+        className={`container pt-6 md:pt-8 ${recipe.notes || recipe.sourceUrl ? "pb-6 md:pb-8" : "pb-0"}`}
+      >
         <div className="grid gap-6 md:gap-8 lg:grid-cols-[1fr_2fr]">
           {/* Ingredients */}
           <div className="lg:sticky lg:top-24 lg:self-start">
@@ -200,7 +202,7 @@ export default async function RecipePage({ params }: PageProps) {
       {(recipe.notes || recipe.sourceUrl) && (
         <>
           <Separator className="container" />
-          <section className="container py-6 md:py-8">
+          <section className="container pt-6 pb-0 md:pt-8">
             {recipe.notes && (
               <Accordion className="max-w-2xl">
                 <AccordionItem value="notes" className="border-none">
