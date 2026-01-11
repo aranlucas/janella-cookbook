@@ -72,7 +72,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                     <Input
                       {...field}
                       type="url"
-                      placeholder="https://www.youtube.com/watch?v=..."
+                      placeholder="https://www.youtube.com/watch?v=... or /shorts/..."
                       className="bg-cream border-butter focus:border-terracotta"
                       disabled={isPending}
                     />
@@ -84,9 +84,9 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
 
             <div className="text-muted-foreground text-sm">
               <p>
-                Paste a YouTube video URL of a cooking tutorial. We&apos;ll
-                automatically extract the recipe from the video&apos;s
-                transcript:
+                Paste a YouTube video or Shorts URL of a cooking tutorial.
+                We&apos;ll automatically extract the recipe from the
+                video&apos;s transcript:
               </p>
               <ul className="mt-2 list-inside list-disc space-y-1">
                 <li>Recipe title and description</li>
@@ -98,10 +98,10 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
               <div className="bg-butter/20 mt-3 rounded-md p-2 text-xs">
                 <p className="font-medium">Enhanced Import:</p>
                 <p className="mt-1">
-                  Using advanced transcript fetching that works with most
-                  YouTube videos, including those with auto-generated captions.
-                  If a video doesn&apos;t work, try the &quot;Paste Text&quot;
-                  tab instead.
+                  Supports regular videos and YouTube Shorts. Uses advanced
+                  transcript fetching that works with most videos, including
+                  those with auto-generated captions. If a video doesn&apos;t
+                  work, try the &quot;Paste Text&quot; tab instead.
                 </p>
               </div>
             </div>

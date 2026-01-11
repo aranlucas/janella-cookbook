@@ -8,6 +8,7 @@ import { RecipeParseError, ExternalApiError } from "./errors";
  * - https://www.youtube.com/watch?v=VIDEO_ID
  * - https://youtu.be/VIDEO_ID
  * - https://www.youtube.com/embed/VIDEO_ID
+ * - https://www.youtube.com/shorts/VIDEO_ID
  * - https://m.youtube.com/watch?v=VIDEO_ID
  */
 export function extractYouTubeVideoId(url: string): string {
@@ -29,6 +30,12 @@ export function extractYouTubeVideoId(url: string): string {
       const videoId = parsedUrl.searchParams.get("v");
       if (videoId) {
         return videoId;
+      }
+
+      // Handle /shorts/VIDEO_ID
+      const shortsMatch = parsedUrl.pathname.match(/\/shorts\/([^/?]+)/);
+      if (shortsMatch) {
+        return shortsMatch[1];
       }
 
       // Handle /embed/VIDEO_ID
