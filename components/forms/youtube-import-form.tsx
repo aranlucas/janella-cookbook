@@ -95,9 +95,15 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                 <li>Cooking times and servings</li>
                 <li>Video thumbnail as recipe image</li>
               </ul>
-              <p className="mt-2 text-xs italic">
-                Note: The video must have captions/transcript enabled
-              </p>
+              <div className="bg-butter/20 mt-3 rounded-md p-2 text-xs">
+                <p className="font-medium">Enhanced Import:</p>
+                <p className="mt-1">
+                  Using advanced transcript fetching that works with most
+                  YouTube videos, including those with auto-generated captions.
+                  If a video doesn&apos;t work, try the &quot;Paste Text&quot;
+                  tab instead.
+                </p>
+              </div>
             </div>
 
             <Button

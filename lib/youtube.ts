@@ -1,4 +1,5 @@
 import { YoutubeTranscript } from "youtube-transcript";
+import { Innertube } from "youtubei.js/web";
 import { RecipeParseError, ExternalApiError } from "./errors";
 
 /**
@@ -54,47 +55,115 @@ export function extractYouTubeVideoId(url: string): string {
 }
 
 /**
- * Get video transcript from YouTube
+ * Get video transcript from YouTube using youtubei.js (primary) with fallback to youtube-transcript
+ * youtubei.js is more robust and less likely to be blocked by YouTube
  */
 export async function getYouTubeTranscript(
   videoId: string,
 ): Promise<{ text: string; title?: string }> {
+  // Try youtubei.js first (more robust, less likely to be blocked)
   try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+    const youtube = await Innertube.create({
+      lang: "en",
+      location: "US",
+      retrieve_player: false,
+    });
 
-    if (!transcript || transcript.length === 0) {
-      throw new ExternalApiError(
-        "YouTube",
-        "No transcript available for this video. The video may not have captions enabled.",
-      );
+    const info = await youtube.getInfo(videoId);
+    const transcriptData = await info.getTranscript();
+
+    if (!transcriptData) {
+      throw new Error("No transcript available");
+    }
+
+    // The transcript data structure from youtubei.js
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const segments = (transcriptData as any).content?.body?.initial_segments;
+    if (!segments || !Array.isArray(segments) || segments.length === 0) {
+      throw new Error("No transcript segments found");
     }
 
     // Combine all transcript segments into a single text
-    const text = transcript.map((segment) => segment.text).join(" ");
+    const text = segments
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((segment: any) => {
+        const runs = segment?.snippet?.runs || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return runs.map((run: any) => run?.text || "").join("");
+      })
+      .filter((segmentText: string) => segmentText.trim().length > 0)
+      .join(" ");
 
-    return { text };
-  } catch (error) {
-    if (error instanceof ExternalApiError) throw error;
+    if (!text || text.trim().length === 0) {
+      throw new Error("Transcript is empty");
+    }
 
-    // Handle specific YouTube transcript errors
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    return {
+      text,
+      title: info.basic_info.title || undefined,
+    };
+  } catch (primaryError) {
+    // Log the primary error for debugging
+    console.warn(
+      "youtubei.js transcript fetch failed, trying fallback:",
+      primaryError instanceof Error
+        ? primaryError.message
+        : String(primaryError),
+    );
 
-    if (errorMessage.includes("Transcript is disabled")) {
+    // Fallback to youtube-transcript library
+    try {
+      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+
+      if (!transcript || transcript.length === 0) {
+        throw new Error("No transcript available");
+      }
+
+      // Combine all transcript segments into a single text
+      const text = transcript.map((segment) => segment.text).join(" ");
+
+      return { text };
+    } catch (fallbackError) {
+      // Both methods failed, throw a detailed error
+      const primaryMsg =
+        primaryError instanceof Error
+          ? primaryError.message
+          : String(primaryError);
+      const fallbackMsg =
+        fallbackError instanceof Error
+          ? fallbackError.message
+          : String(fallbackError);
+
+      // Handle specific error cases
+      if (
+        primaryMsg.includes("Transcript is disabled") ||
+        fallbackMsg.includes("Transcript is disabled")
+      ) {
+        throw new ExternalApiError(
+          "YouTube",
+          "Transcript is disabled for this video. Please try a different video or use the manual import option.",
+        );
+      }
+
+      if (
+        primaryMsg.includes("not found") ||
+        primaryMsg.includes("404") ||
+        fallbackMsg.includes("not found") ||
+        fallbackMsg.includes("404")
+      ) {
+        throw new ExternalApiError(
+          "YouTube",
+          "Video not found or is private. Please check the URL and try again.",
+        );
+      }
+
+      // Generic error
       throw new ExternalApiError(
         "YouTube",
-        "Transcript is disabled for this video",
+        `Failed to fetch transcript. The video may not have captions enabled, or YouTube may be blocking the request. Primary error: ${primaryMsg}`,
+        fallbackError,
       );
     }
-
-    if (errorMessage.includes("not found") || errorMessage.includes("404")) {
-      throw new ExternalApiError("YouTube", "Video not found or is private");
-    }
-
-    throw new ExternalApiError(
-      "YouTube",
-      `Failed to fetch transcript: ${errorMessage}`,
-      error,
-    );
   }
 }
 

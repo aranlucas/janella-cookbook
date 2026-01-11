@@ -475,8 +475,9 @@ export async function parseRecipeFromYouTube(
   // Get video metadata
   const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
 
-  // Fetch transcript
-  const { text: transcript } = await getYouTubeTranscript(videoId);
+  // Fetch transcript (may also return video title)
+  const { text: transcript, title: videoTitle } =
+    await getYouTubeTranscript(videoId);
 
   if (!transcript || transcript.trim().length < 50) {
     throw new RecipeParseError(
@@ -491,6 +492,10 @@ export async function parseRecipeFromYouTube(
   try {
     const { output: parsed } = await withRetry(
       async () => {
+        const videoContext = videoTitle
+          ? `\n\nVideo Title: "${videoTitle}"\n\n`
+          : "\n\n";
+
         return await generateText({
           model: model,
           output: Output.object({ schema: recipeSchema }),
@@ -501,13 +506,14 @@ CRITICAL INSTRUCTIONS:
 - Look for ingredients mentioned with quantities (e.g., "2 cups of flour", "3 tablespoons butter")
 - Extract step-by-step cooking instructions in the order they're mentioned
 - Identify prep time, cook time, and servings if mentioned
-- Extract the recipe title (often mentioned at the start of the video)
+- Extract the recipe title (often mentioned at the start of the video or in the video title)
 - Identify the cuisine type and meal course if evident
 - Be thorough but only include information that's actually in the transcript
 - If ingredients are mentioned but quantities aren't specified, still include the ingredient
 - Ignore non-recipe content like intro/outro, channel promotions, or unrelated commentary
-- Extract all ingredients and instructions even if the transcript is messy or has typos`,
-          prompt: `Extract the complete recipe from this YouTube cooking video transcript:\n\n${validatedTranscript}`,
+- Extract all ingredients and instructions even if the transcript is messy or has typos
+- If the video title clearly indicates the recipe name, you can use it as the recipe title`,
+          prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}Transcript:\n${validatedTranscript}`,
         });
       },
       {
