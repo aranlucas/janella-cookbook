@@ -39,8 +39,8 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <div className="relative flex gap-1.5">
-        <div className="relative flex-1">
+      <div className="relative flex gap-2">
+        <div className="relative flex-1 min-w-0">
           <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2">
             🔍
           </span>
@@ -51,16 +51,16 @@ export function SearchBar({
             placeholder={placeholder}
             autoFocus={autoFocus}
             className={cn(
-              "bg-warm-white border-butter focus:border-terracotta pl-10",
-              size === "large" && "h-12 rounded-xl text-lg",
+              "bg-warm-white border-butter focus:border-terracotta w-full pl-10",
+              size === "large" && "h-12 rounded-xl text-base sm:text-lg",
             )}
           />
         </div>
         <Button
           type="submit"
           className={cn(
-            "bg-terracotta hover:bg-rust text-warm-white",
-            size === "large" && "h-12 rounded-xl px-8 text-lg",
+            "bg-terracotta hover:bg-rust text-warm-white shrink-0",
+            size === "large" && "h-12 rounded-xl px-4 text-base sm:px-6 sm:text-lg md:px-8",
           )}
         >
           Search
