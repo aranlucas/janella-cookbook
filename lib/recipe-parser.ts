@@ -5,6 +5,11 @@ import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
 import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
+import {
+  extractYouTubeVideoId,
+  getYouTubeTranscript,
+  getYouTubeVideoMetadata,
+} from "./youtube";
 
 // OpenRouter client configured for AI SDK
 const openrouter = createOpenAI({
@@ -445,6 +450,113 @@ Be accurate and organized. Extract all ingredients and instructions even if form
     throw new ExternalApiError(
       "OpenRouter",
       `Failed to parse recipe text: ${error instanceof Error ? error.message : "Unknown error"}`,
+      error,
+    );
+  }
+}
+
+/**
+ * Parse a recipe from a YouTube video URL
+ * Extracts the transcript and parses it into structured recipe data
+ */
+export async function parseRecipeFromYouTube(
+  url: string,
+): Promise<ParsedRecipe> {
+  if (!process.env.OPENROUTER_API_KEY) {
+    throw new ExternalApiError(
+      "OpenRouter",
+      "OPENROUTER_API_KEY environment variable is not set",
+    );
+  }
+
+  // Extract video ID from URL
+  const videoId = extractYouTubeVideoId(url);
+
+  // Get video metadata
+  const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
+
+  // Fetch transcript
+  const { text: transcript } = await getYouTubeTranscript(videoId);
+
+  if (!transcript || transcript.trim().length < 50) {
+    throw new RecipeParseError(
+      "Transcript is too short to extract a recipe",
+      url,
+    );
+  }
+
+  // Validate and truncate to fit within model's context window
+  const validatedTranscript = validateAndTruncateContent(transcript.trim());
+
+  try {
+    const { output: parsed } = await withRetry(
+      async () => {
+        return await generateText({
+          model: model,
+          output: Output.object({ schema: recipeSchema }),
+          system: `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
+
+CRITICAL INSTRUCTIONS:
+- The transcript is from a cooking video, so extract the recipe being demonstrated
+- Look for ingredients mentioned with quantities (e.g., "2 cups of flour", "3 tablespoons butter")
+- Extract step-by-step cooking instructions in the order they're mentioned
+- Identify prep time, cook time, and servings if mentioned
+- Extract the recipe title (often mentioned at the start of the video)
+- Identify the cuisine type and meal course if evident
+- Be thorough but only include information that's actually in the transcript
+- If ingredients are mentioned but quantities aren't specified, still include the ingredient
+- Ignore non-recipe content like intro/outro, channel promotions, or unrelated commentary
+- Extract all ingredients and instructions even if the transcript is messy or has typos`,
+          prompt: `Extract the complete recipe from this YouTube cooking video transcript:\n\n${validatedTranscript}`,
+        });
+      },
+      {
+        maxRetries: 2,
+        initialDelayMs: 2000,
+      },
+    );
+
+    // Validate we got a proper recipe
+    if (!parsed.title || parsed.title === "Untitled Recipe") {
+      throw new RecipeParseError(
+        "Could not extract recipe title from the video transcript",
+        url,
+      );
+    }
+
+    if (!parsed.ingredients || parsed.ingredients.length === 0) {
+      throw new RecipeParseError(
+        "Could not extract any ingredients from the video transcript. Make sure the video has captions enabled and contains a recipe.",
+        url,
+      );
+    }
+
+    return {
+      title: parsed.title,
+      description: parsed.description,
+      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
+        ...ing,
+        sortOrder: i,
+      })),
+      instructions: (parsed.instructions || []).map((inst, i: number) => ({
+        text: inst?.text || "",
+        group: inst?.group,
+        sortOrder: i,
+      })),
+      prepTime: parsed.prepTime,
+      cookTime: parsed.cookTime,
+      totalTime: parsed.totalTime,
+      servings: parsed.servings,
+      cuisine: parsed.cuisine,
+      course: parsed.course as Course | undefined,
+      difficulty: parsed.difficulty as Difficulty | undefined,
+      imageUrl: thumbnailUrl, // Use YouTube thumbnail as recipe image
+    };
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new ExternalApiError(
+      "OpenRouter",
+      `Failed to parse recipe from YouTube video: ${error instanceof Error ? error.message : "Unknown error"}`,
       error,
     );
   }

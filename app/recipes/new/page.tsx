@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UrlImportForm } from "@/components/forms/url-import-form";
 import { TextImportForm } from "@/components/forms/text-import-form";
+import { YouTubeImportForm } from "@/components/forms/youtube-import-form";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
 import { AppLayout } from "@/components/layout/app-layout";
 
@@ -22,12 +23,18 @@ export default function AddRecipePage() {
       description="Import from a website, paste text, or create from scratch."
     >
       <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
-        <TabsList className="bg-butter/50 grid h-auto w-full grid-cols-3">
+        <TabsList className="bg-butter/50 grid h-auto w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger
             value="url"
             className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
           >
             From URL
+          </TabsTrigger>
+          <TabsTrigger
+            value="youtube"
+            className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
+          >
+            YouTube
           </TabsTrigger>
           <TabsTrigger
             value="text"
@@ -45,6 +52,10 @@ export default function AddRecipePage() {
 
         <TabsContent value="url">
           <UrlImportForm />
+        </TabsContent>
+
+        <TabsContent value="youtube">
+          <YouTubeImportForm />
         </TabsContent>
 
         <TabsContent value="text">
