@@ -368,7 +368,7 @@ export function ManualRecipeForm({
                     className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
                   >
                     <div className="flex items-start gap-2">
-                      <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+                      <div className="grid flex-1 gap-2 sm:grid-cols-4">
                         <Input
                           {...register(`ingredients.${index}.quantity`)}
                           placeholder="Qty"
@@ -379,7 +379,7 @@ export function ManualRecipeForm({
                           placeholder="Unit"
                           className="bg-cream border-butter"
                         />
-                        <div className="col-span-2 space-y-1 sm:col-span-2">
+                        <div className="space-y-1 sm:col-span-2">
                           <Input
                             {...register(`ingredients.${index}.name`)}
                             placeholder="Ingredient name"
@@ -396,8 +396,8 @@ export function ManualRecipeForm({
                         </div>
                         <Input
                           {...register(`ingredients.${index}.group`)}
-                          placeholder="Group (e.g., Green Salsa)"
-                          className="bg-cream border-butter"
+                          placeholder="Group (optional)"
+                          className="bg-cream border-butter sm:col-span-4"
                         />
                       </div>
                       <Button
@@ -444,7 +444,7 @@ export function ManualRecipeForm({
 
               <div className="space-y-3">
                 {instructionFields.map((field, index) => (
-                  <div key={field.id} className="space-y-1">
+                  <div key={field.id} className="space-y-2">
                     <div className="flex items-start gap-2">
                       <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
                         {index + 1}
@@ -454,23 +454,23 @@ export function ManualRecipeForm({
                         placeholder={`Step ${index + 1}...`}
                         className="bg-cream border-butter min-h-[80px] flex-1"
                       />
-                      <div className="ml-2 w-40">
-                        <Input
-                          {...register(`instructions.${index}.group`)}
-                          placeholder="Group (e.g., Green Salsa)"
-                          className="bg-cream border-butter"
-                        />
-                      </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => removeInstruction(index)}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive shrink-0"
                         disabled={instructionFields.length === 1}
                       >
                         ✕
                       </Button>
+                    </div>
+                    <div className="ml-12">
+                      <Input
+                        {...register(`instructions.${index}.group`)}
+                        placeholder="Group (optional, e.g., Green Salsa)"
+                        className="bg-cream border-butter w-full sm:w-auto sm:max-w-xs"
+                      />
                     </div>
                     {form.formState.errors.instructions?.[index]?.text && (
                       <p className="text-destructive ml-12 text-xs">

@@ -151,7 +151,7 @@ export default async function HomePage() {
         </section>
 
         {/* Recipe Section */}
-        <section className="overflow-hidden py-12 md:py-16">
+        <section className="py-12 md:py-16">
           <div className="container">
             <div className="mb-10 text-center">
               <h2 className="text-charcoal font-serif text-3xl font-bold sm:text-4xl md:text-5xl">
@@ -161,9 +161,11 @@ export default async function HomePage() {
                 The latest creations from Janella&apos;s kitchen.
               </p>
             </div>
-            <Suspense fallback={<RecipeGridSkeleton />}>
-              <RecipeList />
-            </Suspense>
+            <div className="overflow-hidden">
+              <Suspense fallback={<RecipeGridSkeleton />}>
+                <RecipeList />
+              </Suspense>
+            </div>
           </div>
         </section>
       </main>

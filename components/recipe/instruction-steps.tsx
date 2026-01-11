@@ -50,7 +50,7 @@ export function InstructionSteps({
                 className={cn(
                   "relative pl-12 transition-colors",
                   currentStep === instruction.id &&
-                    "bg-butter/30 -mx-4 rounded-lg px-4 py-4 pl-16",
+                    "bg-butter/30 rounded-lg px-4 py-4",
                 )}
               >
                 <button
