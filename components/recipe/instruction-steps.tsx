@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Instruction } from "@/types/recipe";
 
@@ -13,7 +10,6 @@ export function InstructionSteps({
   instructions,
   className,
 }: InstructionStepsProps) {
-  const [currentStep, setCurrentStep] = useState<string | null>(null);
 
   // Group instructions by their group field, preserving order within each group
   const groupedInstructions = instructions.reduce<
@@ -45,29 +41,10 @@ export function InstructionSteps({
           )}
           <ol className="space-y-6">
             {groupInstructions.map((instruction, index) => (
-              <li
-                key={instruction.id}
-                className={cn(
-                  "relative pl-12 transition-colors",
-                  currentStep === instruction.id &&
-                    "bg-butter/30 rounded-lg pr-4 py-4",
-                )}
-              >
-                <button
-                  onClick={() =>
-                    setCurrentStep(
-                      currentStep === instruction.id ? null : instruction.id,
-                    )
-                  }
-                  className={cn(
-                    "absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold transition-colors",
-                    currentStep === instruction.id
-                      ? "bg-terracotta text-warm-white"
-                      : "bg-butter text-charcoal hover:bg-terracotta hover:text-warm-white",
-                  )}
-                >
+              <li key={instruction.id} className="relative pl-12">
+                <div className="bg-butter text-charcoal absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold">
                   {index + 1}
-                </button>
+                </div>
                 <div className="space-y-2">
                   <p className="text-charcoal leading-relaxed">
                     {instruction.text}

@@ -50,38 +50,38 @@ export function RecipeCard({
           )}
         </div>
 
-        <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-1 flex-col p-3 sm:p-4">
           <div className="mb-1 flex items-center justify-between">
             {recipe.difficulty && (
               <Badge
                 variant={difficultyVariant[recipe.difficulty] || "secondary"}
-                className="text-[10px] font-bold tracking-wider uppercase"
+                className="text-[9px] font-bold tracking-wider uppercase sm:text-[10px]"
               >
                 {recipe.difficulty}
               </Badge>
             )}
             {recipe.totalTime && (
-              <span className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+              <span className="text-muted-foreground flex items-center gap-1 text-[11px] font-medium sm:text-xs">
                 {recipe.totalTime}m
               </span>
             )}
           </div>
 
-          <h3 className="text-card-foreground group-hover:text-primary mb-1 font-serif text-xl leading-tight font-bold transition-colors duration-300">
+          <h3 className="text-card-foreground group-hover:text-primary mb-1 font-serif text-lg font-bold leading-tight transition-colors duration-300 sm:text-xl">
             {recipe.title}
           </h3>
 
           {recipe.description && (
-            <p className="text-muted-foreground mb-2 line-clamp-2 text-sm leading-relaxed">
+            <p className="text-muted-foreground mb-2 line-clamp-2 text-xs leading-relaxed sm:text-sm">
               {recipe.description}
             </p>
           )}
 
-          <div className="text-muted-foreground/80 mt-auto flex items-center justify-between gap-3 text-xs">
+          <div className="text-muted-foreground/80 mt-auto flex items-center justify-between gap-2 text-[11px] sm:gap-3 sm:text-xs">
             {recipe.cuisine && (
               <Badge
                 variant="outline"
-                className="bg-background/50 border-border/50 text-[10px] font-medium tracking-wider uppercase"
+                className="bg-background/50 border-border/50 text-[9px] font-medium tracking-wider uppercase sm:text-[10px]"
               >
                 {recipe.cuisine}
               </Badge>
@@ -89,7 +89,7 @@ export function RecipeCard({
             {recipe.servings && (
               <>
                 <span>•</span>
-                <span>{recipe.servings} servings</span>
+                <span className="truncate">{recipe.servings} servings</span>
               </>
             )}
           </div>

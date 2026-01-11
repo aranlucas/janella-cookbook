@@ -23,7 +23,7 @@ interface RecipeGridProps {
 export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
   if (isLoading) {
     return (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="space-y-3">
             <Skeleton className="aspect-[4/3] w-full rounded-lg" />
@@ -64,7 +64,7 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
   }
 
   return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid gap-4 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {recipes.map((recipe, index) => (
         <div
           key={recipe.id}
