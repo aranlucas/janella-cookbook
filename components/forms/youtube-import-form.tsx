@@ -100,8 +100,13 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                 <p className="mt-1">
                   Supports regular videos and YouTube Shorts. Uses advanced
                   transcript fetching that works with most videos, including
-                  those with auto-generated captions. If a video doesn&apos;t
-                  work, try the &quot;Paste Text&quot; tab instead.
+                  those with auto-generated captions.
+                </p>
+                <p className="mt-2">
+                  <strong>Smart Fallback:</strong> If transcripts aren&apos;t
+                  available, automatically tries to extract the recipe from the
+                  video description. This works great for videos that include
+                  written recipes in their description.
                 </p>
               </div>
             </div>

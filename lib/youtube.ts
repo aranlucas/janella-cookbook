@@ -63,11 +63,17 @@ export function extractYouTubeVideoId(url: string): string {
 
 /**
  * Get video transcript from YouTube using youtubei.js (primary) with fallback to youtube-transcript
+ * If transcript is unavailable, falls back to video description
  * youtubei.js is more robust and less likely to be blocked by YouTube
  */
-export async function getYouTubeTranscript(
-  videoId: string,
-): Promise<{ text: string; title?: string }> {
+export async function getYouTubeTranscript(videoId: string): Promise<{
+  text: string;
+  title?: string;
+  source?: "transcript" | "description";
+}> {
+  let videoDescription: string | undefined;
+  let videoTitle: string | undefined;
+
   // Try youtubei.js first (more robust, less likely to be blocked)
   try {
     const youtube = await Innertube.create({
@@ -77,6 +83,11 @@ export async function getYouTubeTranscript(
     });
 
     const info = await youtube.getInfo(videoId);
+
+    // Save title and description for fallback use
+    videoTitle = info.basic_info.title || undefined;
+    videoDescription = info.basic_info.short_description || undefined;
+
     const transcriptData = await info.getTranscript();
 
     if (!transcriptData) {
@@ -107,7 +118,8 @@ export async function getYouTubeTranscript(
 
     return {
       text,
-      title: info.basic_info.title || undefined,
+      title: videoTitle,
+      source: "transcript",
     };
   } catch (primaryError) {
     // Log the primary error for debugging
@@ -129,9 +141,21 @@ export async function getYouTubeTranscript(
       // Combine all transcript segments into a single text
       const text = transcript.map((segment) => segment.text).join(" ");
 
-      return { text };
+      return { text, title: videoTitle, source: "transcript" };
     } catch (fallbackError) {
-      // Both methods failed, throw a detailed error
+      // Both transcript methods failed - try using video description as last resort
+      if (videoDescription && videoDescription.trim().length >= 50) {
+        console.warn(
+          "Both transcript methods failed, using video description as fallback",
+        );
+        return {
+          text: videoDescription.trim(),
+          title: videoTitle,
+          source: "description",
+        };
+      }
+
+      // Both methods failed and no usable description, throw a detailed error
       const primaryMsg =
         primaryError instanceof Error
           ? primaryError.message
@@ -148,7 +172,7 @@ export async function getYouTubeTranscript(
       ) {
         throw new ExternalApiError(
           "YouTube",
-          "Transcript is disabled for this video. Please try a different video or use the manual import option.",
+          "Transcript is disabled for this video and the description is too short. Please try a different video or use the manual import option.",
         );
       }
 
@@ -167,7 +191,7 @@ export async function getYouTubeTranscript(
       // Generic error
       throw new ExternalApiError(
         "YouTube",
-        `Failed to fetch transcript. The video may not have captions enabled, or YouTube may be blocking the request. Primary error: ${primaryMsg}`,
+        `Failed to fetch transcript and video description is too short. The video may not have captions enabled, or YouTube may be blocking the request. Primary error: ${primaryMsg}`,
         fallbackError,
       );
     }

@@ -475,19 +475,24 @@ export async function parseRecipeFromYouTube(
   // Get video metadata
   const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
 
-  // Fetch transcript (may also return video title)
-  const { text: transcript, title: videoTitle } =
-    await getYouTubeTranscript(videoId);
+  // Fetch transcript or description (may also return video title)
+  const {
+    text: content,
+    title: videoTitle,
+    source,
+  } = await getYouTubeTranscript(videoId);
 
-  if (!transcript || transcript.trim().length < 50) {
+  if (!content || content.trim().length < 50) {
     throw new RecipeParseError(
-      "Transcript is too short to extract a recipe",
+      source === "description"
+        ? "Video description is too short to extract a recipe"
+        : "Transcript is too short to extract a recipe",
       url,
     );
   }
 
   // Validate and truncate to fit within model's context window
-  const validatedTranscript = validateAndTruncateContent(transcript.trim());
+  const validatedContent = validateAndTruncateContent(content.trim());
 
   try {
     const { output: parsed } = await withRetry(
@@ -496,10 +501,24 @@ export async function parseRecipeFromYouTube(
           ? `\n\nVideo Title: "${videoTitle}"\n\n`
           : "\n\n";
 
-        return await generateText({
-          model: model,
-          output: Output.object({ schema: recipeSchema }),
-          system: `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
+        // Different system prompts for transcript vs description
+        const systemPrompt =
+          source === "description"
+            ? `You are a recipe extraction expert. Extract recipe data from a YouTube video description.
+
+CRITICAL INSTRUCTIONS:
+- The text is from a video description, which may contain a written recipe
+- Look for ingredients listed with quantities (e.g., "2 cups of flour", "3 tablespoons butter")
+- Extract step-by-step cooking instructions if provided
+- Identify prep time, cook time, and servings if mentioned
+- Extract the recipe title (often in the video title or at the start of the description)
+- Identify the cuisine type and meal course if evident
+- Be thorough but only include information that's actually in the description
+- If ingredients are mentioned but quantities aren't specified, still include the ingredient
+- Ignore non-recipe content like social media links, channel promotions, or unrelated information
+- If the video title clearly indicates the recipe name, you can use it as the recipe title
+- Video descriptions may be less detailed than transcripts, so extract whatever information is available`
+            : `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
 
 CRITICAL INSTRUCTIONS:
 - The transcript is from a cooking video, so extract the recipe being demonstrated
@@ -512,8 +531,16 @@ CRITICAL INSTRUCTIONS:
 - If ingredients are mentioned but quantities aren't specified, still include the ingredient
 - Ignore non-recipe content like intro/outro, channel promotions, or unrelated commentary
 - Extract all ingredients and instructions even if the transcript is messy or has typos
-- If the video title clearly indicates the recipe name, you can use it as the recipe title`,
-          prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}Transcript:\n${validatedTranscript}`,
+- If the video title clearly indicates the recipe name, you can use it as the recipe title`;
+
+        const contentLabel =
+          source === "description" ? "Description" : "Transcript";
+
+        return await generateText({
+          model: model,
+          output: Output.object({ schema: recipeSchema }),
+          system: systemPrompt,
+          prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
         });
       },
       {
@@ -523,16 +550,18 @@ CRITICAL INSTRUCTIONS:
     );
 
     // Validate we got a proper recipe
+    const sourceLabel = source === "description" ? "description" : "transcript";
+
     if (!parsed.title || parsed.title === "Untitled Recipe") {
       throw new RecipeParseError(
-        "Could not extract recipe title from the video transcript",
+        `Could not extract recipe title from the video ${sourceLabel}`,
         url,
       );
     }
 
     if (!parsed.ingredients || parsed.ingredients.length === 0) {
       throw new RecipeParseError(
-        "Could not extract any ingredients from the video transcript. Make sure the video has captions enabled and contains a recipe.",
+        `Could not extract any ingredients from the video ${sourceLabel}. ${source === "description" ? "The description may not contain a complete recipe." : "Make sure the video has captions enabled and contains a recipe."}`,
         url,
       );
     }
