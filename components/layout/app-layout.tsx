@@ -90,20 +90,20 @@ function PageHeader({
 }: PageHeaderConfig) {
   return (
     <section
-      className={cn("py-8 sm:py-12", background === "muted" && "bg-muted/30")}
+      className={cn("py-6 sm:py-10 md:py-12", background === "muted" && "bg-muted/30")}
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
-          <h1 className="text-foreground mb-4 font-serif text-4xl font-bold sm:text-5xl">
+          <h1 className="text-foreground mb-3 font-serif text-3xl font-bold sm:mb-4 sm:text-4xl md:text-5xl">
             {title}
           </h1>
           {description && (
-            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
+            <p className="text-muted-foreground mx-auto max-w-2xl text-base sm:text-lg">
               {description}
             </p>
           )}
           {actions && (
-            <div className={cn("mt-6", centered && "flex justify-center")}>
+            <div className={cn("mt-4 sm:mt-6", centered && "flex justify-center")}>
               {actions}
             </div>
           )}

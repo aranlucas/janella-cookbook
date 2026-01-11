@@ -209,7 +209,7 @@ export default async function RecipesPage(props: RecipesPageProps) {
       title={title}
       description={description}
       headerChildren={
-        <div className="mx-auto mt-8 max-w-2xl">
+        <div className="mx-auto mt-4 max-w-2xl sm:mt-6 md:mt-8">
           <Suspense>
             <SearchBar
               placeholder="Search within collection..."
