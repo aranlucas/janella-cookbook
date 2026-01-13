@@ -1,14 +1,27 @@
-import { createMCPClient, auth } from "@ai-sdk/mcp";
+import { createMCPClient, type OAuthClientProvider } from "@ai-sdk/mcp";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev";
 
-export async function getMCPClient() {
-  const authProvider = auth.createOAuthProvider({
-    clientId: process.env.MCP_CLIENT_ID,
-    authorizationEndpoint: `${MCP_SERVER_URL}/oauth/authorize`,
-    tokenEndpoint: `${MCP_SERVER_URL}/oauth/token`,
-  });
+const authProvider: OAuthClientProvider = {
+  redirectUrl: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/oauth/callback`,
+  clientMetadata: {
+    client_name: "Janella Cookbook",
+    redirect_uris: [
+      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/oauth/callback`,
+    ],
+    grant_types: ["authorization_code", "refresh_token"],
+  },
+  tokens: async () => {
+    // TODO: Retrieve stored tokens from database/session
+    return null;
+  },
+  saveTokens: async (tokens) => {
+    // TODO: Save tokens to database/session
+    console.log("Tokens received:", tokens);
+  },
+};
 
+export async function getMCPClient() {
   const client = await createMCPClient({
     transport: {
       type: "http",
