@@ -13,41 +13,30 @@ import { useEffect, useRef, useState } from "react";
 import { Bot, User } from "lucide-react";
 
 export function ChatInterface() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: "/api/chat",
-      initialMessages: [
-        {
-          id: "welcome",
-          role: "assistant",
-          content:
-            "Hello! I'm your AI cooking assistant. I can help you find recipes, plan meals, and answer cooking questions. How can I help you today?",
-        },
-      ],
-    });
+  const { messages, sendMessage, status } = useChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
+
+  const isLoading = status === "streaming" || status === "submitted";
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Sync internal input state with useChat
-  useEffect(() => {
-    setInputValue(input);
-  }, [input]);
-
   const onSubmit = () => {
     if (inputValue.trim() && !isLoading) {
-      const submitEvent = new Event("submit", {
-        bubbles: true,
-        cancelable: true,
-      }) as unknown as React.FormEvent<HTMLFormElement>;
-      handleSubmit(submitEvent);
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text: inputValue }],
+      });
       setInputValue("");
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputValue(e.target.value);
   };
 
   return (
@@ -94,9 +83,12 @@ export function ChatInterface() {
                 {/* Message content */}
                 <MessageContent data-from={message.role}>
                   <MessageResponse>
-                    {typeof message.content === "string"
-                      ? message.content
-                      : JSON.stringify(message.content)}
+                    {message.parts.map((part, i) => {
+                      if (part.type === "text") {
+                        return <span key={i}>{part.text}</span>;
+                      }
+                      return null;
+                    })}
                   </MessageResponse>
                 </MessageContent>
               </div>

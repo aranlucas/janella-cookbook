@@ -27,7 +27,9 @@ export const Message = forwardRef<HTMLDivElement, MessageProps>(
 Message.displayName = "Message";
 
 // Message content wrapper
-type MessageContentProps = ComponentProps<"div">;
+type MessageContentProps = ComponentProps<"div"> & {
+  "data-from"?: string;
+};
 
 export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
   ({ className, children, ...props }, ref) => {
@@ -41,7 +43,6 @@ export const MessageContent = forwardRef<HTMLDivElement, MessageContentProps>(
           "data-[from=system]:bg-sage/20 data-[from=system]:text-charcoal",
           className,
         )}
-        data-from={props["data-from"]}
         {...props}
       >
         {children}
