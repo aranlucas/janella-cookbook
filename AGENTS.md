@@ -238,26 +238,6 @@ This ensures that the generated Prisma Client is compatible with the ES Module e
 
 ## Coding Guidelines
 
-**Error Handling:**
-
-- **NEVER use try-catch blocks** - Use Promise `.catch()` method instead for error handling
-- Example (Preferred):
-  ```typescript
-  const data = await fetchData().catch((error) => {
-    console.error("Failed to fetch:", error);
-    return defaultValue;
-  });
-  ```
-- Example (Avoid):
-  ```typescript
-  // DON'T DO THIS
-  try {
-    const data = await fetchData();
-  } catch (error) {
-    console.error("Failed to fetch:", error);
-  }
-  ```
-
 **Type Safety:**
 
 - **NEVER use `any` type** - Always use proper TypeScript types
