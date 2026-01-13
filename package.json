@@ -21,6 +21,7 @@
     "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@ai-sdk/mcp": "^1.0.6",
     "@ai-sdk/openai": "^3.0.2",
     "@ai-sdk/react": "^3.0.23",
     "@base-ui/react": "^1.0.0",

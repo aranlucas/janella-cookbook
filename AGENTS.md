@@ -236,6 +236,50 @@ generator client {
 
 This ensures that the generated Prisma Client is compatible with the ES Module environment, preventing potential `require()`-related errors.
 
+## Coding Guidelines
+
+**Error Handling:**
+
+- **NEVER use try-catch blocks** - Use Promise `.catch()` method instead for error handling
+- Example (Preferred):
+  ```typescript
+  const data = await fetchData().catch((error) => {
+    console.error("Failed to fetch:", error);
+    return defaultValue;
+  });
+  ```
+- Example (Avoid):
+  ```typescript
+  // DON'T DO THIS
+  try {
+    const data = await fetchData();
+  } catch (error) {
+    console.error("Failed to fetch:", error);
+  }
+  ```
+
+**Type Safety:**
+
+- **NEVER use `any` type** - Always use proper TypeScript types
+- If type is unknown, use `unknown` and narrow it down with type guards
+- Use `Awaited<ReturnType<typeof func>>` for inferring async function return types
+- Use generics or union types when multiple types are possible
+- If TypeScript's type inference has legitimate limitations, use `@ts-expect-error` with a clear comment explaining why
+- Example (Preferred):
+  ```typescript
+  const tools: Awaited<ReturnType<typeof client.tools>> | undefined;
+  ```
+- Example (Avoid):
+  ```typescript
+  // DON'T DO THIS
+  const tools: any;
+  ```
+- Example (Acceptable for legitimate type system limitations):
+  ```typescript
+  // @ts-expect-error - MCP tools() return type is compatible but TS can't infer the complex union type
+  tools,
+  ```
+
 ## Important Notes
 
 **pgvector Setup:**
