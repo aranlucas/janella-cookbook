@@ -4,7 +4,10 @@ import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
 
-const navItems = [{ href: "/recipes", label: "Recipes" }];
+const navItems = [
+  { href: "/recipes", label: "Recipes" },
+  { href: "/chat", label: "AI Assistant" },
+];
 
 export function Header() {
   return (
