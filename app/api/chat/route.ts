@@ -17,8 +17,17 @@ async function getBaseUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
 export async function POST(request: Request) {
-  const { messages } = await request.json();
+  const { messages, location } = (await request.json()) as {
+    messages: unknown;
+    location?: LocationData;
+  };
   const baseUrl = await getBaseUrl();
   const authProvider = new MCPOAuthProvider(baseUrl);
 
@@ -128,6 +137,19 @@ When handling grocery orders:
 - Note when a recipe benefits from advance prep (marinating, brining, etc.) and explain why
 - Suggest building pantry staples over time to make future cooking easier
 - When introducing new techniques, offer to explain in more detail if helpful
+
+## Location Awareness
+
+${
+  location
+    ? `**User's Current Location:** Latitude ${location.latitude.toFixed(4)}, Longitude ${location.longitude.toFixed(4)}
+- Use this location for finding nearby grocery stores, restaurants, or local ingredient availability
+- Consider regional/local food preferences and seasonal availability for this area
+- When ordering groceries, prioritize stores near the user's location`
+    : `**Location Not Available:** The user has not shared their location.
+- If you need location information (for finding nearby stores, local recommendations, etc.), politely ask the user to enable location sharing using the location button (📍) in the chat input
+- Phrase it naturally, like: "To help find grocery stores near you, could you enable location sharing using the pin icon in the chat input?"`
+}
 ${resourceContext}`,
     });
 

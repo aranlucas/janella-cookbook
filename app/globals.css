@@ -23,6 +23,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
 
   /* Typography - using local fonts with system fallbacks */
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
@@ -65,108 +67,117 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Modern Rustic Custom Colors */
-  --color-rustic-cream: #f4f1ea;
-  --color-rustic-paper: #efede6;
-  --color-rustic-charcoal: #2a2826;
-  --color-rustic-terracotta: #c45d3e;
-  --color-rustic-moss: #5d6b54;
-  --color-rustic-sand: #d6cfc2;
-  --color-rustic-butter: #e8ded1;
+  /* Bold Earthy Modern Palette */
+  --color-rustic-cream: #faf5ed;
+  --color-rustic-paper: #f7e9d4;
+  --color-rustic-charcoal: #2d2926;
+  --color-rustic-terracotta: #e04e39;
+  --color-rustic-moss: #4a5d43;
+  --color-rustic-sand: #e8ddd4;
+  --color-rustic-butter: #f7e9d4;
+  --color-rustic-marigold: #f0a830;
+  --color-rustic-blush: #f2ddd6;
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.625rem;
 
-  /* Modern Rustic Palette - Light Mode */
-  --background: #f4f1ea; /* Warm Alabaster */
-  --foreground: #2a2826; /* Warm Ink */
+  /* Bold Earthy Modern - Light Mode */
+  --background: #faf5ed; /* Warm Cream */
+  --foreground: #2d2926; /* Rich Charcoal */
 
-  --card: #efede6; /* Paper */
-  --card-foreground: #2a2826;
+  --card: #f7e9d4; /* Butter */
+  --card-foreground: #2d2926;
 
-  --popover: #efede6;
-  --popover-foreground: #2a2826;
+  --popover: #ffffff;
+  --popover-foreground: #2d2926;
 
-  --primary: #c45d3e; /* Spiced Terracotta */
-  --primary-foreground: #f4f1ea;
+  --primary: #e04e39; /* Bold Coral-Red */
+  --primary-foreground: #ffffff;
 
-  --secondary: #d6cfc2; /* Sand */
-  --secondary-foreground: #2a2826;
+  --secondary: #f2ddd6; /* Blush */
+  --secondary-foreground: #2d2926;
 
-  --muted: #e8ded1; /* Butter/Beige */
-  --muted-foreground: #756f68; /* Warm Grey */
+  --muted: #e8ddd4; /* Sand */
+  --muted-foreground: #6b635c; /* Warm Grey */
 
-  --accent: #5d6b54; /* Deep Moss */
-  --accent-foreground: #f4f1ea;
+  --accent: #4a5d43; /* Deep Forest */
+  --accent-foreground: #ffffff;
 
-  --destructive: #be3931; /* Burnt Red */
-  --destructive-foreground: #f4f1ea;
+  /* New: Highlight color for special moments */
+  --highlight: #f0a830; /* Marigold */
+  --highlight-foreground: #2d2926;
 
-  --border: #d6cfc2;
-  --input: #d6cfc2;
-  --ring: #c45d3e;
+  --destructive: #c4392e;
+  --destructive-foreground: #ffffff;
 
-  --chart-1: #c45d3e;
-  --chart-2: #5d6b54;
-  --chart-3: #d6cfc2;
-  --chart-4: #e8ded1;
-  --chart-5: #2a2826;
+  --border: #e8ddd4;
+  --input: #e8ddd4;
+  --ring: #e04e39;
 
-  --sidebar: #efede6;
-  --sidebar-foreground: #2a2826;
-  --sidebar-primary: #c45d3e;
-  --sidebar-primary-foreground: #f4f1ea;
-  --sidebar-accent: #d6cfc2;
-  --sidebar-accent-foreground: #2a2826;
-  --sidebar-border: #d6cfc2;
-  --sidebar-ring: #c45d3e;
+  --chart-1: #e04e39;
+  --chart-2: #4a5d43;
+  --chart-3: #f0a830;
+  --chart-4: #f2ddd6;
+  --chart-5: #2d2926;
+
+  --sidebar: #f7e9d4;
+  --sidebar-foreground: #2d2926;
+  --sidebar-primary: #e04e39;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2ddd6;
+  --sidebar-accent-foreground: #2d2926;
+  --sidebar-border: #e8ddd4;
+  --sidebar-ring: #e04e39;
 }
 
 .dark {
-  /* Modern Rustic Palette - Dark Mode */
-  --background: #1c1b19; /* Deep Warm Black */
-  --foreground: #efede6; /* Paper White */
+  /* Bold Earthy Modern - Dark Mode */
+  --background: #1a1917; /* Deep Warm Black */
+  --foreground: #f7e9d4; /* Butter White */
 
-  --card: #2a2826; /* Charcoal */
-  --card-foreground: #efede6;
+  --card: #2d2926; /* Rich Charcoal */
+  --card-foreground: #f7e9d4;
 
-  --popover: #2a2826;
-  --popover-foreground: #efede6;
+  --popover: #2d2926;
+  --popover-foreground: #f7e9d4;
 
-  --primary: #c45d3e;
-  --primary-foreground: #f4f1ea;
+  --primary: #e8614e; /* Slightly lighter coral for dark mode */
+  --primary-foreground: #ffffff;
 
-  --secondary: #3e3b38;
-  --secondary-foreground: #efede6;
+  --secondary: #3a3634;
+  --secondary-foreground: #f7e9d4;
 
-  --muted: #3e3b38;
-  --muted-foreground: #99938d;
+  --muted: #3a3634;
+  --muted-foreground: #a39a92;
 
-  --accent: #5d6b54;
-  --accent-foreground: #f4f1ea;
+  --accent: #6b7e5f; /* Lighter forest for contrast */
+  --accent-foreground: #ffffff;
 
-  --destructive: #be3931;
-  --destructive-foreground: #f4f1ea;
+  --highlight: #f0a830;
+  --highlight-foreground: #2d2926;
 
-  --border: #3e3b38;
-  --input: #3e3b38;
-  --ring: #c45d3e;
+  --destructive: #d4453a;
+  --destructive-foreground: #ffffff;
 
-  --chart-1: #c45d3e;
-  --chart-2: #5d6b54;
-  --chart-3: #99938d;
-  --chart-4: #3e3b38;
-  --chart-5: #efede6;
+  --border: #3a3634;
+  --input: #3a3634;
+  --ring: #e8614e;
 
-  --sidebar: #2a2826;
-  --sidebar-foreground: #efede6;
-  --sidebar-primary: #c45d3e;
-  --sidebar-primary-foreground: #f4f1ea;
-  --sidebar-accent: #3e3b38;
-  --sidebar-accent-foreground: #efede6;
-  --sidebar-border: #3e3b38;
-  --sidebar-ring: #c45d3e;
+  --chart-1: #e8614e;
+  --chart-2: #6b7e5f;
+  --chart-3: #f0a830;
+  --chart-4: #3a3634;
+  --chart-5: #f7e9d4;
+
+  --sidebar: #2d2926;
+  --sidebar-foreground: #f7e9d4;
+  --sidebar-primary: #e8614e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a3634;
+  --sidebar-accent-foreground: #f7e9d4;
+  --sidebar-border: #3a3634;
+  --sidebar-ring: #e8614e;
 }
 
 @layer base {
@@ -189,7 +200,7 @@
     height: 100%;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.04;
+    opacity: 0.06;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
@@ -214,15 +225,15 @@
   }
 
   h1 {
-    @apply text-5xl leading-[0.95] font-bold md:text-6xl lg:text-7xl;
+    @apply text-5xl leading-[0.92] font-black md:text-7xl lg:text-8xl xl:text-9xl;
   }
 
   h2 {
-    @apply text-3xl leading-tight font-semibold md:text-4xl lg:text-5xl;
+    @apply text-3xl leading-tight font-bold md:text-4xl lg:text-5xl;
   }
 
   h3 {
-    @apply text-2xl font-medium md:text-3xl;
+    @apply text-2xl font-semibold md:text-3xl;
   }
 
   p {

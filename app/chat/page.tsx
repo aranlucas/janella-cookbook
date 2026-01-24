@@ -9,29 +9,8 @@ export const metadata: Metadata = {
 
 export default function ChatPage() {
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
-      {/* Page header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-charcoal mb-2 text-3xl font-bold">
-          AI Cooking Assistant
-        </h1>
-        <p className="text-charcoal/70 mx-auto max-w-2xl">
-          Get personalized meal planning suggestions, recipe recommendations,
-          and cooking tips from our AI assistant powered by advanced meal
-          planning tools.
-        </p>
-      </div>
-
-      {/* Chat interface */}
+    <main className="fixed inset-0 flex items-center justify-center bg-stone-100 p-4">
       <ChatInterface />
-
-      {/* Footer info */}
-      <div className="text-charcoal/50 mt-6 text-center text-sm">
-        <p>
-          This assistant uses AI to provide meal planning suggestions and
-          cooking advice. Responses are generated in real-time and may vary.
-        </p>
-      </div>
-    </div>
+    </main>
   );
 }
