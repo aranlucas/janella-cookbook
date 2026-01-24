@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ImageWithFallback } from "./image-with-fallback";
 import { cn } from "@/lib/utils";
 
 interface RecipeImageProps {
@@ -32,10 +31,8 @@ export function RecipeImage({
   width,
   height,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
-  priority = false,
   className,
   containerClassName,
-  fallback,
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -69,13 +66,10 @@ export function RecipeImage({
       <div
         className={cn("absolute inset-0 overflow-hidden", containerClassName)}
       >
-        <ImageWithFallback
+        <img
           src={src}
           alt={alt}
-          fill
           sizes={sizes}
-          priority={priority}
-          fallback={fallback}
           className={cn(
             "object-cover transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
@@ -94,14 +88,12 @@ export function RecipeImage({
   // For fixed dimensions
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
-      <ImageWithFallback
+      <img
         src={src}
         alt={alt}
         width={width || 400}
         height={height || 300}
         sizes={sizes}
-        priority={priority}
-        fallback={fallback}
         className={cn(
           "object-cover transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",

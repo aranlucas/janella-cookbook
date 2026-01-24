@@ -1,19 +1,36 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { Conversation } from "@/components/ai-elements/conversation";
+import {
+  Conversation,
+} from "@/components/ai-elements/conversation";
 import {
   Message,
   MessageContent,
   MessageResponse,
-  Thinking,
 } from "@/components/ai-elements/message";
-import { PromptInput } from "@/components/ai-elements/prompt-input";
 import { useEffect, useRef, useState } from "react";
-import { Bot, User } from "lucide-react";
+import { Bot } from "lucide-react";
 
 export function ChatInterface() {
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status } = useChat({
+    onError: (error) => {
+      console.log("onError called:", error.message);
+      // Parse auth URL from error message
+      try {
+        const jsonMatch = error.message.match(/\{.*\}/);
+        if (jsonMatch) {
+          const data = JSON.parse(jsonMatch[0]);
+          if (data.error === "auth_required" && data.authorizationUrl) {
+            console.log("Redirecting to:", data.authorizationUrl);
+            window.location.href = data.authorizationUrl;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to parse auth error:", e);
+      }
+    },
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
@@ -33,10 +50,6 @@ export function ChatInterface() {
       });
       setInputValue("");
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value);
   };
 
   return (
@@ -59,55 +72,22 @@ export function ChatInterface() {
       {/* Messages area */}
       <div className="flex-1 overflow-hidden">
         <Conversation className="h-full px-6 py-4">
-          {messages.map((message, index) => (
-            <Message
-              key={message.id || index}
-              from={message.role as "user" | "assistant" | "system"}
-            >
-              <div className="flex w-full gap-3">
-                {/* Avatar */}
-                <div
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                    message.role === "user"
-                      ? "bg-sage text-warm-white"
-                      : "bg-terracotta text-warm-white"
-                  }`}
-                >
-                  {message.role === "user" ? (
-                    <User className="h-4 w-4" />
-                  ) : (
-                    <Bot className="h-4 w-4" />
-                  )}
-                </div>
-
-                {/* Message content */}
-                <MessageContent data-from={message.role}>
-                  <MessageResponse>
-                    {message.parts.map((part, i) => {
-                      if (part.type === "text") {
-                        return <span key={i}>{part.text}</span>;
-                      }
-                      return null;
-                    })}
-                  </MessageResponse>
-                </MessageContent>
-              </div>
+          {messages.map(({ role, parts }, index) => (
+            <Message from={role} key={index}>
+              <MessageContent>
+                {parts.map((part, i) => {
+                  switch (part.type) {
+                    case "text":
+                      return (
+                        <MessageResponse key={`${role}-${i}`}>
+                          {part.text}
+                        </MessageResponse>
+                      );
+                  }
+                })}
+              </MessageContent>
             </Message>
           ))}
-
-          {/* Loading indicator */}
-          {isLoading && (
-            <Message from="assistant">
-              <div className="flex w-full gap-3">
-                <div className="bg-terracotta text-warm-white flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
-                  <Bot className="h-4 w-4" />
-                </div>
-                <MessageContent data-from="assistant">
-                  <Thinking />
-                </MessageContent>
-              </div>
-            </Message>
-          )}
 
           <div ref={messagesEndRef} />
         </Conversation>
@@ -122,14 +102,12 @@ export function ChatInterface() {
           }}
           className="flex gap-2"
         >
-          <PromptInput
+          <input
             value={inputValue}
             onChange={(e) => {
               setInputValue(e.target.value);
-              handleInputChange(e);
             }}
             onSubmit={onSubmit}
-            isLoading={isLoading}
             placeholder="Ask me anything about cooking or meal planning..."
             className="flex-1"
           />
