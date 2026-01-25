@@ -256,10 +256,14 @@ export async function importFromText(text: string): Promise<ActionResult> {
       return { success: false, error: "Text is required" };
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (
+      !process.env.OPENROUTER_API_KEY &&
+      !process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    ) {
       return {
         success: false,
-        error: "Text parsing requires OpenRouter API configuration",
+        error:
+          "Text parsing requires AI provider configuration. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
       };
     }
 
@@ -356,10 +360,14 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
       return { success: false, error: "Invalid URL" };
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (
+      !process.env.OPENROUTER_API_KEY &&
+      !process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    ) {
       return {
         success: false,
-        error: "YouTube import requires OpenRouter API configuration",
+        error:
+          "YouTube import requires AI provider configuration. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
       };
     }
 
