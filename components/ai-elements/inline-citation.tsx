@@ -157,20 +157,36 @@ export const InlineCitationCarouselIndex = ({
   ...props
 }: InlineCitationCarouselIndexProps) => {
   const api = useCarouselApi();
-  const [current, setCurrent] = useState(0);
-  const [count, setCount] = useState(0);
+  // Initialize state from API if available
+  const [current, setCurrent] = useState(() =>
+    api ? api.selectedScrollSnap() + 1 : 0,
+  );
+  const [count, setCount] = useState(() =>
+    api ? api.scrollSnapList().length : 0,
+  );
 
   useEffect(() => {
     if (!api) {
       return;
     }
 
-    setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap() + 1);
+    // Update state in a callback to satisfy lint rules
+    const updateState = () => {
+      setCount(api.scrollSnapList().length);
+      setCurrent(api.selectedScrollSnap() + 1);
+    };
 
+    // Initial sync (deferred to next tick to avoid sync setState in effect)
+    const timeoutId = setTimeout(updateState, 0);
+
+    // Subscribe to changes
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
     });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [api]);
 
   return (

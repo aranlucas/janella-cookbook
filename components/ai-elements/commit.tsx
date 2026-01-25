@@ -20,6 +20,7 @@ import {
   type ComponentProps,
   type HTMLAttributes,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -161,12 +162,17 @@ export const CommitTimestamp = ({
   children,
   ...props
 }: CommitTimestampProps) => {
-  const formatted = new Intl.RelativeTimeFormat("en", {
-    numeric: "auto",
-  }).format(
-    Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-    "day",
-  );
+  // Capture "now" once on mount to avoid impure Date.now() calls during render
+  const [now] = useState(() => Date.now());
+  const formatted = useMemo(() => {
+    const formatter = new Intl.RelativeTimeFormat("en", {
+      numeric: "auto",
+    });
+    return formatter.format(
+      Math.round((date.getTime() - now) / (1000 * 60 * 60 * 24)),
+      "day",
+    );
+  }, [date, now]);
 
   return (
     <time
