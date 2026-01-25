@@ -89,7 +89,7 @@ export function QuickActionsFab({
   );
 
   return (
-    <div className={cn("fixed right-4 bottom-24 z-50 md:hidden", className)}>
+    <div className={cn("fixed right-4 bottom-52 z-50 md:hidden", className)}>
       {/* Action buttons */}
       <div
         className={cn(
@@ -184,7 +184,7 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       onClick={handleClick}
       disabled={disabled}
       className={cn(
-        "fixed bottom-24 left-4 z-50 md:hidden",
+        "fixed bottom-52 left-4 z-50 md:hidden",
         "h-12 w-12 rounded-full shadow-lg",
         "bg-stone-800 text-white hover:bg-stone-900",
         "transition-transform active:scale-95",
