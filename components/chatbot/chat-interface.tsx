@@ -35,6 +35,11 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Loader } from "@/components/ai-elements/loader";
+import { VoiceInput } from "@/components/chatbot/voice-input";
+import { MessageContextMenu } from "@/components/chatbot/message-context-menu";
+import { QuickActionsFab, CameraFab } from "@/components/chatbot/quick-actions-fab";
+import { MobileChatHeader } from "@/components/chatbot/mobile-chat-header";
+import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
   ChefHat,
   ImageIcon,
@@ -43,7 +48,7 @@ import {
   Sparkles,
   UtensilsCrossed,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const cookingSuggestions = [
@@ -89,8 +94,40 @@ export function ChatInterface() {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || "ontouchstart" in window);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Handle mobile keyboard - adjust viewport when keyboard opens
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleResize = () => {
+      // Scroll to bottom when keyboard opens
+      if (document.activeElement === inputRef.current) {
+        setTimeout(() => {
+          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+      }
+    };
+
+    const visualViewport = window.visualViewport;
+    if (visualViewport) {
+      visualViewport.addEventListener("resize", handleResize);
+      return () => visualViewport.removeEventListener("resize", handleResize);
+    }
+  }, [isMobile]);
+
+  const { messages, sendMessage, status, setMessages } = useChat({
     // Send location with every request so AI has context
     body: {
       location: locationEnabled && location ? location : undefined,
@@ -220,6 +257,7 @@ export function ChatInterface() {
 
   const handleSuggestionClick = (suggestion: string) => {
     if (isLoading) return;
+    hapticLight();
 
     sendMessage({
       role: "user",
@@ -227,30 +265,80 @@ export function ChatInterface() {
     });
   };
 
+  // Voice input handler
+  const handleVoiceTranscript = useCallback((transcript: string) => {
+    setText((prev) => prev + transcript);
+    hapticSuccess();
+  }, []);
+
+  // Quick action handler (from FAB)
+  const handleQuickAction = useCallback((prompt: string) => {
+    if (isLoading) return;
+    hapticLight();
+
+    sendMessage({
+      role: "user",
+      parts: [{ type: "text", text: prompt }],
+    });
+  }, [isLoading, sendMessage]);
+
+  // Clear chat handler
+  const handleClearChat = useCallback(() => {
+    hapticLight();
+    setMessages([]);
+    toast.success("Chat cleared");
+  }, [setMessages]);
+
+  // Camera capture handler
+  const handleCameraCapture = useCallback(() => {
+    hapticLight();
+    // Trigger the file input for camera capture
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "environment";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        // This would integrate with the attachment system
+        toast.info("Photo captured! Use the attachment button to upload.");
+      }
+    };
+    input.click();
+  }, []);
+
   return (
     <div className="flex h-[calc(100dvh-32px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl">
-      {/* Chat header */}
-      <div className="flex shrink-0 items-center gap-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-orange-50 px-6 py-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md">
-          <UtensilsCrossed className="h-6 w-6" />
-        </div>
-        <div className="flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-stone-800">
-            AI Cooking Assistant
-          </h2>
-          <p className="text-sm text-stone-500">Powered by Janella Cookbook</p>
-        </div>
-        {locationEnabled && (
-          <div className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-            <MapPin className="h-3 w-3" />
-            <span>Location on</span>
+      {/* Mobile-optimized header */}
+      {isMobile ? (
+        <MobileChatHeader
+          locationEnabled={locationEnabled}
+          onClearChat={handleClearChat}
+        />
+      ) : (
+        /* Desktop header */
+        <div className="flex shrink-0 items-center gap-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-orange-50 px-6 py-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md">
+            <UtensilsCrossed className="h-6 w-6" />
           </div>
-        )}
-      </div>
+          <div className="flex-1">
+            <h2 className="text-xl font-bold tracking-tight text-stone-800">
+              AI Cooking Assistant
+            </h2>
+            <p className="text-sm text-stone-500">Powered by Janella Cookbook</p>
+          </div>
+          {locationEnabled && (
+            <div className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+              <MapPin className="h-3 w-3" />
+              <span>Location on</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Messages area */}
       <Conversation className="flex-1 bg-gradient-to-b from-stone-50/50 to-white">
-        <ConversationContent className="px-6 py-6">
+        <ConversationContent className="px-4 py-6 md:px-6">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-5">
               <div className="relative">
@@ -289,39 +377,53 @@ export function ChatInterface() {
             </div>
           ) : (
             <>
-              {messages.map(({ role, parts }, index) => (
-                <Message from={role} key={index}>
-                  <MessageContent
-                    className={
-                      role === "user"
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-                        : ""
-                    }
+              {messages.map(({ role, parts }, index) => {
+                // Extract text content for context menu
+                const textContent = parts
+                  .filter((p) => p.type === "text")
+                  .map((p) => (p as { type: "text"; text: string }).text)
+                  .join("\n");
+
+                return (
+                  <MessageContextMenu
+                    key={index}
+                    messageContent={textContent}
+                    messageRole={role === "user" ? "user" : "assistant"}
                   >
-                    {parts.map((part, i) => {
-                      switch (part.type) {
-                        case "text":
-                          return (
-                            <MessageResponse key={`${role}-${i}`}>
-                              {part.text}
-                            </MessageResponse>
-                          );
-                        case "file":
-                          return (
-                            <img
-                              key={`${role}-${i}`}
-                              src={part.url}
-                              alt="Uploaded image"
-                              className="max-h-48 rounded-lg object-cover"
-                            />
-                          );
-                        default:
-                          return null;
-                      }
-                    })}
-                  </MessageContent>
-                </Message>
-              ))}
+                    <Message from={role}>
+                      <MessageContent
+                        className={
+                          role === "user"
+                            ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
+                            : ""
+                        }
+                      >
+                        {parts.map((part, i) => {
+                          switch (part.type) {
+                            case "text":
+                              return (
+                                <MessageResponse key={`${role}-${i}`}>
+                                  {part.text}
+                                </MessageResponse>
+                              );
+                            case "file":
+                              return (
+                                <img
+                                  key={`${role}-${i}`}
+                                  src={part.url}
+                                  alt="Uploaded image"
+                                  className="max-h-48 rounded-lg object-cover"
+                                />
+                              );
+                            default:
+                              return null;
+                          }
+                        })}
+                      </MessageContent>
+                    </Message>
+                  </MessageContextMenu>
+                );
+              })}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <Message from="assistant">
                   <MessageContent>
@@ -386,6 +488,13 @@ export function ChatInterface() {
                     <PromptInputActionAddAttachments label="Add recipe photo" />
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu>
+
+                {/* Voice input button - great for mobile */}
+                <VoiceInput
+                  onTranscript={handleVoiceTranscript}
+                  disabled={isLoading}
+                />
+
                 <PromptInputButton
                   onClick={toggleLocation}
                   disabled={locationLoading}
@@ -417,6 +526,17 @@ export function ChatInterface() {
           </PromptInput>
         </div>
       </div>
+
+      {/* Mobile-only: Quick Actions FAB */}
+      {isMobile && (
+        <>
+          <QuickActionsFab
+            onSelectAction={handleQuickAction}
+            disabled={isLoading}
+          />
+          <CameraFab onCapture={handleCameraCapture} disabled={isLoading} />
+        </>
+      )}
     </div>
   );
 }
