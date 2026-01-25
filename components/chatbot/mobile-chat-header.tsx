@@ -167,15 +167,17 @@ export function MobileChatHeader({
 
           {/* Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="text-stone-600 hover:text-stone-900"
-                aria-label="More options"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </Button>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-stone-600 hover:text-stone-900"
+                  aria-label="More options"
+                />
+              }
+            >
+              <MoreVertical className="h-5 w-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={handleShare}>

@@ -134,10 +134,6 @@ export function ChatInterface() {
   }, [isMobile]);
 
   const { messages, sendMessage, status, setMessages } = useChat({
-    // Send location with every request so AI has context
-    body: {
-      location: locationEnabled && location ? location : undefined,
-    },
     onError: (error) => {
       console.log("onError called:", error.message);
       try {
@@ -439,7 +435,7 @@ export function ChatInterface() {
                 <Message from="assistant">
                   <MessageContent>
                     <div className="flex items-center gap-3 py-2">
-                      <Loader variant="typing" />
+                      <Loader />
                       <span className="text-sm text-stone-500">
                         Thinking...
                       </span>
@@ -517,7 +513,7 @@ export function ChatInterface() {
                   }
                 >
                   {locationLoading ? (
-                    <Loader variant="spinner" className="h-4 w-4" />
+                    <Loader className="h-4 w-4" />
                   ) : locationEnabled ? (
                     <MapPin className="h-4 w-4" />
                   ) : (
