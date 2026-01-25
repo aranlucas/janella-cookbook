@@ -14,13 +14,16 @@ interface ChatPageProps {
 
 export default async function ChatPage({ searchParams }: ChatPageProps) {
   const params = await searchParams;
-  const recipeContext = params.recipe && params.title
-    ? { slug: params.recipe, title: params.title }
-    : undefined;
+  const recipeContext =
+    params.recipe && params.title
+      ? { slug: params.recipe, title: params.title }
+      : undefined;
 
   return (
     <main className="fixed inset-0 flex items-center justify-center bg-stone-100 p-4">
-      <Suspense fallback={<div className="text-stone-500">Loading chat...</div>}>
+      <Suspense
+        fallback={<div className="text-stone-500">Loading chat...</div>}
+      >
         <ChatInterface recipeContext={recipeContext} />
       </Suspense>
     </main>

@@ -18,6 +18,13 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import {
   PromptInput,
   PromptInputActionAddAttachments,
   PromptInputActionMenu,
@@ -429,6 +436,27 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                       >
                         {parts.map((part, i) => {
                           switch (part.type) {
+                            case "dynamic-tool":
+                              return (
+                                <Tool key={`${role}-tool-${i}`}>
+                                  <ToolHeader
+                                    type="dynamic-tool"
+                                    state={part.state}
+                                    toolName={part.toolName}
+                                    title={part.toolName}
+                                  />
+                                  <ToolContent>
+                                    <ToolInput input={part.input} />
+                                    {(part.state === "output-available" ||
+                                      part.state === "output-error") && (
+                                      <ToolOutput
+                                        output={part.output}
+                                        errorText={part.errorText}
+                                      />
+                                    )}
+                                  </ToolContent>
+                                </Tool>
+                              );
                             case "text":
                               return (
                                 <MessageResponse key={`${role}-${i}`}>
