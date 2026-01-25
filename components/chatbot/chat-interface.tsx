@@ -435,38 +435,28 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                         }
                       >
                         {parts.map((part, i) => {
-                          // Handle tool parts (type starts with "tool-")
-                          if (
-                            part.type.startsWith("tool-") &&
-                            "toolCallId" in part
-                          ) {
-                            const toolName =
-                              part.type === "dynamic-tool"
-                                ? (part as { toolName: string }).toolName
-                                : part.type.replace("tool-", "");
-                            return (
-                              <Tool key={`${role}-tool-${i}`}>
-                                <ToolHeader
-                                  type="dynamic-tool"
-                                  state={part.state}
-                                  toolName={toolName}
-                                  title={part.title ?? toolName}
-                                />
-                                <ToolContent>
-                                  <ToolInput input={part.input} />
-                                  {(part.state === "output-available" ||
-                                    part.state === "output-error") && (
-                                    <ToolOutput
-                                      output={part.output}
-                                      errorText={part.errorText}
-                                    />
-                                  )}
-                                </ToolContent>
-                              </Tool>
-                            );
-                          }
-
                           switch (part.type) {
+                            case "dynamic-tool":
+                              return (
+                                <Tool key={`${role}-tool-${i}`}>
+                                  <ToolHeader
+                                    type="dynamic-tool"
+                                    state={part.state}
+                                    toolName={part.toolName}
+                                    title={part.toolName}
+                                  />
+                                  <ToolContent>
+                                    <ToolInput input={part.input} />
+                                    {(part.state === "output-available" ||
+                                      part.state === "output-error") && (
+                                      <ToolOutput
+                                        output={part.output}
+                                        errorText={part.errorText}
+                                      />
+                                    )}
+                                  </ToolContent>
+                                </Tool>
+                              );
                             case "text":
                               return (
                                 <MessageResponse key={`${role}-${i}`}>
