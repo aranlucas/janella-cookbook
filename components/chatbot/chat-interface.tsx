@@ -150,21 +150,65 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     }
   }, [isMobile]);
 
-  const { messages, sendMessage, status, setMessages } = useChat({
-    onError: (error) => {
-      console.log("onError called:", error.message);
+  const { messages, sendMessage, status, setMessages, error } = useChat({
+    onError: (error: Error) => {
+      console.error("Chat error:", error.message);
+
+      // Try to parse structured error responses
       try {
         const jsonMatch = error.message.match(/\{.*\}/);
         if (jsonMatch) {
           const data = JSON.parse(jsonMatch[0]);
+
+          // Handle auth required error with redirect
           if (data.error === "auth_required" && data.authorizationUrl) {
-            console.log("Redirecting to:", data.authorizationUrl);
+            toast.info("Authentication required", {
+              description: "Redirecting to login...",
+            });
             window.location.href = data.authorizationUrl;
+            return;
+          }
+
+          // Handle rate limit errors
+          if (data.error === "rate_limit" || error.message.includes("rate limit")) {
+            toast.error("Rate limit exceeded", {
+              description: "Please wait a moment before sending another message.",
+            });
+            return;
+          }
+
+          // Handle other structured errors
+          if (data.message) {
+            toast.error("Error", {
+              description: data.message,
+            });
+            return;
           }
         }
-      } catch (e) {
-        console.error("Failed to parse auth error:", e);
+      } catch {
+        // Not a JSON error, continue to default handling
       }
+
+      // Handle network errors
+      if (error.message.includes("fetch") || error.message.includes("network") || error.message.includes("Failed to fetch")) {
+        toast.error("Network error", {
+          description: "Please check your internet connection and try again.",
+        });
+        return;
+      }
+
+      // Handle timeout errors
+      if (error.message.includes("timeout") || error.message.includes("timed out")) {
+        toast.error("Request timed out", {
+          description: "The server took too long to respond. Please try again.",
+        });
+        return;
+      }
+
+      // Default error message
+      toast.error("Something went wrong", {
+        description: "An error occurred while processing your message. Please try again.",
+      });
     },
   });
 
@@ -489,6 +533,49 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                       <span className="text-sm text-stone-500">
                         Thinking...
                       </span>
+                    </div>
+                  </MessageContent>
+                </Message>
+              )}
+              {error && !isLoading && messages[messages.length - 1]?.role === "user" && (
+                <Message from="assistant">
+                  <MessageContent className="border border-red-200 bg-red-50">
+                    <div className="flex flex-col gap-3 py-2">
+                      <div className="flex items-center gap-2 text-red-600">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium">
+                          Failed to get a response
+                        </span>
+                      </div>
+                      <p className="text-sm text-red-600/80">
+                        Something went wrong. Please try sending your message again.
+                      </p>
+                      <button
+                        onClick={() => {
+                          const lastUserMessage = messages[messages.length - 1];
+                          if (lastUserMessage?.role === "user") {
+                            hapticLight();
+                            sendMessage({
+                              role: "user",
+                              parts: lastUserMessage.parts,
+                            });
+                          }
+                        }}
+                        className="self-start rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                      >
+                        Retry
+                      </button>
                     </div>
                   </MessageContent>
                 </Message>
