@@ -548,7 +548,6 @@ export function ChatInterface() {
           </PromptInput>
         </div>
       </div>
-
     </div>
   );
 }
