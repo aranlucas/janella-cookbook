@@ -54,16 +54,20 @@ interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-  }
-}
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
+
+const getSpeechRecognition = (): SpeechRecognitionConstructor | undefined => {
+  if (typeof window === "undefined") return undefined;
+  return (
+    (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor })
+      .SpeechRecognition ??
+    (
+      window as unknown as {
+        webkitSpeechRecognition?: SpeechRecognitionConstructor;
+      }
+    ).webkitSpeechRecognition
+  );
+};
 
 type SpeechInputMode = "speech-recognition" | "media-recorder" | "none";
 
@@ -123,9 +127,9 @@ export const SpeechInput = ({
       return;
     }
 
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    const speechRecognition = new SpeechRecognition();
+    const SpeechRecognitionClass = getSpeechRecognition();
+    if (!SpeechRecognitionClass) return;
+    const speechRecognition = new SpeechRecognitionClass();
 
     speechRecognition.continuous = true;
     speechRecognition.interimResults = true;

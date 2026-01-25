@@ -205,8 +205,8 @@ export function highlightCode(
 
       const tokenized: TokenizedCode = {
         tokens: result.tokens,
-        fg: result.fg,
-        bg: result.bg,
+        fg: result.fg ?? "inherit",
+        bg: result.bg ?? "transparent",
       };
 
       // Cache the result
@@ -244,7 +244,7 @@ const LINE_NUMBER_CLASSES = cn(
 );
 
 const CodeBlockBody = memo(
-  ({
+  function CodeBlockBody({
     tokenized,
     showLineNumbers,
     className,
@@ -252,7 +252,7 @@ const CodeBlockBody = memo(
     tokenized: TokenizedCode;
     showLineNumbers: boolean;
     className?: string;
-  }) => {
+  }) {
     const preStyle = useMemo(
       () => ({
         backgroundColor: tokenized.bg,
@@ -377,18 +377,33 @@ export const CodeBlockContent = ({
   // Memoized raw tokens for immediate display
   const rawTokens = useMemo(() => createRawTokens(code), [code]);
 
-  // Try to get cached result synchronously, otherwise use raw tokens
-  const [tokenized, setTokenized] = useState<TokenizedCode>(
+  // Synchronously compute cached or raw tokens
+  const syncTokenized = useMemo(
     () => highlightCode(code, language) ?? rawTokens,
+    [code, language, rawTokens],
   );
 
-  useEffect(() => {
-    // Reset to raw tokens when code changes (shows current code, not stale tokens)
-    setTokenized(highlightCode(code, language) ?? rawTokens);
+  // State for async highlighting updates
+  const [asyncTokenized, setAsyncTokenized] = useState<TokenizedCode | null>(
+    null,
+  );
 
+  // Track which code/language the async result is for
+  const [asyncKey, setAsyncKey] = useState<string | null>(null);
+  const currentKey = `${code}:${language}`;
+
+  // Use async result only if it matches current inputs
+  const tokenized =
+    asyncKey === currentKey && asyncTokenized ? asyncTokenized : syncTokenized;
+
+  useEffect(() => {
+    const key = `${code}:${language}`;
     // Subscribe to async highlighting result
-    highlightCode(code, language, setTokenized);
-  }, [code, language, rawTokens]);
+    highlightCode(code, language, (result) => {
+      setAsyncKey(key);
+      setAsyncTokenized(result);
+    });
+  }, [code, language]);
 
   return (
     <div className="relative overflow-auto">

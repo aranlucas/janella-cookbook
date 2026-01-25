@@ -1,4 +1,4 @@
-import { ToolLoopAgent, createAgentUIStreamResponse } from "ai";
+import { ToolLoopAgent, createAgentUIStreamResponse, type UIMessage } from "ai";
 import { auth, createMCPClient } from "@ai-sdk/mcp";
 import { MCPOAuthProvider, AuthRequiredError } from "@/lib/mcp-oauth";
 import { headers } from "next/headers";
@@ -25,7 +25,7 @@ interface LocationData {
 
 export async function POST(request: Request) {
   const { messages, location } = (await request.json()) as {
-    messages: unknown;
+    messages: UIMessage[];
     location?: LocationData;
   };
   const baseUrl = await getBaseUrl();
