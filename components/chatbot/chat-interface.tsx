@@ -69,6 +69,15 @@ interface LocationData {
   accuracy: number;
 }
 
+interface RecipeContext {
+  slug: string;
+  title: string;
+}
+
+interface ChatInterfaceProps {
+  recipeContext?: RecipeContext;
+}
+
 const PromptInputAttachmentsDisplay = () => {
   const attachments = usePromptInputAttachments();
 
@@ -92,12 +101,13 @@ const PromptInputAttachmentsDisplay = () => {
   );
 };
 
-export function ChatInterface() {
+export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   const [text, setText] = useState<string>("");
   const [location, setLocation] = useState<LocationData | null>(null);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Detect mobile device
@@ -152,6 +162,18 @@ export function ChatInterface() {
   });
 
   const isLoading = status === "streaming" || status === "submitted";
+
+  // Auto-send initial message when recipe context is provided
+  useEffect(() => {
+    if (recipeContext && !hasInitialized && messages.length === 0) {
+      setHasInitialized(true);
+      const initialMessage = `I'd like to chat about the recipe "${recipeContext.title}". Can you help me with cooking tips, ingredient substitutions, or ordering the ingredients?`;
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text: initialMessage }],
+      });
+    }
+  }, [recipeContext, hasInitialized, messages.length, sendMessage]);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
