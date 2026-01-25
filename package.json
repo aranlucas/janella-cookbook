@@ -39,6 +39,7 @@
     "@streamdown/mermaid": "^1.0.1",
     "@xyflow/react": "^12.10.0",
     "ai": "^6.0.49",
+    "ai-fallback": "^2.0.0",
     "ansi-to-react": "^6.2.6",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
