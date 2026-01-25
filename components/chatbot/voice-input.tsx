@@ -2,8 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Mic, MicOff, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Mic, MicOff } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { toast } from "sonner";
 
 interface VoiceInputProps {
@@ -62,6 +68,25 @@ declare global {
   }
 }
 
+// Use useSyncExternalStore for browser API detection (SSR-safe)
+function subscribe() {
+  // No-op: browser support doesn't change
+  return () => {};
+}
+
+function getSnapshot(): boolean {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+function getServerSnapshot(): boolean {
+  return false; // Assume not supported during SSR
+}
+
+function getSpeechRecognition(): (new () => SpeechRecognition) | null {
+  if (typeof window === "undefined") return null;
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+}
+
 export function VoiceInput({
   onTranscript,
   onInterimTranscript,
@@ -69,93 +94,92 @@ export function VoiceInput({
   className,
 }: VoiceInputProps) {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
+  const isSupported = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    // Check for browser support
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
+    const SpeechRecognitionClass = getSpeechRecognition();
+    if (!SpeechRecognitionClass) return;
 
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
+    const recognition = new SpeechRecognitionClass();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let interimTranscript = "";
-        let finalTranscript = "";
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let interimTranscript = "";
+      let finalTranscript = "";
 
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
-          }
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
         }
+      }
 
-        if (interimTranscript && onInterimTranscript) {
-          onInterimTranscript(interimTranscript);
-        }
+      if (interimTranscript && onInterimTranscript) {
+        onInterimTranscript(interimTranscript);
+      }
 
-        if (finalTranscript) {
-          onTranscript(finalTranscript);
-          // Provide haptic feedback on successful transcription
-          if (navigator.vibrate) {
-            navigator.vibrate(50);
-          }
-        }
-      };
-
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error("Speech recognition error:", event.error);
-        setIsListening(false);
-
-        switch (event.error) {
-          case "not-allowed":
-            toast.error("Microphone access denied", {
-              description: "Please enable microphone access in your browser settings",
-            });
-            break;
-          case "no-speech":
-            toast.info("No speech detected", {
-              description: "Try speaking again",
-            });
-            break;
-          case "network":
-            toast.error("Network error", {
-              description: "Check your internet connection",
-            });
-            break;
-          default:
-            toast.error("Voice input error", {
-              description: "Please try again",
-            });
-        }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        // Haptic feedback when starting
+      if (finalTranscript) {
+        onTranscript(finalTranscript);
+        // Provide haptic feedback on successful transcription
         if (navigator.vibrate) {
-          navigator.vibrate([50, 50, 50]);
+          navigator.vibrate(50);
         }
-      };
+      }
+    };
 
-      recognitionRef.current = recognition;
-    }
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+
+      switch (event.error) {
+        case "not-allowed":
+          toast.error("Microphone access denied", {
+            description:
+              "Please enable microphone access in your browser settings",
+          });
+          break;
+        case "no-speech":
+          toast.info("No speech detected", {
+            description: "Try speaking again",
+          });
+          break;
+        case "network":
+          toast.error("Network error", {
+            description: "Check your internet connection",
+          });
+          break;
+        default:
+          toast.error("Voice input error", {
+            description: "Please try again",
+          });
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      // Haptic feedback when starting
+      if (navigator.vibrate) {
+        navigator.vibrate([50, 50, 50]);
+      }
+    };
+
+    recognitionRef.current = recognition;
 
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
+      recognition.abort();
     };
   }, [onTranscript, onInterimTranscript]);
 
@@ -189,16 +213,16 @@ export function VoiceInput({
       className={cn(
         "relative transition-all",
         isListening
-          ? "bg-red-500 text-white hover:bg-red-600 animate-pulse"
+          ? "animate-pulse bg-red-500 text-white hover:bg-red-600"
           : "text-stone-500 hover:bg-stone-100 hover:text-stone-700",
-        className
+        className,
       )}
       aria-label={isListening ? "Stop voice input" : "Start voice input"}
     >
       {isListening ? (
         <>
           <MicOff className="h-4 w-4" />
-          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-300 animate-ping" />
+          <span className="absolute -top-1 -right-1 h-2 w-2 animate-ping rounded-full bg-red-300" />
         </>
       ) : (
         <Mic className="h-4 w-4" />
@@ -209,45 +233,44 @@ export function VoiceInput({
 
 // Hook for using voice input anywhere
 export function useVoiceInput() {
-  const [isSupported, setIsSupported] = useState(false);
+  const isSupported = useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    setIsSupported(!!SpeechRecognition);
+    const SpeechRecognitionClass = getSpeechRecognition();
+    if (!SpeechRecognitionClass) return;
 
-    if (SpeechRecognition) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = "en-US";
+    const recognition = new SpeechRecognitionClass();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
 
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let finalTranscript = "";
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          }
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
         }
-        if (finalTranscript) {
-          setTranscript((prev) => prev + finalTranscript);
-        }
-      };
+      }
+      if (finalTranscript) {
+        setTranscript((prev) => prev + finalTranscript);
+      }
+    };
 
-      recognition.onend = () => setIsListening(false);
-      recognition.onstart = () => setIsListening(true);
-      recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognition.onstart = () => setIsListening(true);
+    recognition.onerror = () => setIsListening(false);
 
-      recognitionRef.current = recognition;
-    }
+    recognitionRef.current = recognition;
 
     return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.abort();
-      }
+      recognition.abort();
     };
   }, []);
 

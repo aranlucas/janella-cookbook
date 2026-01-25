@@ -51,7 +51,7 @@ export function PullToRefresh({
         isPulling.current = true;
       }
     },
-    [state]
+    [state],
   );
 
   const handleTouchMove = useCallback(
@@ -90,7 +90,7 @@ export function PullToRefresh({
         }
       }
     },
-    [state, pullThreshold, maxPull]
+    [state, pullThreshold, maxPull],
   );
 
   const handleTouchEnd = useCallback(async () => {
@@ -150,8 +150,8 @@ export function PullToRefresh({
       {/* Pull indicator */}
       <div
         className={cn(
-          "absolute left-0 right-0 top-0 flex items-center justify-center transition-all duration-200 z-10",
-          showIndicator ? "opacity-100" : "opacity-0"
+          "absolute top-0 right-0 left-0 z-10 flex items-center justify-center transition-all duration-200",
+          showIndicator ? "opacity-100" : "opacity-0",
         )}
         style={{
           height: pullDistance,
@@ -162,7 +162,7 @@ export function PullToRefresh({
           <div
             className={cn(
               "flex items-center justify-center rounded-full bg-white shadow-md transition-all duration-200",
-              state === "refreshing" ? "h-10 w-10" : "h-8 w-8"
+              state === "refreshing" ? "h-10 w-10" : "h-8 w-8",
             )}
             style={{
               transform:
@@ -172,12 +172,12 @@ export function PullToRefresh({
             }}
           >
             {state === "refreshing" ? (
-              <Loader2 className="h-5 w-5 text-orange-500 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
             ) : (
               <RefreshCw
                 className={cn(
                   "h-4 w-4 transition-colors",
-                  state === "ready" ? "text-orange-500" : "text-stone-400"
+                  state === "ready" ? "text-orange-500" : "text-stone-400",
                 )}
               />
             )}
@@ -185,7 +185,7 @@ export function PullToRefresh({
           <span
             className={cn(
               "text-xs font-medium transition-colors",
-              state === "ready" ? "text-orange-600" : "text-stone-500"
+              state === "ready" ? "text-orange-600" : "text-stone-500",
             )}
           >
             {getMessage()}

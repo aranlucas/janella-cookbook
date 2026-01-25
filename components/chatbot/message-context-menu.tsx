@@ -64,20 +64,17 @@ export function MessageContextMenu({
   }, [messageContent, handleCopy]);
 
   // Long press detection for mobile
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      touchStartPos.current = {
-        x: e.touches[0].clientX,
-        y: e.touches[0].clientY,
-      };
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
 
-      longPressTimer.current = setTimeout(() => {
-        hapticMedium();
-        setIsOpen(true);
-      }, 500);
-    },
-    []
-  );
+    longPressTimer.current = setTimeout(() => {
+      hapticMedium();
+      setIsOpen(true);
+    }, 500);
+  }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!touchStartPos.current || !longPressTimer.current) return;

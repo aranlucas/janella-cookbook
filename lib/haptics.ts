@@ -3,7 +3,14 @@
  * Uses the Vibration API when available
  */
 
-type HapticPattern = "light" | "medium" | "heavy" | "success" | "warning" | "error" | "selection";
+type HapticPattern =
+  | "light"
+  | "medium"
+  | "heavy"
+  | "success"
+  | "warning"
+  | "error"
+  | "selection";
 
 const patterns: Record<HapticPattern, number | number[]> = {
   light: 10,

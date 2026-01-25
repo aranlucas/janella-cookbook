@@ -37,7 +37,10 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Loader } from "@/components/ai-elements/loader";
 import { VoiceInput } from "@/components/chatbot/voice-input";
 import { MessageContextMenu } from "@/components/chatbot/message-context-menu";
-import { QuickActionsFab, CameraFab } from "@/components/chatbot/quick-actions-fab";
+import {
+  QuickActionsFab,
+  CameraFab,
+} from "@/components/chatbot/quick-actions-fab";
 import { MobileChatHeader } from "@/components/chatbot/mobile-chat-header";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
@@ -115,7 +118,10 @@ export function ChatInterface() {
       // Scroll to bottom when keyboard opens
       if (document.activeElement === inputRef.current) {
         setTimeout(() => {
-          inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          inputRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }, 100);
       }
     };
@@ -272,15 +278,18 @@ export function ChatInterface() {
   }, []);
 
   // Quick action handler (from FAB)
-  const handleQuickAction = useCallback((prompt: string) => {
-    if (isLoading) return;
-    hapticLight();
+  const handleQuickAction = useCallback(
+    (prompt: string) => {
+      if (isLoading) return;
+      hapticLight();
 
-    sendMessage({
-      role: "user",
-      parts: [{ type: "text", text: prompt }],
-    });
-  }, [isLoading, sendMessage]);
+      sendMessage({
+        role: "user",
+        parts: [{ type: "text", text: prompt }],
+      });
+    },
+    [isLoading, sendMessage],
+  );
 
   // Clear chat handler
   const handleClearChat = useCallback(() => {
@@ -325,7 +334,9 @@ export function ChatInterface() {
             <h2 className="text-xl font-bold tracking-tight text-stone-800">
               AI Cooking Assistant
             </h2>
-            <p className="text-sm text-stone-500">Powered by Janella Cookbook</p>
+            <p className="text-sm text-stone-500">
+              Powered by Janella Cookbook
+            </p>
           </div>
           {locationEnabled && (
             <div className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">

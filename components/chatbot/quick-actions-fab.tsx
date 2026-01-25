@@ -85,18 +85,18 @@ export function QuickActionsFab({
       onSelectAction(action.prompt);
       setIsOpen(false);
     },
-    [onSelectAction]
+    [onSelectAction],
   );
 
   return (
-    <div className={cn("fixed bottom-24 right-4 z-50 md:hidden", className)}>
+    <div className={cn("fixed right-4 bottom-24 z-50 md:hidden", className)}>
       {/* Action buttons */}
       <div
         className={cn(
-          "flex flex-col-reverse gap-2 mb-2 transition-all duration-300",
+          "mb-2 flex flex-col-reverse gap-2 transition-all duration-300",
           isOpen
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 translate-y-4 pointer-events-none"
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-4 opacity-0",
         )}
       >
         {quickActions.map((action, index) => (
@@ -104,13 +104,13 @@ export function QuickActionsFab({
             key={action.id}
             className={cn(
               "flex items-center gap-2 transition-all duration-200",
-              isOpen ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+              isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0",
             )}
             style={{
               transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
             }}
           >
-            <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-medium text-stone-700 shadow-md whitespace-nowrap">
+            <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-stone-700 shadow-md backdrop-blur-sm">
               {action.label}
             </span>
             <Button
@@ -119,8 +119,8 @@ export function QuickActionsFab({
               disabled={disabled}
               onClick={() => handleActionClick(action)}
               className={cn(
-                "h-10 w-10 rounded-full shadow-lg text-white transition-transform active:scale-95",
-                action.color
+                "h-10 w-10 rounded-full text-white shadow-lg transition-transform active:scale-95",
+                action.color,
               )}
               aria-label={action.label}
             >
@@ -139,8 +139,8 @@ export function QuickActionsFab({
         className={cn(
           "h-14 w-14 rounded-full shadow-xl transition-all duration-300",
           isOpen
-            ? "bg-stone-600 hover:bg-stone-700 rotate-45"
-            : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+            ? "rotate-45 bg-stone-600 hover:bg-stone-700"
+            : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700",
         )}
         aria-label={isOpen ? "Close quick actions" : "Open quick actions"}
         aria-expanded={isOpen}
@@ -155,7 +155,7 @@ export function QuickActionsFab({
       {/* Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/20 -z-10"
+          className="fixed inset-0 -z-10 bg-black/20"
           onClick={() => setIsOpen(false)}
           aria-hidden="true"
         />
@@ -186,9 +186,9 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       className={cn(
         "fixed bottom-24 left-4 z-50 md:hidden",
         "h-12 w-12 rounded-full shadow-lg",
-        "bg-stone-800 hover:bg-stone-900 text-white",
+        "bg-stone-800 text-white hover:bg-stone-900",
         "transition-transform active:scale-95",
-        className
+        className,
       )}
       aria-label="Take photo of recipe"
     >

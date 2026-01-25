@@ -104,7 +104,7 @@ export function MobileChatHeader({
         "bg-gradient-to-r from-stone-50 to-orange-50 backdrop-blur-lg",
         isCompact ? "py-2" : "py-4",
         !isVisible && "-translate-y-full",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-3 px-4">
@@ -114,7 +114,7 @@ export function MobileChatHeader({
             variant="ghost"
             size="icon-sm"
             onClick={onBack}
-            className="md:hidden text-stone-600 hover:text-stone-900"
+            className="text-stone-600 hover:text-stone-900 md:hidden"
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -125,29 +125,29 @@ export function MobileChatHeader({
         <div
           className={cn(
             "flex items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md transition-all duration-300",
-            isCompact ? "h-8 w-8" : "h-12 w-12"
+            isCompact ? "h-8 w-8" : "h-12 w-12",
           )}
         >
           <UtensilsCrossed
             className={cn(
               "transition-all duration-300",
-              isCompact ? "h-4 w-4" : "h-6 w-6"
+              isCompact ? "h-4 w-4" : "h-6 w-6",
             )}
           />
         </div>
 
         {/* Title area */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <h2
             className={cn(
-              "font-bold tracking-tight text-stone-800 truncate transition-all duration-300",
-              isCompact ? "text-base" : "text-xl"
+              "truncate font-bold tracking-tight text-stone-800 transition-all duration-300",
+              isCompact ? "text-base" : "text-xl",
             )}
           >
             {title}
           </h2>
           {!isCompact && (
-            <p className="text-sm text-stone-500 truncate">{subtitle}</p>
+            <p className="truncate text-sm text-stone-500">{subtitle}</p>
           )}
         </div>
 
@@ -157,7 +157,7 @@ export function MobileChatHeader({
             <div
               className={cn(
                 "flex items-center gap-1.5 rounded-full bg-green-100 text-xs font-medium text-green-700 transition-all duration-300",
-                isCompact ? "px-2 py-0.5" : "px-3 py-1"
+                isCompact ? "px-2 py-0.5" : "px-3 py-1",
               )}
             >
               <MapPin className="h-3 w-3" />
