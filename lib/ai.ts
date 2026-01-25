@@ -12,12 +12,15 @@ const openrouter = createOpenAI({
 });
 
 /**
- * Chat model with Gemini 2.5-flash as primary (better for conversational AI)
- * Falls back to OpenRouter Devstral if Google is unavailable
+ * Chat model with Gemini text models as fallback chain
+ * Primary: gemini-2.5-flash (best for conversational AI)
+ * Fallbacks: gemini-3-flash -> gemini-2.5-flash-lite -> OpenRouter
  */
 export const chatModel = createFallback({
   models: [
     google("gemini-2.5-flash"),
+    google("gemini-3-flash"),
+    google("gemini-2.5-flash-lite"),
     openrouter("mistralai/devstral-2512:free"),
   ],
   onError: (error, modelId) => {
@@ -27,13 +30,15 @@ export const chatModel = createFallback({
 });
 
 /**
- * Standard model with Gemini 2.0-flash as primary (good for structured output)
- * Used for recipe parsing, nutrition analysis, and other structured tasks
- * Falls back to OpenRouter Devstral if Google is unavailable
+ * Standard model for structured output tasks (recipe parsing, nutrition analysis)
+ * Primary: gemini-2.0-flash (good for structured output)
+ * Fallbacks: gemini-2.5-flash -> gemini-2.5-flash-lite -> OpenRouter
  */
 export const model = createFallback({
   models: [
     google("gemini-2.0-flash"),
+    google("gemini-2.5-flash"),
+    google("gemini-2.5-flash-lite"),
     openrouter("mistralai/devstral-2512:free"),
   ],
   onError: (error, modelId) => {
