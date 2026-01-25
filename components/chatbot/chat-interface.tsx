@@ -22,6 +22,7 @@ import {
   PromptInputActionAddAttachments,
   PromptInputActionMenu,
   PromptInputActionMenuContent,
+  PromptInputActionMenuItem,
   PromptInputActionMenuTrigger,
   PromptInputBody,
   PromptInputButton,
@@ -33,17 +34,16 @@ import {
   PromptInputTools,
   usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
+import { DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Loader } from "@/components/ai-elements/loader";
 import { VoiceInput } from "@/components/chatbot/voice-input";
 import { MessageContextMenu } from "@/components/chatbot/message-context-menu";
-import {
-  QuickActionsFab,
-  CameraFab,
-} from "@/components/chatbot/quick-actions-fab";
+import { quickActions } from "@/components/chatbot/quick-actions-fab";
 import { MobileChatHeader } from "@/components/chatbot/mobile-chat-header";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
+  Camera,
   ChefHat,
   ImageIcon,
   MapPin,
@@ -512,9 +512,24 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             <PromptInputFooter>
               <PromptInputTools>
                 <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger className="text-stone-500 hover:bg-stone-100 hover:text-stone-700" />
-                  <PromptInputActionMenuContent>
+                  <PromptInputActionMenuTrigger className="h-8 w-8 rounded-full border border-stone-300 bg-white text-stone-600 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600" />
+                  <PromptInputActionMenuContent className="w-56">
                     <PromptInputActionAddAttachments label="Add recipe photo" />
+                    <PromptInputActionMenuItem onClick={handleCameraCapture}>
+                      <Camera className="mr-2 h-4 w-4" />
+                      Take a photo
+                    </PromptInputActionMenuItem>
+                    <DropdownMenuSeparator />
+                    {quickActions.map((action) => (
+                      <PromptInputActionMenuItem
+                        key={action.id}
+                        onClick={() => handleQuickAction(action.prompt)}
+                        disabled={isLoading}
+                      >
+                        <span className="mr-2">{action.icon}</span>
+                        {action.label}
+                      </PromptInputActionMenuItem>
+                    ))}
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu>
 
@@ -555,17 +570,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
           </PromptInput>
         </div>
       </div>
-
-      {/* Mobile-only: Quick Actions FAB */}
-      {isMobile && (
-        <>
-          <QuickActionsFab
-            onSelectAction={handleQuickAction}
-            disabled={isLoading}
-          />
-          <CameraFab onCapture={handleCameraCapture} disabled={isLoading} />
-        </>
-      )}
     </div>
   );
 }
