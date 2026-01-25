@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart, ChefHat } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Heart, ChefHat, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { toggleFavorite, markAsCooked } from "@/lib/actions";
@@ -14,9 +15,19 @@ interface RecipeEngagementActionsProps {
 export function RecipeEngagementActions({
   recipe: initialRecipe,
 }: RecipeEngagementActionsProps) {
+  const router = useRouter();
   const [recipe, setRecipe] = useState(initialRecipe);
   const [isFavoriting, startFavoriteTransition] = useTransition();
   const [isCooking, startCookTransition] = useTransition();
+
+  const handleChatWithRecipe = () => {
+    // Navigate to chat with recipe context
+    const params = new URLSearchParams({
+      recipe: recipe.slug,
+      title: recipe.title,
+    });
+    router.push(`/chat?${params.toString()}`);
+  };
 
   const handleToggleFavorite = () => {
     startFavoriteTransition(async () => {
@@ -83,6 +94,16 @@ export function RecipeEngagementActions({
             {recipe.cookCount}
           </span>
         )}
+      </Button>
+
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={handleChatWithRecipe}
+        className="group relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700"
+      >
+        <MessageCircle className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
+        <span className="font-medium">Chat with Recipe</span>
       </Button>
     </div>
   );
