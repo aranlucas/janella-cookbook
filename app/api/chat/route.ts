@@ -2,34 +2,11 @@ import { ToolLoopAgent, createAgentUIStreamResponse, type UIMessage } from "ai";
 import { auth, createMCPClient } from "@ai-sdk/mcp";
 import { MCPOAuthProvider, AuthRequiredError } from "@/lib/mcp-oauth";
 import { headers } from "next/headers";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createOpenAI } from "@ai-sdk/openai";
-import { createFallback } from "ai-fallback";
+import { chatModel } from "@/lib/ai";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
 
 export const maxDuration = 30;
-
-// Google Generative AI client (primary)
-const google = createGoogleGenerativeAI({});
-
-// OpenRouter client configured for AI SDK (fallback)
-const openrouter = createOpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-// Create fallback model with Google (Gemini) as primary and OpenRouter as fallback
-const model = createFallback({
-  models: [
-    google("gemini-2.5-flash"),
-    openrouter("mistralai/devstral-2512:free"),
-  ],
-  onError: (error, modelId) => {
-    console.warn(`AI provider error (${modelId}):`, error.message);
-  },
-  modelResetInterval: 5 * 60 * 1000,
-});
 
 async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
@@ -45,20 +22,6 @@ interface LocationData {
 }
 
 export async function POST(request: Request) {
-  // Check if at least one AI provider is configured
-  if (
-    !process.env.OPENROUTER_API_KEY &&
-    !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  ) {
-    return Response.json(
-      {
-        error:
-          "No AI provider configured. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
-      },
-      { status: 500 },
-    );
-  }
-
   const { messages, location } = (await request.json()) as {
     messages: UIMessage[];
     location?: LocationData;
@@ -94,7 +57,7 @@ export async function POST(request: Request) {
       resourceContents.length > 0 ? `\n\n${resourceContents.join("\n\n")}` : "";
 
     const agent = new ToolLoopAgent({
-      model: model,
+      model: chatModel,
       tools,
       instructions: `You are a knowledgeable and encouraging culinary assistant for the Janella Cookbook app, designed for a home cook who enjoys making meals from scratch. Your role is to provide accessible recipes, explain techniques when needed, and seamlessly handle grocery ordering to support home cooking.
 
