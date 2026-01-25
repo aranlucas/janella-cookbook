@@ -104,7 +104,7 @@ export function MessageContextMenu({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
-        className="touch-none"
+        className="touch-pan-y"
       >
         {children}
       </ContextMenuTrigger>
