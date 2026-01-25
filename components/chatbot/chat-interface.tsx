@@ -490,7 +490,7 @@ export function ChatInterface() {
             <PromptInputFooter>
               <PromptInputTools>
                 <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger className="text-stone-500 hover:bg-stone-100 hover:text-stone-700" />
+                  <PromptInputActionMenuTrigger className="h-8 w-8 rounded-full border border-stone-300 bg-white text-stone-600 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600" />
                   <PromptInputActionMenuContent className="w-56">
                     <PromptInputActionAddAttachments label="Add recipe photo" />
                     <PromptInputActionMenuItem onClick={handleCameraCapture}>
