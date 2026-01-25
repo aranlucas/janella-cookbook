@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { useState, useCallback } from "react";
 
-interface QuickAction {
+export interface QuickAction {
   id: string;
   icon: React.ReactNode;
   label: string;
@@ -23,7 +23,7 @@ interface QuickAction {
   color: string;
 }
 
-const quickActions: QuickAction[] = [
+export const quickActions: QuickAction[] = [
   {
     id: "quick-dinner",
     icon: <Clock className="h-4 w-4" />,
