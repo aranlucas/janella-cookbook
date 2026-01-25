@@ -1,39 +1,15 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createFallback } from "ai-fallback";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
 import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
+import { model } from "./ai";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 import {
   extractYouTubeVideoId,
   getYouTubeTranscript,
   getYouTubeVideoMetadata,
 } from "./youtube";
-
-// Google Generative AI client (primary)
-const google = createGoogleGenerativeAI({});
-
-// OpenRouter client configured for AI SDK (fallback)
-const openrouter = createOpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-// Create fallback model with Google (Gemini) as primary and OpenRouter (Devstral) as fallback
-const model = createFallback({
-  models: [
-    google("gemini-2.0-flash"),
-    openrouter("mistralai/devstral-2512:free"),
-  ],
-  onError: (error, modelId) => {
-    console.warn(`AI provider error (${modelId}):`, error.message);
-  },
-  // Reset to primary provider after 5 minutes
-  modelResetInterval: 5 * 60 * 1000,
-});
 
 // Model context window configuration
 const MAX_CONTEXT_TOKENS = 256000; // Devstral 2512 supports 256K tokens
@@ -305,17 +281,6 @@ async function extractRecipeWithAI(
   html: string,
   sourceUrl: string,
 ): Promise<ParsedRecipe> {
-  // Check if at least one AI provider is configured
-  if (
-    !process.env.OPENROUTER_API_KEY &&
-    !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  ) {
-    throw new ExternalApiError(
-      "AI Provider",
-      "No AI provider configured. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
-    );
-  }
-
   // Extract the main image before processing content
   const imageUrl = extractImageFromHtml(html, sourceUrl);
 
@@ -407,17 +372,6 @@ CRITICAL INSTRUCTIONS:
  * Parse a recipe from natural language text
  */
 export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
-  // Check if at least one AI provider is configured
-  if (
-    !process.env.OPENROUTER_API_KEY &&
-    !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  ) {
-    throw new ExternalApiError(
-      "AI Provider",
-      "No AI provider configured. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
-    );
-  }
-
   if (!text || text.trim().length < 20) {
     throw new RecipeParseError("Please provide more recipe text to parse");
   }
@@ -486,17 +440,6 @@ Be accurate and organized. Extract all ingredients and instructions even if form
 export async function parseRecipeFromYouTube(
   url: string,
 ): Promise<ParsedRecipe> {
-  // Check if at least one AI provider is configured
-  if (
-    !process.env.OPENROUTER_API_KEY &&
-    !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  ) {
-    throw new ExternalApiError(
-      "AI Provider",
-      "No AI provider configured. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
-    );
-  }
-
   // Extract video ID from URL
   const videoId = extractYouTubeVideoId(url);
 

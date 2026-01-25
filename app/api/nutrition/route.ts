@@ -1,29 +1,6 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { createFallback } from "ai-fallback";
 import { streamText } from "ai";
 import { z } from "zod";
-
-// Google Generative AI client (primary)
-const google = createGoogleGenerativeAI({});
-
-// OpenRouter client configured for AI SDK (fallback)
-const openrouter = createOpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-// Create fallback model with Google (Gemini) as primary and OpenRouter (Devstral) as fallback
-const model = createFallback({
-  models: [
-    google("gemini-2.0-flash"),
-    openrouter("mistralai/devstral-2512:free"),
-  ],
-  onError: (error, modelId) => {
-    console.warn(`AI provider error (${modelId}):`, error.message);
-  },
-  modelResetInterval: 5 * 60 * 1000,
-});
+import { model } from "@/lib/ai";
 
 // Request validation schema
 const nutritionRequestSchema = z.object({
@@ -41,20 +18,6 @@ const nutritionRequestSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    // Check if at least one AI provider is configured
-    if (
-      !process.env.OPENROUTER_API_KEY &&
-      !process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    ) {
-      return new Response(
-        JSON.stringify({
-          error:
-            "No AI provider configured. Set either OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY",
-        }),
-        { status: 500 },
-      );
-    }
-
     const body = await req.json();
     const validated = nutritionRequestSchema.parse(body);
 
