@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
@@ -25,6 +28,18 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* Chat icon button visible on mobile only */}
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 md:hidden"
+          >
+            <Link href="/chat" aria-label="AI Chat Assistant">
+              <MessageSquare className="h-5 w-5" />
+            </Link>
+          </Button>
+
           {/* Icon button visible on small mobile, hidden on larger screens */}
           <div className="block sm:hidden">
             <AddRecipeButton variant="icon" />
