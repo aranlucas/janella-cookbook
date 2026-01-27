@@ -21,7 +21,7 @@ export const chatModel = createFallback({
     google("gemini-2.5-flash"),
     google("gemini-3-flash"),
     google("gemini-2.5-flash-lite"),
-    openrouter("mistralai/devstral-2512:free"),
+    openrouter("z-ai/glm-4.5-air:free"),
   ],
   onError: (error, modelId) => {
     console.warn(`AI provider error (${modelId}):`, error.message);
@@ -39,7 +39,7 @@ export const model = createFallback({
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
-    openrouter("mistralai/devstral-2512:free"),
+    openrouter("z-ai/glm-4.5-air:free"),
   ],
   onError: (error, modelId) => {
     console.warn(`AI provider error (${modelId}):`, error.message);
