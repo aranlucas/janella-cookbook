@@ -6,7 +6,6 @@ import { chatModel } from "@/lib/ai";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
 
-export const maxDuration = 30;
 
 async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
