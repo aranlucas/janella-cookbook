@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
-import { ExternalApiError, DatabaseError, withRetry } from "./errors";
+import { ExternalApiError, DatabaseError } from "./errors";
 import type {
   SearchFilters,
   SearchResult,
@@ -163,17 +163,7 @@ export async function semanticSearch(
 
   let queryEmbedding: number[];
   try {
-    queryEmbedding = await withRetry(() => generateEmbedding(enhancedQuery), {
-      maxRetries: 2,
-      initialDelayMs: 500,
-      shouldRetry: (error) => {
-        // Retry on network errors, not on auth errors
-        if (error instanceof Error) {
-          return !error.message.includes("401");
-        }
-        return true;
-      },
-    });
+    queryEmbedding = await generateEmbedding(enhancedQuery);
   } catch (error) {
     throw new ExternalApiError(
       "Hugging Face",

@@ -97,7 +97,7 @@ export function RecipeEngagementActions({
       </Button>
 
       <Button
-        variant="outline"
+        variant="default"
         size="lg"
         onClick={handleChatWithRecipe}
         className="group relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700"
