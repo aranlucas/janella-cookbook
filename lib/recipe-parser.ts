@@ -2,7 +2,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
-import { RecipeParseError, ExternalApiError, withRetry } from "./errors";
+import { RecipeParseError, ExternalApiError } from "./errors";
 import { model } from "./ai";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 import {
@@ -230,37 +230,20 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
 
   let html: string;
   try {
-    const response = await withRetry(
-      async () => {
-        const res = await fetch(validatedUrl.href, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
-            Accept: "text/html,application/xhtml+xml",
-          },
-          signal: AbortSignal.timeout(15000), // 15 second timeout
-        });
-
-        if (!res.ok) {
-          throw new RecipeParseError(
-            `Failed to fetch URL: ${res.status} ${res.statusText}`,
-            url,
-          );
-        }
-
-        return res;
+    const response = await fetch(validatedUrl.href, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
+        Accept: "text/html,application/xhtml+xml",
       },
-      {
-        maxRetries: 2,
-        initialDelayMs: 1000,
-        shouldRetry: (error) => {
-          // Don't retry on 4xx errors
-          if (error instanceof RecipeParseError) {
-            return !error.message.includes("4");
-          }
-          return true;
-        },
-      },
-    );
+      signal: AbortSignal.timeout(15000), // 15 second timeout
+    });
+
+    if (!response.ok) {
+      throw new RecipeParseError(
+        `Failed to fetch URL: ${response.status} ${response.statusText}`,
+        url,
+      );
+    }
 
     html = await response.text();
   } catch (error) {
@@ -291,12 +274,10 @@ async function extractRecipeWithAI(
   const validatedContent = validateAndTruncateContent(cleanedHtml);
 
   try {
-    const { output: parsed } = await withRetry(
-      async () => {
-        return await generateText({
-          model: model,
-          output: Output.object({ schema: recipeSchema }),
-          system: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
+    const { output: parsed } = await generateText({
+      model: model,
+      output: Output.object({ schema: recipeSchema }),
+      system: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
 
 CRITICAL INSTRUCTIONS:
 - You will receive the FULL HTML of a webpage - ignore all irrelevant content like navigation menus, advertisements, footers, sidebars, social media widgets, and promotional content
@@ -313,14 +294,8 @@ CRITICAL INSTRUCTIONS:
 - Look for recipe variations, notes, or tips that are part of the recipe
 - Ignore any user comments, related recipes, or other non-recipe content
 - Output in structured JSON format`,
-          prompt: `Extract the complete recipe from this webpage HTML. Ignore navigation, ads, and other irrelevant content. Focus only on the recipe itself:\n\n${validatedContent}`,
-        });
-      },
-      {
-        maxRetries: 2,
-        initialDelayMs: 2000,
-      },
-    );
+      prompt: `Extract the complete recipe from this webpage HTML. Ignore navigation, ads, and other irrelevant content. Focus only on the recipe itself:\n\n${validatedContent}`,
+    });
 
     // Validate we got a proper recipe
     if (!parsed.title || parsed.title === "Untitled Recipe") {
@@ -380,21 +355,13 @@ export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
   const validatedText = validateAndTruncateContent(text.trim());
 
   try {
-    const { output: parsed } = await withRetry(
-      async () => {
-        return await generateText({
-          model: model,
-          output: Output.object({ schema: recipeSchema }),
-          system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
+    const { output: parsed } = await generateText({
+      model: model,
+      output: Output.object({ schema: recipeSchema }),
+      system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
-          prompt: validatedText,
-        });
-      },
-      {
-        maxRetries: 2,
-        initialDelayMs: 2000,
-      },
-    );
+      prompt: validatedText,
+    });
 
     // Validate we got a proper recipe
     if (!parsed.ingredients || parsed.ingredients.length === 0) {
@@ -466,16 +433,14 @@ export async function parseRecipeFromYouTube(
   const validatedContent = validateAndTruncateContent(content.trim());
 
   try {
-    const { output: parsed } = await withRetry(
-      async () => {
-        const videoContext = videoTitle
-          ? `\n\nVideo Title: "${videoTitle}"\n\n`
-          : "\n\n";
+    const videoContext = videoTitle
+      ? `\n\nVideo Title: "${videoTitle}"\n\n`
+      : "\n\n";
 
-        // Different system prompts for transcript vs description
-        const systemPrompt =
-          source === "description"
-            ? `You are a recipe extraction expert. Extract recipe data from a YouTube video description.
+    // Different system prompts for transcript vs description
+    const systemPrompt =
+      source === "description"
+        ? `You are a recipe extraction expert. Extract recipe data from a YouTube video description.
 
 CRITICAL INSTRUCTIONS:
 - The text is from a video description, which may contain a written recipe
@@ -489,7 +454,7 @@ CRITICAL INSTRUCTIONS:
 - Ignore non-recipe content like social media links, channel promotions, or unrelated information
 - If the video title clearly indicates the recipe name, you can use it as the recipe title
 - Video descriptions may be less detailed than transcripts, so extract whatever information is available`
-            : `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
+        : `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
 
 CRITICAL INSTRUCTIONS:
 - The transcript is from a cooking video, so extract the recipe being demonstrated
@@ -504,21 +469,15 @@ CRITICAL INSTRUCTIONS:
 - Extract all ingredients and instructions even if the transcript is messy or has typos
 - If the video title clearly indicates the recipe name, you can use it as the recipe title`;
 
-        const contentLabel =
-          source === "description" ? "Description" : "Transcript";
+    const contentLabel =
+      source === "description" ? "Description" : "Transcript";
 
-        return await generateText({
-          model: model,
-          output: Output.object({ schema: recipeSchema }),
-          system: systemPrompt,
-          prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
-        });
-      },
-      {
-        maxRetries: 2,
-        initialDelayMs: 2000,
-      },
-    );
+    const { output: parsed } = await generateText({
+      model: model,
+      output: Output.object({ schema: recipeSchema }),
+      system: systemPrompt,
+      prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
+    });
 
     // Validate we got a proper recipe
     const sourceLabel = source === "description" ? "description" : "transcript";
