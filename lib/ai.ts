@@ -12,16 +12,16 @@ const openrouter = createOpenAI({
 });
 
 /**
- * Chat model with Gemini text models as fallback chain
- * Primary: gemini-2.5-flash (best for conversational AI)
- * Fallbacks: gemini-3-flash -> gemini-2.5-flash-lite -> OpenRouter
+ * Chat model with OpenRouter as primary
+ * Primary: stepfun/step-3.5-flash:free
+ * Fallbacks: gemini-2.5-flash -> gemini-3-flash -> gemini-2.5-flash-lite
  */
 export const chatModel = createFallback({
   models: [
+    openrouter("stepfun/step-3.5-flash:free"),
     google("gemini-2.5-flash"),
     google("gemini-3-flash"),
     google("gemini-2.5-flash-lite"),
-    openrouter("stepfun/step-3.5-flash:free"),
   ],
   onError: (error, modelId) => {
     console.warn(`AI provider error (${modelId}):`, error.message);
@@ -31,15 +31,15 @@ export const chatModel = createFallback({
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- * Primary: gemini-2.0-flash (good for structured output)
- * Fallbacks: gemini-2.5-flash -> gemini-2.5-flash-lite -> OpenRouter
+ * Primary: stepfun/step-3.5-flash:free
+ * Fallbacks: gemini-2.0-flash -> gemini-2.5-flash -> gemini-2.5-flash-lite
  */
 export const model = createFallback({
   models: [
+    openrouter("stepfun/step-3.5-flash:free"),
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
-    openrouter("stepfun/step-3.5-flash:free"),
   ],
   onError: (error, modelId) => {
     console.warn(`AI provider error (${modelId}):`, error.message);
