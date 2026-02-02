@@ -13,12 +13,12 @@ const openrouter = createOpenAI({
 
 /**
  * Chat model with OpenRouter as primary
- * Primary: stepfun/step-3.5-flash:free
+ * Primary: arcee-ai/trinity-large-preview:free
  * Fallbacks: gemini-2.5-flash -> gemini-3-flash -> gemini-2.5-flash-lite
  */
 export const chatModel = createFallback({
   models: [
-    openrouter("stepfun/step-3.5-flash:free"),
+    openrouter("arcee-ai/trinity-large-preview:free"),
     google("gemini-2.5-flash"),
     google("gemini-3-flash"),
     google("gemini-2.5-flash-lite"),
@@ -31,12 +31,12 @@ export const chatModel = createFallback({
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- * Primary: stepfun/step-3.5-flash:free
+ * Primary: arcee-ai/trinity-large-preview:free
  * Fallbacks: gemini-2.0-flash -> gemini-2.5-flash -> gemini-2.5-flash-lite
  */
 export const model = createFallback({
   models: [
-    openrouter("stepfun/step-3.5-flash:free"),
+    openrouter("arcee-ai/trinity-large-preview:free"),
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
