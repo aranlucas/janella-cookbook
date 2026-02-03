@@ -15,10 +15,14 @@ const openrouter = createOpenAI({
  * Chat model with OpenRouter as primary
  * Primary: arcee-ai/trinity-large-preview:free
  * Fallbacks: gemini-2.5-flash -> gemini-3-flash -> gemini-2.5-flash-lite
+ *
+ * Note: We use .chat() for OpenRouter to force the Chat Completions API
+ * instead of the Responses API (default in AI SDK 5+), as OpenRouter
+ * doesn't fully support the Responses API format.
  */
 export const chatModel = createFallback({
   models: [
-    openrouter("arcee-ai/trinity-large-preview:free"),
+    openrouter.chat("arcee-ai/trinity-large-preview:free"),
     google("gemini-2.5-flash"),
     google("gemini-3-flash"),
     google("gemini-2.5-flash-lite"),
@@ -33,10 +37,14 @@ export const chatModel = createFallback({
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
  * Primary: arcee-ai/trinity-large-preview:free
  * Fallbacks: gemini-2.0-flash -> gemini-2.5-flash -> gemini-2.5-flash-lite
+ *
+ * Note: We use .chat() for OpenRouter to force the Chat Completions API
+ * instead of the Responses API (default in AI SDK 5+), as OpenRouter
+ * doesn't fully support the Responses API format.
  */
 export const model = createFallback({
   models: [
-    openrouter("arcee-ai/trinity-large-preview:free"),
+    openrouter.chat("arcee-ai/trinity-large-preview:free"),
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
