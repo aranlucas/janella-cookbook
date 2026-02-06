@@ -6,7 +6,6 @@ import { chatModel } from "@/lib/ai";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
 
-
 async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
   const host = headersList.get("host") ?? "localhost:3000";

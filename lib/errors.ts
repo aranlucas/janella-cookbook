@@ -101,4 +101,3 @@ export function formatErrorResponse(error: unknown): {
     details: appError.details,
   };
 }
-
