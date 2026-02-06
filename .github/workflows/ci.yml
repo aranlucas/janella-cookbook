@@ -56,41 +56,98 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
+
           SHA="${{ github.event.pull_request.head.sha }}"
           REPO="${{ github.repository }}"
-          MAX_ATTEMPTS=30
-          INTERVAL=10
+          MAX_ATTEMPTS=60
+          INTERVAL=15
 
-          echo "Waiting for Vercel deployment for commit $SHA ..."
+          echo "============================================"
+          echo "Waiting for Vercel preview deployment"
+          echo "  Repository : $REPO"
+          echo "  Commit SHA : $SHA"
+          echo "  Timeout    : $((MAX_ATTEMPTS * INTERVAL))s (${MAX_ATTEMPTS} attempts × ${INTERVAL}s)"
+          echo "============================================"
+          echo ""
 
           for i in $(seq 1 $MAX_ATTEMPTS); do
-            # Fetch deployments for this commit SHA
-            DEPLOY_URL=$(gh api "repos/$REPO/deployments?sha=$SHA&per_page=10" \
-              --jq '
-                [ .[] | select(.environment | test("Preview";"i")) ] | first | .id
-              ' 2>/dev/null || true)
+            echo "--- Attempt $i/$MAX_ATTEMPTS ($(date -u '+%H:%M:%S UTC')) ---"
 
-            if [ -n "$DEPLOY_URL" ] && [ "$DEPLOY_URL" != "null" ]; then
-              # Found a deployment — check its latest status
-              STATUS_JSON=$(gh api "repos/$REPO/deployments/$DEPLOY_URL/statuses?per_page=1" \
-                --jq 'first' 2>/dev/null || true)
-              STATE=$(echo "$STATUS_JSON" | jq -r '.state // empty')
-              TARGET=$(echo "$STATUS_JSON" | jq -r '.environment_url // .target_url // empty')
+            # 1. List all deployments for this SHA
+            echo "Fetching deployments for SHA=$SHA ..."
+            RAW_DEPLOYMENTS=$(gh api "repos/$REPO/deployments?sha=$SHA&per_page=20" 2>&1) || {
+              echo "::warning::gh api call failed: $RAW_DEPLOYMENTS"
+              echo "Waiting ${INTERVAL}s before retry..."
+              sleep "$INTERVAL"
+              continue
+            }
 
-              if [ "$STATE" = "success" ] && [ -n "$TARGET" ]; then
-                echo "Vercel preview ready: $TARGET"
-                echo "url=$TARGET" >> "$GITHUB_OUTPUT"
-                exit 0
-              fi
-              echo "Attempt $i/$MAX_ATTEMPTS — deployment found, state=$STATE. Waiting ${INTERVAL}s..."
-            else
-              echo "Attempt $i/$MAX_ATTEMPTS — no deployment yet. Waiting ${INTERVAL}s..."
+            DEPLOY_COUNT=$(echo "$RAW_DEPLOYMENTS" | jq 'length')
+            echo "Found $DEPLOY_COUNT deployment(s) for this SHA"
+
+            if [ "$DEPLOY_COUNT" -eq 0 ]; then
+              echo "No deployments yet. Waiting ${INTERVAL}s..."
+              sleep "$INTERVAL"
+              continue
             fi
 
+            # 2. Log all deployments (environment + id)
+            echo "$RAW_DEPLOYMENTS" | jq -r '.[] | "  id=\(.id)  environment=\(.environment)  created_at=\(.created_at)"'
+
+            # 3. Find the first Preview deployment
+            DEPLOY_ID=$(echo "$RAW_DEPLOYMENTS" | jq -r '
+              [ .[] | select(.environment | test("preview";"i")) ] | first | .id // empty
+            ')
+
+            if [ -z "$DEPLOY_ID" ]; then
+              echo "No deployment with a 'Preview' environment found. Waiting ${INTERVAL}s..."
+              sleep "$INTERVAL"
+              continue
+            fi
+
+            echo "Using deployment id=$DEPLOY_ID"
+
+            # 4. Fetch statuses for this deployment
+            echo "Fetching statuses for deployment $DEPLOY_ID ..."
+            RAW_STATUSES=$(gh api "repos/$REPO/deployments/$DEPLOY_ID/statuses?per_page=5" 2>&1) || {
+              echo "::warning::Failed to fetch statuses: $RAW_STATUSES"
+              echo "Waiting ${INTERVAL}s before retry..."
+              sleep "$INTERVAL"
+              continue
+            }
+
+            STATUS_COUNT=$(echo "$RAW_STATUSES" | jq 'length')
+            echo "Found $STATUS_COUNT status(es)"
+            echo "$RAW_STATUSES" | jq -r '.[] | "  state=\(.state)  environment_url=\(.environment_url // "n/a")  target_url=\(.target_url // "n/a")  created_at=\(.created_at)"'
+
+            # 5. Check latest status
+            STATE=$(echo "$RAW_STATUSES" | jq -r 'first | .state // empty')
+            ENV_URL=$(echo "$RAW_STATUSES" | jq -r 'first | .environment_url // empty')
+            TGT_URL=$(echo "$RAW_STATUSES" | jq -r 'first | .target_url // empty')
+
+            # Prefer environment_url, fall back to target_url
+            PREVIEW_URL="${ENV_URL:-$TGT_URL}"
+
+            echo "Latest status: state=$STATE  url=$PREVIEW_URL"
+
+            if [ "$STATE" = "success" ] && [ -n "$PREVIEW_URL" ] && [ "$PREVIEW_URL" != "null" ]; then
+              echo ""
+              echo "============================================"
+              echo "Vercel preview is ready!"
+              echo "  URL: $PREVIEW_URL"
+              echo "============================================"
+              echo "url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Not ready yet (state=$STATE). Waiting ${INTERVAL}s..."
+            echo ""
             sleep "$INTERVAL"
           done
 
-          echo "::error::Timed out waiting for Vercel preview deployment"
+          echo ""
+          echo "::error::Timed out after $((MAX_ATTEMPTS * INTERVAL))s waiting for Vercel preview deployment"
           exit 1
 
       - name: Run Playwright tests
