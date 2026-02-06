@@ -63,20 +63,6 @@ jobs:
           echo "base_url=$URL" >> "$GITHUB_OUTPUT"
           echo "Testing against: $URL"
 
-      - name: Wait for deployment to be ready
-        run: |
-          URL="${{ steps.url.outputs.base_url }}"
-          for i in $(seq 1 30); do
-            if curl -sf -o /dev/null "$URL"; then
-              echo "Deployment is ready!"
-              exit 0
-            fi
-            echo "Attempt $i/30 - waiting 10s..."
-            sleep 10
-          done
-          echo "Deployment did not become ready in time"
-          exit 1
-
       - name: Run Playwright tests
         run: npx playwright test
         env:
