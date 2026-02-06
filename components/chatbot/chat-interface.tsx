@@ -52,22 +52,26 @@ import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import {
   Camera,
   ChefHat,
+  CookingPot,
+  Flame,
+  Heart,
   ImageIcon,
   MapPin,
   MapPinOff,
   Sparkles,
+  Leaf,
   UtensilsCrossed,
 } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 const cookingSuggestions = [
-  "What can I make with chicken and rice?",
-  "Quick dinner ideas for tonight",
-  "Healthy meal prep suggestions",
-  "Best pasta recipes for beginners",
-  "Vegetarian dinner options",
-  "How to meal plan for the week?",
+  { text: "What can I make with chicken and rice?", icon: <CookingPot className="h-3 w-3" /> },
+  { text: "Quick 30-min dinner ideas", icon: <Flame className="h-3 w-3" /> },
+  { text: "Healthy meal prep for the week", icon: <Leaf className="h-3 w-3" /> },
+  { text: "Easy pasta recipes for beginners", icon: <UtensilsCrossed className="h-3 w-3" /> },
+  { text: "Cozy comfort food suggestions", icon: <Heart className="h-3 w-3" /> },
+  { text: "How to meal plan on a budget?", icon: <Sparkles className="h-3 w-3" /> },
 ];
 
 interface LocationData {
@@ -382,7 +386,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   // Camera capture handler
   const handleCameraCapture = useCallback(() => {
     hapticLight();
-    // Trigger the file input for camera capture
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -390,7 +393,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        // This would integrate with the attachment system
         toast.info("Photo captured! Use the attachment button to upload.");
       }
     };
@@ -398,29 +400,35 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   }, []);
 
   return (
-    <div className="flex h-[calc(100dvh-32px)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl">
-      {/* Mobile-optimized header */}
+    <div className="chat-container flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-rustic-sand/80 bg-white/95 shadow-2xl shadow-rustic-charcoal/5 backdrop-blur-sm">
+      {/* Header */}
       {isMobile ? (
         <MobileChatHeader
           locationEnabled={locationEnabled}
           onClearChat={handleClearChat}
         />
       ) : (
-        /* Desktop header */
-        <div className="flex shrink-0 items-center gap-4 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-orange-50 px-6 py-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md">
-            <UtensilsCrossed className="h-6 w-6" />
+        <div className="relative flex shrink-0 items-center gap-4 border-b border-rustic-sand/60 bg-gradient-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 px-6 py-4">
+          {/* Decorative dots */}
+          <div className="absolute top-2 right-4 flex gap-1 opacity-30">
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-terracotta" />
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-marigold" />
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-moss" />
+          </div>
+
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-transform hover:scale-105">
+            <ChefHat className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold tracking-tight text-stone-800">
-              AI Cooking Assistant
+            <h2 className="font-serif text-xl font-bold tracking-tight text-rustic-charcoal">
+              Janella&apos;s Kitchen Assistant
             </h2>
-            <p className="text-sm text-stone-500">
-              Powered by Janella Cookbook
+            <p className="text-xs text-rustic-charcoal/50">
+              Your personal cooking companion
             </p>
           </div>
           {locationEnabled && (
-            <div className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+            <div className="flex items-center gap-1.5 rounded-full bg-rustic-moss/10 px-3 py-1.5 text-xs font-medium text-rustic-moss ring-1 ring-rustic-moss/20">
               <MapPin className="h-3 w-3" />
               <span>Location on</span>
             </div>
@@ -429,48 +437,60 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       )}
 
       {/* Messages area */}
-      <Conversation className="flex-1 bg-gradient-to-b from-stone-50/50 to-white">
+      <Conversation className="flex-1 bg-gradient-to-b from-rustic-cream/30 via-white to-rustic-cream/20">
         <ConversationContent className="px-4 py-6 md:px-6">
           {messages.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-5">
+            <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
+              {/* Cute chef illustration area */}
               <div className="relative">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-orange-200 shadow-inner">
-                  <ChefHat className="h-8 w-8 text-orange-600" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-rustic-blush to-rustic-butter shadow-inner">
+                  <ChefHat className="h-10 w-10 text-rustic-terracotta" />
                 </div>
-                <div className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md">
-                  <Sparkles className="h-3 w-3 text-orange-500" />
+                <div className="absolute -top-1 -right-1 flex h-7 w-7 animate-bounce items-center justify-center rounded-full bg-rustic-marigold shadow-md">
+                  <Sparkles className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div className="absolute -bottom-1 -left-2 flex h-6 w-6 items-center justify-center rounded-full bg-rustic-moss/90 shadow-md">
+                  <Leaf className="h-3 w-3 text-white" />
                 </div>
               </div>
+
               <div className="text-center">
-                <h3 className="mb-2 text-xl font-bold text-stone-800">
-                  Welcome to your AI Cooking Assistant
+                <h3 className="mb-2 font-serif text-2xl font-bold tracking-tight text-rustic-charcoal">
+                  Hello there, chef!
                 </h3>
-                <p className="max-w-md text-sm leading-relaxed text-stone-500">
-                  Ask me anything about recipes, meal planning, cooking
-                  techniques, or ingredient substitutions.
+                <p className="max-w-sm text-sm leading-relaxed text-rustic-charcoal/60">
+                  I&apos;m here to help with recipes, meal planning, cooking tips,
+                  and even grocery orders. What shall we cook today?
                 </p>
               </div>
-              <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1.5 text-xs">
-                <Sparkles className="h-3 w-3 text-orange-500" />
-                <span className="font-medium text-stone-600">
-                  Try a suggestion below to get started
+
+              {/* Feature hints */}
+              <div className="flex flex-wrap justify-center gap-3 text-xs">
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-blush/50 px-3 py-1.5 text-rustic-charcoal/60">
+                  <ImageIcon className="h-3 w-3 text-rustic-terracotta" />
+                  Snap a recipe photo
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-butter/50 px-3 py-1.5 text-rustic-charcoal/60">
+                  <MapPin className="h-3 w-3 text-rustic-moss" />
+                  Find nearby stores
+                </span>
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-cream px-3 py-1.5 text-rustic-charcoal/60">
+                  <UtensilsCrossed className="h-3 w-3 text-rustic-marigold" />
+                  Get cooking tips
                 </span>
               </div>
-              <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs text-stone-400">
-                <span className="flex items-center gap-1">
-                  <ImageIcon className="h-3 w-3" /> Upload recipe photos
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" /> Enable location for local
-                  suggestions
+
+              {/* Suggestion prompt */}
+              <div className="mt-2 flex items-center gap-2 rounded-full bg-rustic-terracotta/5 px-4 py-2 text-xs">
+                <Sparkles className="h-3 w-3 text-rustic-terracotta" />
+                <span className="font-medium text-rustic-charcoal/70">
+                  Try a suggestion below to get started
                 </span>
               </div>
             </div>
           ) : (
             <>
               {messages.map(({ role, parts }, index) => {
-                // Extract text content for context menu
                 const textContent = parts
                   .filter((p) => p.type === "text")
                   .map((p) => (p as { type: "text"; text: string }).text)
@@ -486,8 +506,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                       <MessageContent
                         className={
                           role === "user"
-                            ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
-                            : ""
+                            ? "bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/90 text-white shadow-md shadow-rustic-terracotta/10"
+                            : "bg-rustic-cream/50 text-rustic-charcoal ring-1 ring-rustic-sand/40"
                         }
                       >
                         {parts.map((part, i) => {
@@ -525,7 +545,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                                   key={`${role}-${i}`}
                                   src={part.url}
                                   alt="Uploaded image"
-                                  className="max-h-48 rounded-lg object-cover"
+                                  className="max-h-48 rounded-xl object-cover shadow-sm"
                                 />
                               );
                             default:
@@ -539,11 +559,15 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               })}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <Message from="assistant">
-                  <MessageContent>
+                  <MessageContent className="bg-rustic-cream/50 ring-1 ring-rustic-sand/40">
                     <div className="flex items-center gap-3 py-2">
-                      <Loader />
-                      <span className="text-sm text-stone-500">
-                        Thinking...
+                      <div className="flex gap-1">
+                        <span className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60" style={{ animationDelay: "0ms" }} />
+                        <span className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60" style={{ animationDelay: "150ms" }} />
+                        <span className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60" style={{ animationDelay: "300ms" }} />
+                      </div>
+                      <span className="text-sm italic text-rustic-charcoal/40">
+                        Cooking up a response...
                       </span>
                     </div>
                   </MessageContent>
@@ -553,7 +577,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                 !isLoading &&
                 messages[messages.length - 1]?.role === "user" && (
                   <Message from="assistant">
-                    <MessageContent className="border border-red-200 bg-red-50">
+                    <MessageContent className="border border-red-200/60 bg-red-50/80 ring-1 ring-red-100">
                       <div className="flex flex-col gap-3 py-2">
                         <div className="flex items-center gap-2 text-red-600">
                           <svg
@@ -569,12 +593,11 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                             />
                           </svg>
                           <span className="text-sm font-medium">
-                            Failed to get a response
+                            Oops, something went wrong
                           </span>
                         </div>
                         <p className="text-sm text-red-600/80">
-                          Something went wrong. Please try sending your message
-                          again.
+                          The kitchen had a little mishap. Let&apos;s try that again!
                         </p>
                         <button
                           onClick={() => {
@@ -588,9 +611,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                               });
                             }
                           }}
-                          className="self-start rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                          className="self-start rounded-lg bg-rustic-terracotta px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-rustic-terracotta/90 hover:shadow active:scale-[0.98]"
                         >
-                          Retry
+                          Try again
                         </button>
                       </div>
                     </MessageContent>
@@ -603,17 +626,22 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       </Conversation>
 
       {/* Input area */}
-      <div className="shrink-0 border-t border-stone-200 bg-gradient-to-r from-stone-50 to-orange-50">
-        <div className="grid gap-4 p-4">
+      <div className="shrink-0 border-t border-rustic-sand/50 bg-gradient-to-b from-white to-rustic-cream/40">
+        <div className="grid gap-3 p-3 md:p-4">
           {/* Suggestions */}
           <Suggestions className="pb-1">
             {cookingSuggestions.map((suggestion) => (
               <Suggestion
-                key={suggestion}
-                onClick={() => handleSuggestionClick(suggestion)}
-                suggestion={suggestion}
-                className="border-stone-300 bg-white text-stone-700 shadow-sm transition-all hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 hover:shadow"
-              />
+                key={suggestion.text}
+                onClick={() => handleSuggestionClick(suggestion.text)}
+                suggestion={suggestion.text}
+                className="group/chip gap-1.5 border-rustic-sand/60 bg-white text-rustic-charcoal/80 shadow-sm transition-all hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta hover:shadow"
+              >
+                <span className="text-rustic-charcoal/40 transition-colors group-hover/chip:text-rustic-terracotta">
+                  {suggestion.icon}
+                </span>
+                {suggestion.text}
+              </Suggestion>
             ))}
           </Suggestions>
 
@@ -623,7 +651,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             multiple
             accept="image/*"
             onSubmit={handleSubmit}
-            className="overflow-hidden rounded-xl border border-stone-300 bg-white shadow-sm transition-all focus-within:border-orange-400 focus-within:shadow-md focus-within:ring-2 focus-within:ring-orange-100"
+            className="overflow-hidden rounded-2xl border border-rustic-sand/60 bg-white shadow-sm transition-all focus-within:border-rustic-terracotta/40 focus-within:shadow-md focus-within:ring-2 focus-within:ring-rustic-terracotta/10"
           >
             <PromptInputHeader>
               <PromptInputAttachmentsDisplay />
@@ -635,15 +663,15 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                 placeholder={
                   locationEnabled
                     ? "Ask me anything... (location enabled)"
-                    : "Ask me anything about cooking or meal planning..."
+                    : "What shall we cook today?"
                 }
-                className="text-stone-800 placeholder:text-stone-400"
+                className="text-rustic-charcoal placeholder:text-rustic-charcoal/35"
               />
             </PromptInputBody>
             <PromptInputFooter>
               <PromptInputTools>
                 <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger className="h-8 w-8 rounded-full border border-stone-300 bg-white text-stone-600 hover:border-orange-400 hover:bg-orange-50 hover:text-orange-600" />
+                  <PromptInputActionMenuTrigger className="h-8 w-8 rounded-xl border border-rustic-sand/60 bg-white text-rustic-charcoal/50 transition-all hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta" />
                   <PromptInputActionMenuContent className="w-56">
                     <PromptInputActionAddAttachments label="Add recipe photo" />
                     <PromptInputActionMenuItem onClick={handleCameraCapture}>
@@ -664,7 +692,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu>
 
-                {/* Voice input button - great for mobile */}
+                {/* Voice input button */}
                 <VoiceInput
                   onTranscript={handleVoiceTranscript}
                   disabled={isLoading}
@@ -676,8 +704,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                   variant={locationEnabled ? "default" : "ghost"}
                   className={
                     locationEnabled
-                      ? "bg-green-600 text-white hover:bg-green-700"
-                      : "text-stone-500 hover:bg-stone-100 hover:text-stone-700"
+                      ? "bg-rustic-moss text-white hover:bg-rustic-moss/90"
+                      : "text-rustic-charcoal/40 hover:bg-rustic-cream hover:text-rustic-moss"
                   }
                 >
                   {locationLoading ? (
@@ -695,10 +723,17 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               <PromptInputSubmit
                 disabled={!text.trim() || isLoading}
                 status={status}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm transition-all hover:from-orange-600 hover:to-orange-700 hover:shadow disabled:from-stone-300 disabled:to-stone-300 disabled:shadow-none"
+                className="bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/85 text-white shadow-sm transition-all hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/80 hover:shadow-md disabled:from-rustic-sand disabled:to-rustic-sand disabled:text-rustic-charcoal/30 disabled:shadow-none"
               />
             </PromptInputFooter>
           </PromptInput>
+
+          {/* Powered by badge */}
+          <div className="flex justify-center">
+            <span className="text-[10px] tracking-wide text-rustic-charcoal/25">
+              Powered by Janella&apos;s Kitchen
+            </span>
+          </div>
         </div>
       </div>
     </div>

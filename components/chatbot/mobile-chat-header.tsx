@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { hapticLight } from "@/lib/haptics";
 import {
-  UtensilsCrossed,
+  ChefHat,
   MapPin,
   MoreVertical,
   Trash2,
@@ -34,8 +34,8 @@ interface MobileChatHeaderProps {
 }
 
 export function MobileChatHeader({
-  title = "AI Cooking Assistant",
-  subtitle = "Powered by Janella Cookbook",
+  title = "Janella's Kitchen Assistant",
+  subtitle = "Your personal cooking companion",
   locationEnabled,
   onBack,
   onClearChat,
@@ -77,7 +77,7 @@ export function MobileChatHeader({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "AI Cooking Assistant",
+          title: "Janella's Kitchen Assistant",
           text: "Check out this AI cooking assistant!",
           url: window.location.href,
         });
@@ -100,9 +100,9 @@ export function MobileChatHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 shrink-0 border-b border-stone-200 transition-all duration-300",
-        "bg-gradient-to-r from-stone-50 to-orange-50 backdrop-blur-lg",
-        isCompact ? "py-2" : "py-4",
+        "sticky top-0 z-40 shrink-0 border-b border-rustic-sand/50 transition-all duration-300",
+        "bg-gradient-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 backdrop-blur-lg",
+        isCompact ? "py-2" : "py-3",
         !isVisible && "-translate-y-full",
         className,
       )}
@@ -114,7 +114,7 @@ export function MobileChatHeader({
             variant="ghost"
             size="icon-sm"
             onClick={onBack}
-            className="text-stone-600 hover:text-stone-900 md:hidden"
+            className="text-rustic-charcoal/60 hover:text-rustic-charcoal md:hidden"
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -124,14 +124,14 @@ export function MobileChatHeader({
         {/* Logo/Icon */}
         <div
           className={cn(
-            "flex items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-md transition-all duration-300",
-            isCompact ? "h-8 w-8" : "h-12 w-12",
+            "flex items-center justify-center rounded-2xl bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-all duration-300",
+            isCompact ? "h-8 w-8 rounded-xl" : "h-10 w-10",
           )}
         >
-          <UtensilsCrossed
+          <ChefHat
             className={cn(
               "transition-all duration-300",
-              isCompact ? "h-4 w-4" : "h-6 w-6",
+              isCompact ? "h-4 w-4" : "h-5 w-5",
             )}
           />
         </div>
@@ -140,14 +140,16 @@ export function MobileChatHeader({
         <div className="min-w-0 flex-1">
           <h2
             className={cn(
-              "truncate font-bold tracking-tight text-stone-800 transition-all duration-300",
-              isCompact ? "text-base" : "text-xl",
+              "truncate font-serif font-bold tracking-tight text-rustic-charcoal transition-all duration-300",
+              isCompact ? "text-sm" : "text-base",
             )}
           >
             {title}
           </h2>
           {!isCompact && (
-            <p className="truncate text-sm text-stone-500">{subtitle}</p>
+            <p className="truncate text-xs text-rustic-charcoal/50">
+              {subtitle}
+            </p>
           )}
         </div>
 
@@ -156,8 +158,8 @@ export function MobileChatHeader({
           {locationEnabled && (
             <div
               className={cn(
-                "flex items-center gap-1.5 rounded-full bg-green-100 text-xs font-medium text-green-700 transition-all duration-300",
-                isCompact ? "px-2 py-0.5" : "px-3 py-1",
+                "flex items-center gap-1.5 rounded-full bg-rustic-moss/10 text-xs font-medium text-rustic-moss ring-1 ring-rustic-moss/20 transition-all duration-300",
+                isCompact ? "px-2 py-0.5" : "px-2.5 py-1",
               )}
             >
               <MapPin className="h-3 w-3" />
@@ -172,7 +174,7 @@ export function MobileChatHeader({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-stone-600 hover:text-stone-900"
+                  className="text-rustic-charcoal/50 hover:bg-rustic-blush/30 hover:text-rustic-charcoal"
                   aria-label="More options"
                 />
               }

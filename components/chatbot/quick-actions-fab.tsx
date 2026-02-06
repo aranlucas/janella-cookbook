@@ -29,35 +29,35 @@ export const quickActions: QuickAction[] = [
     icon: <Clock className="h-4 w-4" />,
     label: "Quick dinner",
     prompt: "What's a quick dinner I can make in under 30 minutes?",
-    color: "bg-blue-500 hover:bg-blue-600",
+    color: "bg-rustic-marigold hover:bg-rustic-marigold/90",
   },
   {
     id: "healthy",
     icon: <Leaf className="h-4 w-4" />,
     label: "Healthy meal",
     prompt: "Suggest a healthy and nutritious meal for tonight",
-    color: "bg-green-500 hover:bg-green-600",
+    color: "bg-rustic-moss hover:bg-rustic-moss/90",
   },
   {
     id: "shopping",
     icon: <ShoppingCart className="h-4 w-4" />,
     label: "Shopping list",
     prompt: "Help me create a shopping list for the week",
-    color: "bg-purple-500 hover:bg-purple-600",
+    color: "bg-rustic-terracotta/80 hover:bg-rustic-terracotta/70",
   },
   {
     id: "technique",
     icon: <ChefHat className="h-4 w-4" />,
     label: "Cooking tip",
     prompt: "Share a professional cooking technique I should learn",
-    color: "bg-amber-500 hover:bg-amber-600",
+    color: "bg-rustic-charcoal/70 hover:bg-rustic-charcoal/60",
   },
   {
     id: "leftovers",
     icon: <Utensils className="h-4 w-4" />,
     label: "Use leftovers",
     prompt: "What can I make with common leftover ingredients?",
-    color: "bg-rose-500 hover:bg-rose-600",
+    color: "bg-rustic-blush text-rustic-charcoal hover:bg-rustic-blush/80",
   },
 ];
 
@@ -110,7 +110,7 @@ export function QuickActionsFab({
               transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
             }}
           >
-            <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-stone-700 shadow-md backdrop-blur-sm">
+            <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-rustic-charcoal shadow-md backdrop-blur-sm">
               {action.label}
             </span>
             <Button
@@ -139,8 +139,8 @@ export function QuickActionsFab({
         className={cn(
           "h-14 w-14 rounded-full shadow-xl transition-all duration-300",
           isOpen
-            ? "rotate-45 bg-stone-600 hover:bg-stone-700"
-            : "bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700",
+            ? "rotate-45 bg-rustic-charcoal hover:bg-rustic-charcoal/90"
+            : "bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75",
         )}
         aria-label={isOpen ? "Close quick actions" : "Open quick actions"}
         aria-expanded={isOpen}
@@ -186,7 +186,7 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       className={cn(
         "fixed bottom-52 left-4 z-50 md:hidden",
         "h-12 w-12 rounded-full shadow-lg",
-        "bg-stone-800 text-white hover:bg-stone-900",
+        "bg-rustic-charcoal text-white hover:bg-rustic-charcoal/90",
         "transition-transform active:scale-95",
         className,
       )}
