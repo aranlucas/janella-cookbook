@@ -2,19 +2,20 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createFallback } from "ai-fallback";
 
-// Google Generative AI client (primary)
+// Google Generative AI client (fallback)
 const google = createGoogleGenerativeAI({});
 
-// OpenRouter client configured for AI SDK (fallback)
+// OpenRouter client configured for AI SDK (primary - free tier)
 const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
 /**
- * Chat model with OpenRouter as primary
- * Primary: arcee-ai/trinity-large-preview:free
- * Fallbacks: gemini-2.5-flash -> gemini-3-flash -> gemini-2.5-flash-lite
+ * Chat model using OpenRouter's free smart router as primary.
+ * openrouter/free auto-selects from available free models, with smart
+ * filtering for features like image understanding, tool calling, etc.
+ * Fallbacks: Google models for reliability.
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
@@ -22,9 +23,8 @@ const openrouter = createOpenAI({
  */
 export const chatModel = createFallback({
   models: [
-    openrouter.chat("arcee-ai/trinity-large-preview:free"),
+    openrouter.chat("openrouter/free"),
     google("gemini-2.5-flash"),
-    google("gemini-3-flash"),
     google("gemini-2.5-flash-lite"),
   ],
   onError: (error, modelId) => {
@@ -35,8 +35,8 @@ export const chatModel = createFallback({
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- * Primary: arcee-ai/trinity-large-preview:free
- * Fallbacks: gemini-2.0-flash -> gemini-2.5-flash -> gemini-2.5-flash-lite
+ * Primary: openrouter/free (auto-selects best available free model)
+ * Fallbacks: Google models for reliability
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
@@ -44,7 +44,7 @@ export const chatModel = createFallback({
  */
 export const model = createFallback({
   models: [
-    openrouter.chat("arcee-ai/trinity-large-preview:free"),
+    openrouter.chat("openrouter/free"),
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
