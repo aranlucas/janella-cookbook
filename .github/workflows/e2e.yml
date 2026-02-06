@@ -1,10 +1,13 @@
 name: E2E Tests
 
 on:
-  # Fired by Vercel's GitHub integration after a successful preview deployment
+  # Fired by Vercel via repository_dispatch after deployment status changes
   repository_dispatch:
     types:
       - "vercel.deployment.success"
+
+  # Fired by GitHub when Vercel updates a deployment status
+  deployment_status:
 
   # Allow manual trigger with a custom URL
   workflow_dispatch:
@@ -15,18 +18,26 @@ on:
         type: string
 
 concurrency:
-  group: e2e-${{ github.event.client_payload.git.sha || github.sha }}
+  group: e2e-${{ github.event.client_payload.git.sha || github.event.deployment.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   e2e:
+    # Only run when:
+    # - repository_dispatch: always (already filtered to success)
+    # - deployment_status: only on success
+    # - workflow_dispatch: always
+    if: >-
+      github.event_name == 'repository_dispatch' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.client_payload.git.sha || github.sha }}
+          ref: ${{ github.event.client_payload.git.sha || github.event.deployment.sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -43,15 +54,18 @@ jobs:
         id: url
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "base_url=${{ inputs.deployment_url }}" >> "$GITHUB_OUTPUT"
+            URL="${{ inputs.deployment_url }}"
+          elif [ "${{ github.event_name }}" = "deployment_status" ]; then
+            URL="${{ github.event.deployment_status.environment_url }}"
           else
-            echo "base_url=${{ github.event.client_payload.url }}" >> "$GITHUB_OUTPUT"
+            URL="${{ github.event.client_payload.url }}"
           fi
+          echo "base_url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Testing against: $URL"
 
       - name: Wait for deployment to be ready
         run: |
           URL="${{ steps.url.outputs.base_url }}"
-          echo "Testing against: $URL"
           for i in $(seq 1 30); do
             if curl -sf -o /dev/null "$URL"; then
               echo "Deployment is ready!"
