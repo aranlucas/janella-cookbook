@@ -57,11 +57,22 @@ jobs:
             URL="${{ inputs.deployment_url }}"
           elif [ "${{ github.event_name }}" = "deployment_status" ]; then
             URL="${{ github.event.deployment_status.environment_url }}"
+            if [ -z "$URL" ]; then
+              URL="${{ github.event.deployment_status.target_url }}"
+            fi
           else
             URL="${{ github.event.client_payload.url }}"
           fi
+
+          echo "Event: ${{ github.event_name }}"
+          echo "URL:   $URL"
+
+          if [ -z "$URL" ]; then
+            echo "::error::No deployment URL found"
+            exit 1
+          fi
+
           echo "base_url=$URL" >> "$GITHUB_OUTPUT"
-          echo "Testing against: $URL"
 
       - name: Run Playwright tests
         run: npx playwright test
