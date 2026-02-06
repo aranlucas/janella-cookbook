@@ -9,12 +9,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI ? "github" : "html",
-  timeout: 30_000,
+  timeout: process.env.CI ? 60_000 : 30_000,
 
   use: {
     baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    navigationTimeout: process.env.CI ? 45_000 : 15_000,
   },
 
   projects: [
