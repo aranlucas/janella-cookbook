@@ -1,29 +1,26 @@
 name: E2E Tests
 
 on:
-  deployment_status:
+  pull_request:
+  push:
+    branches: [main]
 
   # Allow manual trigger with a custom URL
   workflow_dispatch:
     inputs:
       deployment_url:
-        description: "Deployment URL to test against"
-        required: true
+        description: "Deployment URL to test against (skips Vercel deploy step)"
+        required: false
         type: string
 
 concurrency:
-  group: e2e-${{ github.event.deployment.environment || 'manual' }}-${{ github.sha }}
+  group: e2e-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   e2e:
-    # Run when Vercel deployment succeeds, or on manual trigger
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      (github.event.deployment_status.state == 'success' &&
-       github.event.deployment_status.environment_url != '')
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -39,13 +36,23 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
+      - name: Deploy to Vercel Preview
+        id: vercel
+        if: ${{ !inputs.deployment_url }}
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          github-comment: false
+
       - name: Determine base URL
         id: url
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ -n "${{ inputs.deployment_url }}" ]; then
             echo "base_url=${{ inputs.deployment_url }}" >> "$GITHUB_OUTPUT"
           else
-            echo "base_url=${{ github.event.deployment_status.environment_url }}" >> "$GITHUB_OUTPUT"
+            echo "base_url=${{ steps.vercel.outputs.preview-url }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Wait for deployment to be ready
