@@ -56,7 +56,7 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Wait for Vercel Preview URL
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.3
         id: vercel_preview
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
