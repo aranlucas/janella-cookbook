@@ -27,7 +27,7 @@ While these originate from TypeScript enums, the values are not validated at run
 **File**: `next.config.mjs:11`
 
 ```javascript
-hostname: "**" // Accepts any HTTPS host
+hostname: "**"; // Accepts any HTTPS host
 ```
 
 This allows Next.js image optimization for any external URL, which can be abused for SSRF-like probing or to serve unexpected content through your domain's image proxy.
@@ -56,12 +56,12 @@ There are zero test files in the repository — no unit tests, integration tests
 
 **Recommended test targets** (highest value first):
 
-| Layer | What to test | Tool |
-|-------|-------------|------|
-| Unit | `lib/slug.ts`, `lib/search.ts` filter building, `lib/validations.ts` Zod schemas | Vitest |
-| Integration | Server actions (`createRecipe`, `importFromUrl`, `updateRecipe`, `deleteRecipe`) | Vitest + Prisma test DB |
-| API | `/api/search`, `/api/recipes` request validation and response shape | Vitest + `next/test` or `supertest` |
-| E2E | Recipe creation flow, URL import, search, favorites | Playwright |
+| Layer       | What to test                                                                     | Tool                                |
+| ----------- | -------------------------------------------------------------------------------- | ----------------------------------- |
+| Unit        | `lib/slug.ts`, `lib/search.ts` filter building, `lib/validations.ts` Zod schemas | Vitest                              |
+| Integration | Server actions (`createRecipe`, `importFromUrl`, `updateRecipe`, `deleteRecipe`) | Vitest + Prisma test DB             |
+| API         | `/api/search`, `/api/recipes` request validation and response shape              | Vitest + `next/test` or `supertest` |
+| E2E         | Recipe creation flow, URL import, search, favorites                              | Playwright                          |
 
 **Fix**: Add Vitest as a dev dependency and start with unit tests for pure functions in `lib/`. Then add integration tests for server actions with a test database. Playwright for critical user flows.
 
@@ -74,6 +74,7 @@ There are zero test files in the repository — no unit tests, integration tests
 The app has no Next.js App Router error boundaries or loading states. If a database query fails or a page throws, users see a raw Next.js error page in production.
 
 **Fix**: Add these files:
+
 - `app/error.tsx` — Global error boundary with a retry button
 - `app/not-found.tsx` — Custom 404 page
 - `app/loading.tsx` — Global loading skeleton
@@ -185,21 +186,21 @@ Only `DATABASE_URL` is checked at runtime (in `lib/prisma.ts`). Other variables 
 
 ## Summary by Priority
 
-| Priority | Item | Effort |
-|----------|------|--------|
-| **High** | 2a. Add tests (start with unit tests for `lib/`) | Large |
-| **High** | 3a. Add `error.tsx`, `loading.tsx`, `not-found.tsx` | Small |
-| **High** | 1a. Parameterize all SQL filter values | Small |
-| **Medium** | 5b. Wrap recipe creation in a transaction | Small |
-| **Medium** | 1b. Restrict image domains | Small |
-| **Medium** | 4a. Add `sourceUrl` index | Small |
-| **Medium** | 5a. Validate server action inputs with Zod | Medium |
-| **Medium** | 1c. Add authentication | Medium |
-| **Medium** | 3b. Use structured errors in actions | Medium |
-| **Medium** | 6a. Add seed script | Medium |
-| **Medium** | 6b. Add CI pipeline | Medium |
-| **Low** | 1d. Rate limiting on imports | Medium |
-| **Low** | 4c. Break up globals.css | Medium |
-| **Low** | 5c. Deduplicate enum validation | Small |
-| **Low** | 6c. Env var validation at startup | Small |
-| **Low** | 3c. Add error monitoring | Small |
+| Priority   | Item                                                | Effort |
+| ---------- | --------------------------------------------------- | ------ |
+| **High**   | 2a. Add tests (start with unit tests for `lib/`)    | Large  |
+| **High**   | 3a. Add `error.tsx`, `loading.tsx`, `not-found.tsx` | Small  |
+| **High**   | 1a. Parameterize all SQL filter values              | Small  |
+| **Medium** | 5b. Wrap recipe creation in a transaction           | Small  |
+| **Medium** | 1b. Restrict image domains                          | Small  |
+| **Medium** | 4a. Add `sourceUrl` index                           | Small  |
+| **Medium** | 5a. Validate server action inputs with Zod          | Medium |
+| **Medium** | 1c. Add authentication                              | Medium |
+| **Medium** | 3b. Use structured errors in actions                | Medium |
+| **Medium** | 6a. Add seed script                                 | Medium |
+| **Medium** | 6b. Add CI pipeline                                 | Medium |
+| **Low**    | 1d. Rate limiting on imports                        | Medium |
+| **Low**    | 4c. Break up globals.css                            | Medium |
+| **Low**    | 5c. Deduplicate enum validation                     | Small  |
+| **Low**    | 6c. Env var validation at startup                   | Small  |
+| **Low**    | 3c. Add error monitoring                            | Small  |
