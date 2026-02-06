@@ -12,9 +12,10 @@ const openrouter = createOpenAI({
 });
 
 /**
- * Chat model using OpenRouter free models as primary
- * Primary: meta-llama/llama-4-maverick:free (strong free model)
- * Fallbacks: google models for reliability
+ * Chat model using OpenRouter's free smart router as primary.
+ * openrouter/free auto-selects from available free models, with smart
+ * filtering for features like image understanding, tool calling, etc.
+ * Fallbacks: Google models for reliability.
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
@@ -22,8 +23,7 @@ const openrouter = createOpenAI({
  */
 export const chatModel = createFallback({
   models: [
-    openrouter.chat("meta-llama/llama-4-maverick:free"),
-    openrouter.chat("deepseek/deepseek-chat-v3-0324:free"),
+    openrouter.chat("openrouter/free"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
   ],
@@ -35,7 +35,7 @@ export const chatModel = createFallback({
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- * Primary: OpenRouter free model
+ * Primary: openrouter/free (auto-selects best available free model)
  * Fallbacks: Google models for reliability
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
@@ -44,7 +44,7 @@ export const chatModel = createFallback({
  */
 export const model = createFallback({
   models: [
-    openrouter.chat("meta-llama/llama-4-maverick:free"),
+    openrouter.chat("openrouter/free"),
     google("gemini-2.0-flash"),
     google("gemini-2.5-flash"),
     google("gemini-2.5-flash-lite"),
