@@ -1,29 +1,32 @@
 name: E2E Tests
 
 on:
-  pull_request:
-  push:
-    branches: [main]
+  # Fired by Vercel's GitHub integration after a successful preview deployment
+  repository_dispatch:
+    types:
+      - "vercel.deployment.success"
 
   # Allow manual trigger with a custom URL
   workflow_dispatch:
     inputs:
       deployment_url:
-        description: "Deployment URL to test against (skips Vercel deploy step)"
-        required: false
+        description: "Deployment URL to test against"
+        required: true
         type: string
 
 concurrency:
-  group: e2e-${{ github.ref }}
+  group: e2e-${{ github.event.client_payload.git.sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.client_payload.git.sha || github.sha }}
 
       - uses: actions/setup-node@v4
         with:
@@ -36,29 +39,19 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
 
-      - name: Deploy to Vercel Preview
-        id: vercel
-        if: ${{ !inputs.deployment_url }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          github-comment: false
-
       - name: Determine base URL
         id: url
         run: |
-          if [ -n "${{ inputs.deployment_url }}" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "base_url=${{ inputs.deployment_url }}" >> "$GITHUB_OUTPUT"
           else
-            echo "base_url=${{ steps.vercel.outputs.preview-url }}" >> "$GITHUB_OUTPUT"
+            echo "base_url=${{ github.event.client_payload.url }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Wait for deployment to be ready
         run: |
           URL="${{ steps.url.outputs.base_url }}"
-          echo "Waiting for $URL to be reachable..."
+          echo "Testing against: $URL"
           for i in $(seq 1 30); do
             if curl -sf -o /dev/null "$URL"; then
               echo "Deployment is ready!"
