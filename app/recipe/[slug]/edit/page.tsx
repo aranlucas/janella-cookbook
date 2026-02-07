@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
 import { AppLayout } from "@/components/layout/app-layout";
+import { createPageMetadata } from "@/lib/metadata";
 import type { RecipeWithRelations } from "@/types/recipe";
+import type { Metadata } from "next";
 
 export const revalidate = 86400;
 
@@ -28,17 +30,28 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
   }
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const recipe = await getRecipe(slug);
 
   if (!recipe) {
-    return { title: "Recipe Not Found" };
+    return createPageMetadata({
+      title: "Recipe Not Found | Cookbook",
+      description: "This recipe could not be found.",
+      path: `/recipe/${slug}/edit`,
+      noIndex: true,
+    });
   }
 
-  return {
+  return createPageMetadata({
     title: `Edit ${recipe.title} | Cookbook`,
-  };
+    description: `Update ingredients, instructions, and details for ${recipe.title}.`,
+    path: `/recipe/${recipe.slug}/edit`,
+    image: recipe.imageUrl || undefined,
+    noIndex: true,
+  });
 }
 
 export default async function EditRecipePage({ params }: PageProps) {

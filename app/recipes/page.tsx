@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { AppLayout } from "@/components/layout/app-layout";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 export const revalidate = 86400;
 
@@ -23,6 +25,36 @@ interface RecipesPageProps {
 }
 
 const ITEMS_PER_PAGE = 20;
+
+export async function generateMetadata({
+  searchParams,
+}: RecipesPageProps): Promise<Metadata> {
+  const { q, category } = await searchParams;
+
+  const title = category
+    ? `${category.charAt(0).toUpperCase() + category.slice(1)} Recipes | Cookbook`
+    : q
+      ? `Search: "${q}" | Cookbook`
+      : "All Recipes | Cookbook";
+
+  const description = category
+    ? `Browsing all ${category.toLowerCase()} recipes.`
+    : q
+      ? `Search results for "${q}" in your recipe collection.`
+      : "Explore the complete collection of tried and true favorites.";
+
+  const query = new URLSearchParams();
+  if (q) query.set("q", q);
+  if (category) query.set("category", category);
+  const queryString = query.toString();
+
+  return createPageMetadata({
+    title,
+    description,
+    path: `/recipes${queryString ? `?${queryString}` : ""}`,
+  });
+}
+
 async function getAllRecipes(
   query?: string,
   category?: string,

@@ -7,6 +7,14 @@ import {
   RecipeGridSkeleton,
 } from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Your Favorites | Cookbook",
+  description: "A curated list of your most loved dishes.",
+  path: "/favorites",
+});
 
 export const revalidate = 86400;
 

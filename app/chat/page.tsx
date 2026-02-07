@@ -1,13 +1,15 @@
 import { ChatInterface } from "@/components/chatbot/chat-interface";
 import { Header } from "@/components/layout/header";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { Suspense } from "react";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "AI Chat Assistant | Janella Cookbook",
   description:
-    "Chat with our AI assistant for personalized meal planning and cooking advice",
-};
+    "Chat with our AI assistant for personalized meal planning and cooking advice.",
+  path: "/chat",
+});
 
 interface ChatPageProps {
   searchParams: Promise<{ recipe?: string; title?: string }>;

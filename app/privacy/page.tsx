@@ -1,4 +1,12 @@
 import { AppLayout } from "@/components/layout/app-layout";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Privacy Policy | Cookbook",
+  description: "Read how Janella Cookbook handles privacy and data.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

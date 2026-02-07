@@ -3,6 +3,8 @@ import { SearchBar } from "@/components/search/search-bar";
 import { AppLayout } from "@/components/layout/app-layout";
 import { CardListSkeleton, ContentEmptyState } from "@/components/ui/content-state";
 import { SearchResults } from "./search-results";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -10,14 +12,18 @@ interface PageProps {
   searchParams: Promise<{ q?: string }>;
 }
 
-export async function generateMetadata({ searchParams }: PageProps) {
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
   const params = await searchParams;
   const query = params.q;
+  const querySuffix = query ? `?q=${encodeURIComponent(query)}` : "";
 
-  return {
+  return createPageMetadata({
     title: query ? `"${query}" - Search | Cookbook` : "Search | Cookbook",
-    description: "Search your recipe collection",
-  };
+    description: "Search your recipe collection.",
+    path: `/search${querySuffix}`,
+  });
 }
 
 function SearchResultsSkeleton() {
