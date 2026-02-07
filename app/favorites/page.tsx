@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AppLayout } from "@/components/layout/app-layout";
+import {
+  ContentEmptyState,
+  RecipeGridSkeleton,
+} from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 export const revalidate = 86400;
@@ -26,34 +29,18 @@ async function getFavoriteRecipes(): Promise<RecipeWithRelations[]> {
   }
 }
 
-function RecipeGridSkeleton() {
-  return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="space-y-3">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
 async function RecipeList() {
   const recipes = await getFavoriteRecipes();
 
   if (recipes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <span className="mb-4 text-6xl">❤️</span>
-        <h3 className="text-foreground mb-2 font-serif text-2xl font-semibold">
-          No favorites yet
-        </h3>
-        <p className="text-muted-foreground max-w-md">
-          Mark recipes as favorites to save them here for quick access.
-        </p>
-      </div>
+      <ContentEmptyState
+        icon="❤️"
+        title="No favorites yet"
+        description="Mark recipes as favorites to save them here for quick access."
+        actionHref="/recipes"
+        actionLabel="Browse Recipes"
+      />
     );
   }
 
@@ -71,7 +58,7 @@ export default async function FavoritesPage() {
       title="Your Favorites"
       description="A curated list of your most loved dishes."
     >
-      <Suspense fallback={<RecipeGridSkeleton />}>
+      <Suspense fallback={<RecipeGridSkeleton count={4} />}>
         <RecipeList />
       </Suspense>
     </AppLayout>

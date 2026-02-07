@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { AppLayout } from "@/components/layout/app-layout";
+import { ContentEmptyState } from "@/components/ui/content-state";
 
 const courseIcons: Record<string, string> = {
   BREAKFAST: "🍳",
@@ -71,10 +72,13 @@ export default async function CategoriesPage() {
       description={`Browse ${categories.length} collections of recipes.`}
     >
       {categories.length === 0 ? (
-        <div className="text-muted-foreground py-12 text-center">
-          <span className="mb-4 block text-4xl">📭</span>
-          No categories found. Add some recipes!
-        </div>
+        <ContentEmptyState
+          icon="📭"
+          title="No categories yet"
+          description="Add a few recipes and we will build your category map automatically."
+          actionHref="/recipes/new"
+          actionLabel="Add Recipe"
+        />
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (

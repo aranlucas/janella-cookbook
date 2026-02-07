@@ -198,10 +198,11 @@ export function ManualRecipeForm({
   });
   const courseValue = useWatch({ control: form.control, name: "course" });
   const tagsValue = useWatch({ control: form.control, name: "tags" });
+  const submitLabel = isEditing ? "Update Recipe" : "Create Recipe";
 
   return (
-    <Card className="bg-warm-white">
-      <CardContent className="pt-6">
+    <Card className="bg-card">
+      <CardContent className="pt-6 pb-28 md:pb-6">
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {/* Basic Info */}
@@ -218,7 +219,7 @@ export function ManualRecipeForm({
                       <Input
                         {...field}
                         placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                        className="bg-cream border-butter"
+                        className="bg-background border-border"
                       />
                     </FormControl>
                     <FormMessage />
@@ -236,7 +237,7 @@ export function ManualRecipeForm({
                       <Textarea
                         {...field}
                         placeholder="A brief description of this recipe..."
-                        className="bg-cream border-butter"
+                        className="bg-background border-border"
                       />
                     </FormControl>
                     <FormMessage />
@@ -252,7 +253,7 @@ export function ManualRecipeForm({
                     type="number"
                     {...register("prepTime", { valueAsNumber: true })}
                     min="0"
-                    className="bg-cream border-butter"
+                    className="bg-background border-border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -262,7 +263,7 @@ export function ManualRecipeForm({
                     type="number"
                     {...register("cookTime", { valueAsNumber: true })}
                     min="0"
-                    className="bg-cream border-butter"
+                    className="bg-background border-border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -271,7 +272,7 @@ export function ManualRecipeForm({
                     id="servings"
                     {...register("servings")}
                     placeholder="e.g., 4-6"
-                    className="bg-cream border-butter"
+                    className="bg-background border-border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -282,7 +283,7 @@ export function ManualRecipeForm({
                       form.setValue("difficulty", v as Difficulty)
                     }
                   >
-                    <SelectTrigger className="bg-cream border-butter">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue>
                         {difficultyValue
                           ? difficultyValue.charAt(0) +
@@ -308,7 +309,7 @@ export function ManualRecipeForm({
                     id="cuisine"
                     {...register("cuisine")}
                     placeholder="e.g., Italian, Mexican"
-                    className="bg-cream border-butter"
+                    className="bg-background border-border"
                   />
                 </div>
                 <div className="space-y-2">
@@ -317,7 +318,7 @@ export function ManualRecipeForm({
                     value={courseValue}
                     onValueChange={(v) => form.setValue("course", v as Course)}
                   >
-                    <SelectTrigger className="bg-cream border-butter">
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue>
                         {courseValue
                           ? courseValue.charAt(0) +
@@ -365,25 +366,25 @@ export function ManualRecipeForm({
                 {ingredientFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="border-butter bg-cream/30 space-y-2 rounded-lg border p-3"
+                    className="border-border bg-background/30 space-y-2 rounded-lg border p-3"
                   >
                     <div className="flex items-start gap-2">
                       <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
                         <Input
                           {...register(`ingredients.${index}.quantity`)}
                           placeholder="Qty"
-                          className="bg-cream border-butter"
+                          className="bg-background border-border"
                         />
                         <Input
                           {...register(`ingredients.${index}.unit`)}
                           placeholder="Unit"
-                          className="bg-cream border-butter"
+                          className="bg-background border-border"
                         />
                         <div className="col-span-2 space-y-1 sm:col-span-2">
                           <Input
                             {...register(`ingredients.${index}.name`)}
                             placeholder="Ingredient name"
-                            className="bg-cream border-butter"
+                            className="bg-background border-border"
                           />
                           {form.formState.errors.ingredients?.[index]?.name && (
                             <p className="text-destructive text-xs">
@@ -397,7 +398,7 @@ export function ManualRecipeForm({
                         <Input
                           {...register(`ingredients.${index}.group`)}
                           placeholder="Group (e.g., Green Salsa)"
-                          className="bg-cream border-butter"
+                          className="bg-background border-border"
                         />
                       </div>
                       <Button
@@ -407,6 +408,7 @@ export function ManualRecipeForm({
                         onClick={() => removeIngredient(index)}
                         className="text-muted-foreground hover:text-destructive shrink-0"
                         disabled={ingredientFields.length === 1}
+                        aria-label={`Remove ingredient ${index + 1}`}
                       >
                         ✕
                       </Button>
@@ -414,7 +416,7 @@ export function ManualRecipeForm({
                     <Input
                       {...register(`ingredients.${index}.notes`)}
                       placeholder="Notes (optional)"
-                      className="bg-cream border-butter"
+                      className="bg-background border-border"
                     />
                   </div>
                 ))}
@@ -444,22 +446,13 @@ export function ManualRecipeForm({
 
               <div className="space-y-3">
                 {instructionFields.map((field, index) => (
-                  <div key={field.id} className="space-y-1">
-                    <div className="flex items-start gap-2">
-                      <div className="bg-butter flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif font-bold">
+                  <div
+                    key={field.id}
+                    className="border-border bg-background/30 space-y-2 rounded-lg border p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold">
                         {index + 1}
-                      </div>
-                      <Textarea
-                        {...register(`instructions.${index}.text`)}
-                        placeholder={`Step ${index + 1}...`}
-                        className="bg-cream border-butter min-h-[80px] flex-1"
-                      />
-                      <div className="ml-2 w-40">
-                        <Input
-                          {...register(`instructions.${index}.group`)}
-                          placeholder="Group (e.g., Green Salsa)"
-                          className="bg-cream border-butter"
-                        />
                       </div>
                       <Button
                         type="button"
@@ -468,12 +461,23 @@ export function ManualRecipeForm({
                         onClick={() => removeInstruction(index)}
                         className="text-muted-foreground hover:text-destructive"
                         disabled={instructionFields.length === 1}
+                        aria-label={`Remove step ${index + 1}`}
                       >
                         ✕
                       </Button>
                     </div>
+                    <Textarea
+                      {...register(`instructions.${index}.text`)}
+                      placeholder={`Step ${index + 1}...`}
+                      className="bg-background border-border min-h-[120px] sm:min-h-[96px]"
+                    />
+                    <Input
+                      {...register(`instructions.${index}.group`)}
+                      placeholder="Step group (optional)"
+                      className="bg-background border-border"
+                    />
                     {form.formState.errors.instructions?.[index]?.text && (
-                      <p className="text-destructive ml-12 text-xs">
+                      <p className="text-destructive text-xs">
                         {form.formState.errors.instructions[index].text.message}
                       </p>
                     )}
@@ -499,7 +503,7 @@ export function ManualRecipeForm({
                   id="imageUrl"
                   {...register("imageUrl")}
                   placeholder="https://example.com/image.jpg"
-                  className="bg-cream border-butter"
+                  className="bg-background border-border"
                 />
               </div>
 
@@ -518,7 +522,7 @@ export function ManualRecipeForm({
                     )
                   }
                   placeholder="e.g., comfort food, family favorite, quick"
-                  className="bg-cream border-butter"
+                  className="bg-background border-border"
                 />
               </div>
 
@@ -528,27 +532,44 @@ export function ManualRecipeForm({
                   id="notes"
                   {...register("notes")}
                   placeholder="Any personal notes or modifications..."
-                  className="bg-cream border-butter"
+                  className="bg-background border-border"
                 />
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="bg-terracotta hover:bg-rust text-warm-white w-full"
-              disabled={isPending}
-            >
-              {isPending ? (
-                <>
-                  <span className="mr-2 animate-spin">⏳</span>
-                  {isEditing ? "Updating..." : "Creating..."}
-                </>
-              ) : isEditing ? (
-                "Update Recipe"
-              ) : (
-                "Create Recipe"
-              )}
-            </Button>
+            <div className="hidden md:block">
+              <Button
+                type="submit"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    {isEditing ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            </div>
+
+            <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur md:hidden">
+              <Button
+                type="submit"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <span className="mr-2 animate-spin">⏳</span>
+                    {isEditing ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  submitLabel
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

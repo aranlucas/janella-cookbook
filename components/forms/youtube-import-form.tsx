@@ -58,7 +58,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
   };
 
   return (
-    <Card className="bg-warm-white">
+    <Card className="bg-card">
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -73,7 +73,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                       {...field}
                       type="url"
                       placeholder="https://www.youtube.com/watch?v=... or /shorts/..."
-                      className="bg-cream border-butter focus:border-terracotta"
+                      className="bg-background border-border focus:border-primary"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -95,7 +95,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                 <li>Cooking times and servings</li>
                 <li>Video thumbnail as recipe image</li>
               </ul>
-              <div className="bg-butter/20 mt-3 rounded-md p-2 text-xs">
+              <div className="bg-muted/20 mt-3 rounded-md p-2 text-xs">
                 <p className="font-medium">Enhanced Import:</p>
                 <p className="mt-1">
                   Supports regular videos and YouTube Shorts. Uses advanced
@@ -113,7 +113,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
 
             <Button
               type="submit"
-              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
               disabled={isPending}
             >
               {isPending ? (

@@ -34,18 +34,18 @@ export function InstructionSteps({
       {groups.map(([groupName, groupInstructions]) => (
         <div key={groupName}>
           {groups.length > 1 && (
-            <h4 className="text-charcoal mb-4 font-serif text-lg font-medium">
+            <h4 className="text-foreground mb-4 font-serif text-lg font-medium">
               {groupName}
             </h4>
           )}
           <ol className="space-y-6">
             {groupInstructions.map((instruction, index) => (
               <li key={instruction.id} className="relative pl-12">
-                <span className="bg-butter text-charcoal absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold">
+                <span className="bg-muted text-foreground absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full font-serif font-bold">
                   {index + 1}
                 </span>
                 <div className="space-y-2">
-                  <p className="text-charcoal leading-relaxed">
+                  <p className="text-foreground leading-relaxed">
                     {instruction.text}
                   </p>
                   {instruction.duration && (

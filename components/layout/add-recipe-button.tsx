@@ -32,7 +32,11 @@ export function AddRecipeButton({
   if (variant === "mobile") {
     // Full-width button for mobile menu
     return (
-      <Link href="/add" onClick={onClick} className={cn("w-full", className)}>
+      <Link
+        href="/recipes/new"
+        onClick={onClick}
+        className={cn("w-full", className)}
+      >
         <Button className="w-full gap-2">
           <Plus className="h-4 w-4" />
           Add New Recipe

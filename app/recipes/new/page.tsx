@@ -23,28 +23,28 @@ export default function AddRecipePage() {
       description="Import from a website, paste text, or create from scratch."
     >
       <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
-        <TabsList className="bg-butter/50 grid h-auto w-full grid-cols-2 sm:grid-cols-4">
+        <TabsList className="bg-muted/50 grid h-auto w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger
             value="url"
-            className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
+            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
           >
             From URL
           </TabsTrigger>
           <TabsTrigger
             value="youtube"
-            className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
+            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
           >
             YouTube
           </TabsTrigger>
           <TabsTrigger
             value="text"
-            className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
+            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
           >
             Paste Text
           </TabsTrigger>
           <TabsTrigger
             value="manual"
-            className="data-[state=active]:bg-warm-white py-2 text-xs sm:text-sm"
+            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
           >
             Manual
           </TabsTrigger>

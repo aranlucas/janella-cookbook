@@ -3,19 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { hybridSearch } from "@/lib/search";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
+import { ButtonLink } from "@/components/recipe/button-link";
+import { PaginationControls } from "@/components/recipe/pagination-controls";
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+  ContentEmptyState,
+  RecipeGridSkeleton,
+} from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
-import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/layout/app-layout";
 
 export const revalidate = 86400;
@@ -29,7 +23,6 @@ interface RecipesPageProps {
 }
 
 const ITEMS_PER_PAGE = 20;
-
 async function getAllRecipes(
   query?: string,
   category?: string,
@@ -72,64 +65,6 @@ async function getAllRecipes(
   }
 }
 
-function RecipeGridSkeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="space-y-2 sm:space-y-3">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-5 w-3/4 sm:h-6" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PaginationControls({
-  currentPage,
-  totalPages,
-  baseUrl,
-}: {
-  currentPage: number;
-  totalPages: number;
-  baseUrl: string;
-}) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="mt-12 flex items-center justify-center gap-4">
-      {currentPage > 1 ? (
-        <Link
-          href={`${baseUrl}&page=${currentPage - 1}`}
-          className={cn(buttonVariants({ variant: "outline" }))}
-        >
-          Previous
-        </Link>
-      ) : (
-        <Button variant="outline" disabled>
-          Previous
-        </Button>
-      )}
-      <span className="text-muted-foreground text-sm font-medium">
-        Page {currentPage} of {totalPages}
-      </span>
-      {currentPage < totalPages ? (
-        <Link
-          href={`${baseUrl}&page=${currentPage + 1}`}
-          className={cn(buttonVariants({ variant: "outline" }))}
-        >
-          Next
-        </Link>
-      ) : (
-        <Button variant="outline" disabled>
-          Next
-        </Button>
-      )}
-    </div>
-  );
-}
-
 async function RecipeList({
   query,
   category,
@@ -143,30 +78,20 @@ async function RecipeList({
 
   if (recipes.length === 0) {
     return (
-      <Empty className="py-20">
-        <EmptyMedia variant="icon">
-          <span className="text-4xl">🔍</span>
-        </EmptyMedia>
-        <EmptyHeader>
-          <EmptyTitle>No recipes found</EmptyTitle>
-          <EmptyDescription>
-            {query
-              ? `We couldn't find anything matching "${query}".`
-              : "Try adjusting your filters or search terms."}
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Link
-            href="/recipes"
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "rounded-full px-8",
-            )}
-          >
+      <ContentEmptyState
+        icon="🔍"
+        title="No recipes found"
+        description={
+          query
+            ? `We couldn't find anything matching "${query}".`
+            : "Try adjusting your filters or search terms."
+        }
+        action={
+          <ButtonLink href="/recipes" variant="outline" className="rounded-full px-8">
             View All Recipes
-          </Link>
-        </EmptyContent>
-      </Empty>
+          </ButtonLink>
+        }
+      />
     );
   }
 
@@ -174,7 +99,8 @@ async function RecipeList({
   const baseParams = new URLSearchParams();
   if (query) baseParams.set("q", query);
   if (category) baseParams.set("category", category);
-  const baseUrl = `/recipes?${baseParams.toString()}`;
+  const baseQuery = baseParams.toString();
+  const baseUrl = baseQuery ? `/recipes?${baseQuery}` : "/recipes";
 
   return (
     <div>

@@ -28,10 +28,10 @@ export function RecipeMeta({
   className,
 }: RecipeMetaProps) {
   const difficultyColor = {
-    EASY: "bg-sage text-warm-white",
-    MEDIUM: "bg-butter text-charcoal",
-    HARD: "bg-terracotta text-warm-white",
-    EXPERT: "bg-rust text-warm-white",
+    EASY: "bg-accent text-primary-foreground",
+    MEDIUM: "bg-muted text-foreground",
+    HARD: "bg-primary text-primary-foreground",
+    EXPERT: "bg-destructive text-destructive-foreground",
   };
 
   const formatCourse = (c: Course) => {
@@ -89,7 +89,7 @@ export function RecipeMeta({
               {Array.from({ length: 5 }).map((_, i) => (
                 <span
                   key={i}
-                  className={i < rating ? "text-terracotta" : "text-butter"}
+                  className={i < rating ? "text-primary" : "text-muted-foreground"}
                 >
                   ★
                 </span>

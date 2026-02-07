@@ -122,7 +122,7 @@ export default async function RecipePage({ params }: PageProps) {
           {/* Info */}
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
             <div>
-              <h1 className="text-charcoal font-serif text-xl font-bold sm:text-2xl md:text-3xl lg:text-4xl">
+              <h1 className="text-foreground font-serif text-xl font-bold sm:text-2xl md:text-3xl lg:text-4xl">
                 {recipe.title}
               </h1>
               {recipe.description && (
@@ -172,7 +172,7 @@ export default async function RecipePage({ params }: PageProps) {
             <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
               Ingredients
             </h2>
-            <div className="bg-warm-white recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
+            <div className="bg-card recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
               <IngredientList ingredients={recipe.ingredients} />
             </div>
           </div>
@@ -183,7 +183,7 @@ export default async function RecipePage({ params }: PageProps) {
               <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
                 Instructions
               </h2>
-              <div className="bg-warm-white recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
+              <div className="bg-card recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
                 <InstructionSteps instructions={recipe.instructions} />
               </div>
             </div>
@@ -223,7 +223,7 @@ export default async function RecipePage({ params }: PageProps) {
                   href={recipe.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-terracotta hover:text-rust flex items-center gap-2 text-sm break-all hover:underline md:text-base"
+                  className="text-primary hover:text-primary/80 flex items-center gap-2 text-sm break-all hover:underline md:text-base"
                 >
                   <span className="shrink-0 text-xl">🔗</span>
                   {recipe.sourceUrl}

@@ -1,11 +1,12 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { RecipeCard } from "@/components/recipe/recipe-card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { RecipeGridSkeleton } from "@/components/ui/content-state";
 import {
   Carousel,
   CarouselContent,
@@ -35,20 +36,6 @@ async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
     console.error("Error fetching recipes:", error);
     return [];
   }
-}
-
-function RecipeGridSkeleton() {
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="space-y-2 sm:space-y-3">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-5 w-3/4 sm:h-6" />
-          <Skeleton className="h-4 w-full" />
-        </div>
-      ))}
-    </div>
-  );
 }
 
 async function RecipeList() {
@@ -86,7 +73,7 @@ async function RecipeList() {
       {/* Show more recipes in a grid below the carousel if needed */}
       {recipes.length > 10 && (
         <div className="space-y-8 pt-8">
-          <h3 className="text-charcoal font-serif text-2xl font-bold">
+          <h3 className="text-foreground font-serif text-2xl font-bold">
             Explore More
           </h3>
           <RecipeGrid recipes={recipes.slice(10)} />
@@ -98,7 +85,7 @@ async function RecipeList() {
 
 export default async function HomePage() {
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
+    <div className="bg-background flex min-h-screen flex-col">
       <Header />
 
       <main className="flex-1">
@@ -159,14 +146,14 @@ export default async function HomePage() {
                     { label: "Vegan", emoji: "🥬" },
                     { label: "Quick & Easy", emoji: "⚡" },
                   ].map((tag) => (
-                    <a
+                    <Link
                       key={tag.label}
                       href={`/recipes?q=${encodeURIComponent(tag.label)}`}
                       className="bg-card border-border rounded-full border px-3 py-1 font-medium transition-all duration-200 hover:scale-105 hover:border-[var(--highlight)] hover:bg-[var(--highlight)] hover:text-[var(--highlight-foreground)] sm:px-4 sm:py-1.5"
                     >
                       <span className="mr-0.5 sm:mr-1">{tag.emoji}</span>
                       {tag.label}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>

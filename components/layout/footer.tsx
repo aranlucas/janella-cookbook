@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="border-border/40 bg-muted/50 border-t pt-10 pb-8">
@@ -22,29 +24,29 @@ export function Footer() {
             </h4>
             <ul className="text-muted-foreground space-y-2 text-sm">
               <li>
-                <a
+                <Link
                   href="/recipes"
                   className="hover:text-primary transition-colors"
                 >
                   All Recipes
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/categories"
                   className="hover:text-primary transition-colors"
                 >
                   By Category
-                </a>
+                </Link>
               </li>
 
               <li>
-                <a
+                <Link
                   href="/favorites"
                   className="hover:text-primary transition-colors"
                 >
                   Favorites
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -56,12 +58,12 @@ export function Footer() {
             </h4>
             <ul className="text-muted-foreground space-y-2 text-sm">
               <li>
-                <a
+                <Link
                   href="/about"
                   className="hover:text-primary transition-colors"
                 >
                   About Janella
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -73,18 +75,18 @@ export function Footer() {
             reserved.
           </p>
           <div className="flex gap-4">
-            <a
+            <Link
               href="/privacy"
               className="hover:text-foreground transition-colors"
             >
               Privacy Policy
-            </a>
-            <a
+            </Link>
+            <Link
               href="/terms"
               className="hover:text-foreground transition-colors"
             >
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>

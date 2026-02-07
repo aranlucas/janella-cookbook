@@ -51,7 +51,7 @@ export function SearchBar({
             placeholder={placeholder}
             autoFocus={autoFocus}
             className={cn(
-              "bg-warm-white border-butter focus:border-terracotta pl-9 sm:pl-10",
+              "bg-card border-border focus:border-primary pl-9 sm:pl-10",
               size === "large" &&
                 "h-10 rounded-lg text-sm sm:h-12 sm:rounded-xl sm:text-lg",
             )}
@@ -60,7 +60,7 @@ export function SearchBar({
         <Button
           type="submit"
           className={cn(
-            "bg-terracotta hover:bg-rust text-warm-white",
+            "bg-primary hover:bg-primary/90 text-primary-foreground",
             size === "large" &&
               "h-10 rounded-lg px-4 text-sm sm:h-12 sm:rounded-xl sm:px-8 sm:text-lg",
           )}

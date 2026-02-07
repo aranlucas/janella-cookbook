@@ -2,6 +2,7 @@ import Link from "next/link";
 import { hybridSearch } from "@/lib/search";
 import { Badge } from "@/components/ui/badge";
 import { RecipeImage } from "@/components/ui/recipe-image";
+import { ContentEmptyState } from "@/components/ui/content-state";
 import type { SearchResult } from "@/types/recipe";
 
 interface SearchResultsProps {
@@ -22,15 +23,11 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
   if (results.length === 0) {
     return (
-      <div className="py-10 text-center sm:py-16">
-        <span className="mb-3 block text-4xl sm:mb-4 sm:text-6xl">🍽️</span>
-        <h2 className="mb-2 font-serif text-lg font-semibold sm:text-xl">
-          No recipes found
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          Try different keywords or add some recipes to your collection.
-        </p>
-      </div>
+      <ContentEmptyState
+        icon="🍽️"
+        title="No recipes found"
+        description="Try different keywords or add some recipes to your collection."
+      />
     );
   }
 
@@ -45,7 +42,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
           <Link
             key={recipe.id}
             href={`/recipe/${recipe.slug}`}
-            className="bg-warm-white flex gap-2.5 rounded-lg p-2.5 shadow-sm transition-shadow active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4 md:hover:shadow-md"
+            className="bg-card flex gap-2.5 rounded-lg p-2.5 shadow-sm transition-shadow active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4 md:hover:shadow-md"
           >
             {/* Thumbnail */}
             <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32">
@@ -60,7 +57,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <h3 className="text-charcoal line-clamp-2 font-serif text-sm font-semibold sm:line-clamp-1 sm:text-base md:text-lg">
+                <h3 className="text-foreground line-clamp-2 font-serif text-sm font-semibold sm:line-clamp-1 sm:text-base md:text-lg">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (

@@ -70,7 +70,7 @@ export function RecipeManagementActions({
           variant="ghost"
           size="icon"
           onClick={() => router.push(`/recipe/${recipe.slug}/edit`)}
-          className="text-muted-foreground hover:text-charcoal hover:bg-sage/10 h-9 w-9"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
         >
           <Pencil className="h-4 w-4" />
           <span className="sr-only">Edit recipe</span>
@@ -82,7 +82,7 @@ export function RecipeManagementActions({
             size="icon"
             onClick={() => setRegenerateDialogOpen(true)}
             disabled={isRegenerating}
-            className="text-muted-foreground hover:text-charcoal hover:bg-sage/10 h-9 w-9"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
           >
             <RotateCw
               className={`h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`}
@@ -95,7 +95,7 @@ export function RecipeManagementActions({
           variant="ghost"
           size="icon"
           onClick={handlePrint}
-          className="text-muted-foreground hover:text-charcoal hover:bg-sage/10 h-9 w-9"
+          className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
         >
           <Printer className="h-4 w-4" />
           <span className="sr-only">Print recipe</span>

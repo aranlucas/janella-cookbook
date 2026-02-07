@@ -55,7 +55,7 @@ export function TextImportForm({ onSuccess }: TextImportFormProps) {
   };
 
   return (
-    <Card className="bg-warm-white">
+    <Card className="bg-card">
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -87,7 +87,7 @@ Instructions:
 4. Gradually add flour
 5. Fold in chocolate chips
 6. Bake for 9-11 minutes`}
-                      className="bg-cream border-butter focus:border-terracotta min-h-[300px]"
+                      className="bg-background border-border focus:border-primary min-h-[300px]"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -106,7 +106,7 @@ Instructions:
 
             <Button
               type="submit"
-              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
               disabled={isPending}
             >
               {isPending ? (

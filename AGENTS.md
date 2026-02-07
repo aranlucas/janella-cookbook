@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Local Agent Rules
+
+- Do not modify anything under `components/ui/` unless the user explicitly asks for it in the current thread.
+- UI primitives in this project are Base UI-based (`@base-ui/react/*`), not Radix Slot-based `asChild` patterns by default. Do not assume `asChild` support unless it is explicitly implemented in the local component.
+
 ## Project Overview
 
 A modern Next.js 16 recipe management application with AI-powered recipe parsing, YouTube transcript extraction, AI chat assistant, and hybrid semantic search. Built with React 19, TypeScript, PostgreSQL with pgvector, HuggingFace embeddings, and OpenRouter AI integration.

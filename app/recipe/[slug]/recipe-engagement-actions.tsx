@@ -91,7 +91,7 @@ export function RecipeEngagementActions({
           <ChefHat className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
           <span className="text-sm font-medium sm:text-base">I Made This</span>
           {(recipe.cookCount || 0) > 0 && (
-            <span className="bg-terracotta text-cream ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:ml-2 sm:px-2 sm:text-xs">
+            <span className="bg-primary text-primary-foreground ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:ml-2 sm:px-2 sm:text-xs">
               {recipe.cookCount}
             </span>
           )}

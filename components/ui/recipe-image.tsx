@@ -1,8 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildRecipeImageCandidates } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
+
+const BLUR_DATA_URL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Crect width='16' height='12' fill='%23e8ddd4'/%3E%3C/svg%3E";
 
 interface RecipeImageProps {
   src: string | null | undefined;
@@ -14,17 +18,10 @@ interface RecipeImageProps {
   priority?: boolean;
   className?: string;
   containerClassName?: string;
-  fallback?: string; // Fallback image URL
+  fallback?: string;
   fallbackEmoji?: string;
 }
 
-/**
- * Enhanced recipe image component with fallback handling
- * Built on top of ImageWithFallback with additional features:
- * - Loading states with skeleton animation
- * - Emoji fallback when no image source or all images fail
- * - Custom container styling
- */
 export function RecipeImage({
   src,
   alt,
@@ -35,9 +32,18 @@ export function RecipeImage({
   priority = false,
   className,
   containerClassName,
+  fallback,
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
-  const imageCandidates = useMemo(() => buildRecipeImageCandidates(src), [src]);
+  const imageCandidates = useMemo(() => {
+    const primaryCandidates = buildRecipeImageCandidates(src);
+    const fallbackCandidates = fallback
+      ? buildRecipeImageCandidates(fallback)
+      : [];
+
+    return [...new Set([...primaryCandidates, ...fallbackCandidates])];
+  }, [src, fallback]);
+
   const sourceKey = imageCandidates.join("|") || "__empty__";
 
   return (
@@ -90,7 +96,6 @@ function RecipeImageRenderer({
   const tryNextCandidate = useCallback(() => {
     setCandidateIndex((currentIndex) => {
       const nextIndex = currentIndex + 1;
-
       if (nextIndex < imageCandidates.length) {
         setIsLoading(true);
         return nextIndex;
@@ -102,7 +107,6 @@ function RecipeImageRenderer({
     });
   }, [imageCandidates.length]);
 
-  // Some blocked external requests never fire onError; advance automatically.
   useEffect(() => {
     if (!currentSrc || showEmojiFallback || !isLoading) return;
 
@@ -113,12 +117,11 @@ function RecipeImageRenderer({
     return () => window.clearTimeout(timeout);
   }, [currentSrc, isLoading, showEmojiFallback, tryNextCandidate]);
 
-  // Show emoji fallback if no src provided or if all images failed
   if (!currentSrc || showEmojiFallback) {
     return (
       <div
         className={cn(
-          "bg-butter/30 flex items-center justify-center",
+          "bg-muted/30 flex items-center justify-center",
           fill && "absolute inset-0",
           containerClassName,
         )}
@@ -129,63 +132,53 @@ function RecipeImageRenderer({
     );
   }
 
-  // Handle case where image fails (after trying unoptimized)
-  const handleImageError = () => {
-    tryNextCandidate();
-  };
+  const baseImageClass = cn(
+    "object-cover transition-opacity duration-300",
+    isLoading ? "opacity-0" : "opacity-100",
+    className,
+  );
 
-  // For fill mode (most common use case)
+  const handleLoad = () => setIsLoading(false);
+  const handleError = () => tryNextCandidate();
+
   if (fill) {
     return (
-      <div
-        className={cn("absolute inset-0 overflow-hidden", containerClassName)}
-      >
-        <img
+      <div className={cn("absolute inset-0 overflow-hidden", containerClassName)}>
+        <Image
           src={currentSrc}
           alt={alt}
+          fill
           sizes={sizes}
+          priority={priority}
+          placeholder="blur"
+          blurDataURL={BLUR_DATA_URL}
           referrerPolicy="no-referrer"
-          loading={priority ? "eager" : "lazy"}
-          className={cn(
-            "h-full w-full object-cover transition-opacity duration-300",
-            isLoading ? "opacity-0" : "opacity-100",
-            className,
-          )}
-          onLoad={() => setIsLoading(false)}
-          onError={handleImageError}
+          className={baseImageClass}
+          onLoad={handleLoad}
+          onError={handleError}
         />
-        {isLoading && (
-          <div className="bg-butter/30 absolute inset-0 animate-pulse" />
-        )}
+        {isLoading && <div className="bg-muted/30 absolute inset-0 animate-pulse" />}
       </div>
     );
   }
 
-  // For fixed dimensions
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
-      <img
+      <Image
         src={currentSrc}
         alt={alt}
         width={width || 400}
         height={height || 300}
         sizes={sizes}
+        priority={priority}
+        placeholder="blur"
+        blurDataURL={BLUR_DATA_URL}
         referrerPolicy="no-referrer"
-        loading={priority ? "eager" : "lazy"}
-        className={cn(
-          "h-full w-full object-cover transition-opacity duration-300",
-          isLoading ? "opacity-0" : "opacity-100",
-          className,
-        )}
-        onLoad={() => setIsLoading(false)}
-        onError={handleImageError}
+        className={cn("h-full w-full", baseImageClass)}
+        onLoad={handleLoad}
+        onError={handleError}
       />
-      {isLoading && (
-        <div
-          className="bg-butter/30 absolute inset-0 animate-pulse"
-          style={{ width, height }}
-        />
-      )}
+      {isLoading && <div className="bg-muted/30 absolute inset-0 animate-pulse" />}
     </div>
   );
 }

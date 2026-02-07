@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { SearchBar } from "@/components/search/search-bar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { AppLayout } from "@/components/layout/app-layout";
+import { CardListSkeleton, ContentEmptyState } from "@/components/ui/content-state";
 import { SearchResults } from "./search-results";
 
 export const dynamic = "force-dynamic";
@@ -21,20 +21,7 @@ export async function generateMetadata({ searchParams }: PageProps) {
 }
 
 function SearchResultsSkeleton() {
-  return (
-    <div className="space-y-6">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="bg-warm-white flex gap-4 rounded-lg p-4">
-          <Skeleton className="h-24 w-32 shrink-0 rounded-md" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  return <CardListSkeleton count={6} />;
 }
 
 export default async function SearchPage({ searchParams }: PageProps) {
@@ -50,7 +37,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       contentMaxWidth="4xl"
       contentClassName="py-6 sm:py-8"
     >
-      <h1 className="text-charcoal mb-4 font-serif text-2xl font-bold sm:mb-6 sm:text-3xl">
+      <h1 className="text-foreground mb-4 font-serif text-2xl font-bold sm:mb-6 sm:text-3xl">
         Search Recipes
       </h1>
 
@@ -73,17 +60,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </Suspense>
         </div>
       ) : (
-        <div className="py-16 text-center">
-          <span className="mb-4 block text-6xl">🔍</span>
-          <h2 className="mb-2 font-serif text-xl font-semibold">
-            Start searching
-          </h2>
-          <p className="text-muted-foreground mx-auto max-w-md">
-            Try natural language queries like &quot;quick weeknight
-            dinner&quot;, &quot;something with chicken and lemon&quot;, or
-            &quot;healthy meal prep ideas&quot;.
-          </p>
-        </div>
+        <ContentEmptyState
+          icon="🔍"
+          title="Start searching"
+          description='Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".'
+        />
       )}
     </AppLayout>
   );

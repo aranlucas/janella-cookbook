@@ -55,7 +55,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
   };
 
   return (
-    <Card className="bg-warm-white">
+    <Card className="bg-card">
       <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -70,7 +70,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
                       {...field}
                       type="url"
                       placeholder="https://example.com/recipe/delicious-pasta"
-                      className="bg-cream border-butter focus:border-terracotta"
+                      className="bg-background border-border focus:border-primary"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -95,7 +95,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
 
             <Button
               type="submit"
-              className="bg-terracotta hover:bg-rust text-warm-white w-full"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
               disabled={isPending}
             >
               {isPending ? (

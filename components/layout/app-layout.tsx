@@ -147,7 +147,7 @@ export function AppLayout({
   }
 
   return (
-    <div className="bg-cream flex min-h-screen flex-col">
+    <div className="bg-background flex min-h-screen flex-col">
       <Header />
 
       <div className="flex flex-1">
@@ -205,7 +205,7 @@ export function AppLayout({
               >
                 {contentType === "form" && title && (
                   <>
-                    <h1 className="text-charcoal mb-2 font-serif text-2xl font-bold sm:text-3xl">
+                    <h1 className="text-foreground mb-2 font-serif text-2xl font-bold sm:text-3xl">
                       {title}
                     </h1>
                     {description && (

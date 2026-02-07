@@ -46,7 +46,7 @@ export function IngredientList({
       {groups.map(([groupName, groupIngredients]) => (
         <div key={groupName}>
           {groups.length > 1 && (
-            <h4 className="text-charcoal mb-3 font-serif text-lg font-medium">
+            <h4 className="text-foreground mb-3 font-serif text-lg font-medium">
               {groupName}
             </h4>
           )}
