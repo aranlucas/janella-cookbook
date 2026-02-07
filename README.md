@@ -22,7 +22,7 @@ This project uses **AI SDK V6** with the following providers:
 1. Install dependencies:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. Set up your environment variables:
@@ -36,5 +36,5 @@ This project uses **AI SDK V6** with the following providers:
 
 3. Run the development server:
    ```bash
-   npm run dev
+   pnpm run dev
    ```

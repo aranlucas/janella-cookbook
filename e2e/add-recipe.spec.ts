@@ -27,7 +27,7 @@ test.describe("Add Recipe page", () => {
     await page.goto("/recipes/new");
 
     const urlTab = page.getByRole("tab", { name: "From URL" });
-    await expect(urlTab).toHaveAttribute("data-state", "active");
+    await expect(urlTab).toHaveAttribute("aria-selected", "true");
   });
 
   test("switching to Manual tab shows the form", async ({ page }) => {
@@ -42,8 +42,11 @@ test.describe("Add Recipe page", () => {
   test("breadcrumbs show correct path", async ({ page }) => {
     await page.goto("/recipes/new");
 
-    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Recipes" })).toBeVisible();
-    await expect(page.getByText("New Recipe")).toBeVisible();
+    const breadcrumb = page.getByLabel("breadcrumb");
+    await expect(breadcrumb.getByRole("link", { name: "Home" })).toBeVisible();
+    await expect(
+      breadcrumb.getByRole("link", { name: "Recipes" }),
+    ).toBeVisible();
+    await expect(breadcrumb.getByText("New Recipe")).toBeVisible();
   });
 });

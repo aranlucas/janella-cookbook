@@ -1,6 +1,5 @@
 "use client";
 
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -19,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useControllableState } from "@/hooks/use-controllable-state";
 import { cn } from "@/lib/utils";
 import {
   CircleSmallIcon,
@@ -72,7 +72,7 @@ export const VoiceSelector = ({
   children,
   ...props
 }: VoiceSelectorProps) => {
-  const [value, setValue] = useControllableState({
+  const [value, setValue] = useControllableState<string | undefined>({
     prop: valueProp,
     defaultProp: defaultValue,
     onChange: onValueChange,

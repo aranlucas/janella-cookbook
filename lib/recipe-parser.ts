@@ -4,6 +4,7 @@ import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
 import { RecipeParseError, ExternalApiError } from "./errors";
 import { model } from "./ai";
+import { normalizeRecipeImageUrl } from "./image-url";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
 import {
   extractYouTubeVideoId,
@@ -104,9 +105,11 @@ function extractImageFromHtml(
   const resolveUrl = (imgUrl: string | undefined): string | undefined => {
     if (!imgUrl) return undefined;
     try {
-      return new URL(imgUrl, baseUrl).href;
+      return (
+        normalizeRecipeImageUrl(new URL(imgUrl, baseUrl).href) ?? undefined
+      );
     } catch {
-      return imgUrl;
+      return normalizeRecipeImageUrl(imgUrl) ?? undefined;
     }
   };
 

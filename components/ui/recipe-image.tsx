@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { buildRecipeImageCandidates } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 
 interface RecipeImageProps {
@@ -31,15 +32,89 @@ export function RecipeImage({
   width,
   height,
   sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+  priority = false,
   className,
   containerClassName,
   fallbackEmoji = "🍽️",
 }: RecipeImageProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  const imageCandidates = useMemo(() => buildRecipeImageCandidates(src), [src]);
+  const sourceKey = imageCandidates.join("|") || "__empty__";
+
+  return (
+    <RecipeImageRenderer
+      key={sourceKey}
+      imageCandidates={imageCandidates}
+      alt={alt}
+      fill={fill}
+      width={width}
+      height={height}
+      sizes={sizes}
+      priority={priority}
+      className={className}
+      containerClassName={containerClassName}
+      fallbackEmoji={fallbackEmoji}
+    />
+  );
+}
+
+interface RecipeImageRendererProps {
+  imageCandidates: string[];
+  alt: string;
+  fill: boolean;
+  width?: number;
+  height?: number;
+  sizes: string;
+  priority: boolean;
+  className?: string;
+  containerClassName?: string;
+  fallbackEmoji: string;
+}
+
+function RecipeImageRenderer({
+  imageCandidates,
+  alt,
+  fill,
+  width,
+  height,
+  sizes,
+  priority,
+  className,
+  containerClassName,
+  fallbackEmoji,
+}: RecipeImageRendererProps) {
+  const [isLoading, setIsLoading] = useState(imageCandidates.length > 0);
   const [showEmojiFallback, setShowEmojiFallback] = useState(false);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const currentSrc = imageCandidates[candidateIndex];
+
+  const tryNextCandidate = useCallback(() => {
+    setCandidateIndex((currentIndex) => {
+      const nextIndex = currentIndex + 1;
+
+      if (nextIndex < imageCandidates.length) {
+        setIsLoading(true);
+        return nextIndex;
+      }
+
+      setShowEmojiFallback(true);
+      setIsLoading(false);
+      return currentIndex;
+    });
+  }, [imageCandidates.length]);
+
+  // Some blocked external requests never fire onError; advance automatically.
+  useEffect(() => {
+    if (!currentSrc || showEmojiFallback || !isLoading) return;
+
+    const timeout = window.setTimeout(() => {
+      tryNextCandidate();
+    }, 8000);
+
+    return () => window.clearTimeout(timeout);
+  }, [currentSrc, isLoading, showEmojiFallback, tryNextCandidate]);
 
   // Show emoji fallback if no src provided or if all images failed
-  if (!src || showEmojiFallback) {
+  if (!currentSrc || showEmojiFallback) {
     return (
       <div
         className={cn(
@@ -56,8 +131,7 @@ export function RecipeImage({
 
   // Handle case where image fails (after trying unoptimized)
   const handleImageError = () => {
-    setShowEmojiFallback(true);
-    setIsLoading(false);
+    tryNextCandidate();
   };
 
   // For fill mode (most common use case)
@@ -67,11 +141,13 @@ export function RecipeImage({
         className={cn("absolute inset-0 overflow-hidden", containerClassName)}
       >
         <img
-          src={src}
+          src={currentSrc}
           alt={alt}
           sizes={sizes}
+          referrerPolicy="no-referrer"
+          loading={priority ? "eager" : "lazy"}
           className={cn(
-            "object-cover transition-opacity duration-300",
+            "h-full w-full object-cover transition-opacity duration-300",
             isLoading ? "opacity-0" : "opacity-100",
             className,
           )}
@@ -89,13 +165,15 @@ export function RecipeImage({
   return (
     <div className={cn("relative overflow-hidden", containerClassName)}>
       <img
-        src={src}
+        src={currentSrc}
         alt={alt}
         width={width || 400}
         height={height || 300}
         sizes={sizes}
+        referrerPolicy="no-referrer"
+        loading={priority ? "eager" : "lazy"}
         className={cn(
-          "object-cover transition-opacity duration-300",
+          "h-full w-full object-cover transition-opacity duration-300",
           isLoading ? "opacity-0" : "opacity-100",
           className,
         )}

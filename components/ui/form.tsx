@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import {
   Controller,
   FormProvider,
@@ -99,22 +98,39 @@ function FormLabel({ className, ...props }: React.ComponentProps<"label">) {
   );
 }
 
-function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
+type FormControlProps = React.HTMLAttributes<HTMLElement> & {
+  children: React.ReactElement;
+};
+
+function FormControl({ children, ...controlProps }: FormControlProps) {
   const { error, formItemId, formDescriptionId, formMessageId } =
     useFormField();
 
+  const child = React.Children.only(children) as React.ReactElement<
+    Record<string, unknown>
+  >;
+  if (!React.isValidElement(child)) {
+    return null;
+  }
+
+  const childProps = child.props as {
+    "aria-describedby"?: string;
+  };
+  const describedBy = !error
+    ? formDescriptionId
+    : `${formDescriptionId} ${formMessageId}`;
+
   return (
-    <Slot
-      data-slot="form-control"
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      {...props}
-    />
+    React.cloneElement(child, {
+      ...child.props,
+      ...controlProps,
+      "data-slot": "form-control",
+      id: formItemId,
+      "aria-describedby": childProps["aria-describedby"]
+        ? `${childProps["aria-describedby"]} ${describedBy}`
+        : describedBy,
+      "aria-invalid": !!error,
+    })
   );
 }
 

@@ -27,7 +27,8 @@ test.describe("Favorites page", () => {
   test("breadcrumbs show correct path", async ({ page }) => {
     await page.goto("/favorites");
 
-    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
-    await expect(page.getByText("Your Favorites")).toBeVisible();
+    const breadcrumb = page.getByLabel("breadcrumb");
+    await expect(breadcrumb.getByRole("link", { name: "Home" })).toBeVisible();
+    await expect(breadcrumb.getByText("Your Favorites")).toBeVisible();
   });
 });

@@ -6,10 +6,12 @@ test.describe("Home page", () => {
   }) => {
     await page.goto("/");
 
+    const main = page.locator("main");
+
     // Core branding
     await expect(page.locator("h1")).toContainText("Kitchen");
-    await expect(page.getByText("The Cookbook Collection")).toBeVisible();
-    await expect(page.getByText("Good food,")).toBeVisible();
+    await expect(main.getByText("The Cookbook Collection")).toBeVisible();
+    await expect(main.getByText("Good food,")).toBeVisible();
 
     // Search bar is present
     await expect(
@@ -22,7 +24,7 @@ test.describe("Home page", () => {
 
     const tags = ["Breakfast", "Pasta", "Dessert", "Vegan", "Quick & Easy"];
     for (const tag of tags) {
-      const link = page.getByRole("link", { name: tag });
+      const link = page.getByRole("link", { name: new RegExp(tag) });
       await expect(link).toBeVisible();
       await expect(link).toHaveAttribute(
         "href",
@@ -56,7 +58,9 @@ test.describe("Home page", () => {
 
     const footer = page.locator("footer");
     await expect(footer).toBeVisible();
-    await expect(footer.getByText("Janella's")).toBeVisible();
+    await expect(
+      footer.getByRole("heading", { name: /Janella's/ }),
+    ).toBeVisible();
     await expect(
       footer.getByRole("link", { name: "All Recipes" }),
     ).toHaveAttribute("href", "/recipes");
@@ -72,7 +76,7 @@ test.describe("Home page", () => {
 
     // Copyright with current year
     const year = new Date().getFullYear().toString();
-    await expect(footer.getByText(year)).toBeVisible();
+    await expect(footer.getByText(new RegExp(`© ${year}`))).toBeVisible();
   });
 
   test("search from home navigates to search page", async ({ page }) => {

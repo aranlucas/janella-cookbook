@@ -1,6 +1,5 @@
 "use client";
 
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useControllableState } from "@/hooks/use-controllable-state";
 import { cn } from "@/lib/utils";
 import { ChevronsUpDownIcon } from "lucide-react";
 import {

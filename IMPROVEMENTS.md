@@ -174,7 +174,7 @@ There is no seed script to populate the database with sample recipes for develop
 
 No GitHub Actions or similar CI configuration exists. Linting, type checking, and (future) tests are not run automatically on PRs.
 
-**Fix**: Add a GitHub Actions workflow that runs `npm run lint`, `tsc --noEmit`, and `npm run build` on pull requests.
+**Fix**: Add a GitHub Actions workflow that runs `pnpm run lint`, `tsc --noEmit`, and `pnpm run build` on pull requests.
 
 ### 6c. Missing Environment Variable Validation at Startup (Low)
 

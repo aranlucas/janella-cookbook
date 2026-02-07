@@ -16,8 +16,8 @@ Use `railway env` to access environment variables:
 
 ```bash
 railway env                    # View all environment variables
-railway run npm run dev        # Run commands with Railway environment
-railway run npm run db:migrate # Run with specific service
+railway run pnpm run dev        # Run commands with Railway environment
+railway run pnpm run db:migrate # Run with specific service
 ```
 
 **Required Environment Variables:**
@@ -36,9 +36,9 @@ railway run npm run db:migrate # Run with specific service
 **First-Time Setup:**
 
 ```bash
-npm install                    # Auto-runs postinstall (prisma generate)
-railway run npm run db:push    # Push schema to Railway database
-npm run dev                    # Start dev server on localhost:3000
+pnpm install                    # Auto-runs postinstall (prisma generate)
+railway run pnpm run db:push    # Push schema to Railway database
+pnpm run dev                    # Start dev server on localhost:3000
 ```
 
 ## Common Commands
@@ -46,38 +46,38 @@ npm run dev                    # Start dev server on localhost:3000
 **Development:**
 
 ```bash
-npm run dev                    # Start Next.js dev server with Turbopack
-npm run build                  # Production build
-npm run start                  # Start production server
-npm run lint                   # Run ESLint with --fix
-npm run format                 # Run Prettier with --write
+pnpm run dev                    # Start Next.js dev server with Turbopack
+pnpm run build                  # Production build
+pnpm run start                  # Start production server
+pnpm run lint                   # Run ESLint with --fix
+pnpm run format                 # Run Prettier with --write
 ```
 
 **Database (Prisma):**
 
 ```bash
-npm run db:migrate             # Create and apply migration (dev)
-npm run db:migrate:deploy      # Apply migrations (production)
-npm run db:migrate:reset       # Reset database and reapply all migrations
-npm run db:migrate:status      # Check migration status
-npm run db:push                # Push schema without creating migration (prototyping)
-npm run db:studio              # Open Prisma Studio at localhost:5555
-npm run db:generate            # Generate Prisma Client
-npm run db:seed                # Seed database
+pnpm run db:migrate             # Create and apply migration (dev)
+pnpm run db:migrate:deploy      # Apply migrations (production)
+pnpm run db:migrate:reset       # Reset database and reapply all migrations
+pnpm run db:migrate:status      # Check migration status
+pnpm run db:push                # Push schema without creating migration (prototyping)
+pnpm run db:studio              # Open Prisma Studio at localhost:5555
+pnpm run db:generate            # Generate Prisma Client
+pnpm run db:seed                # Seed database
 ```
 
 **Testing (Playwright E2E):**
 
 ```bash
-npm run test:e2e               # Run Playwright tests headless
-npm run test:e2e:headed        # Run Playwright tests with browser UI
+pnpm run test:e2e               # Run Playwright tests headless
+pnpm run test:e2e:headed        # Run Playwright tests with browser UI
 ```
 
 **Railway-specific Database Access:**
 
 ```bash
-railway run npm run db:studio    # Run Prisma Studio with Railway DB
-railway run npm run db:migrate   # Run migrations against Railway DB
+railway run pnpm run db:studio    # Run Prisma Studio with Railway DB
+railway run pnpm run db:migrate   # Run migrations against Railway DB
 ```
 
 ## Architecture Overview
@@ -185,31 +185,37 @@ Located in `lib/search.ts`, implements dual-mode search:
 ### AI Integration
 
 **Recipe Parsing** (`lib/recipe-parser.ts`):
+
 - Uses OpenRouter pony-alpha model via AI SDK (`lib/ai.ts`)
 - Forces Chat Completions API (not Responses API) for OpenRouter compatibility
 - Zod schema validation for structured output
 
 **URL Import** (`parseRecipeFromUrl`):
+
 1. Fetch HTML from URL
 2. Try JSON-LD extraction (schema.org Recipe format)
 3. Fallback: Extract main content with Cheerio + Readability
 4. Parse with OpenRouter pony-alpha in structured output mode
 
 **YouTube Import** (`parseRecipeFromYouTube` + `lib/youtube.ts`):
+
 - Extract video ID from various YouTube URL formats
 - Fetch transcript via youtube-transcript library
 - Parse transcript into structured recipe with AI
 
 **Text Import** (`parseRecipeFromText`):
+
 - Parse freeform recipe text using structured output
 - Token validation and truncation for context windows
 
 **Embedding Generation** (`lib/embeddings.ts`):
+
 - Model: HuggingFace google/embeddinggemma-300m (768 dimensions)
 - Generates semantic search text with context hints (quick/easy/advanced etc.)
 - Graceful degradation if API key missing
 
 **AI Chat** (`/api/chat`):
+
 - ToolLoopAgent from AI SDK for multi-turn tool use
 - MCP (Model Context Protocol) integration for extended capabilities
 - Voice input support in chat interface
@@ -253,6 +259,7 @@ Client Form Submit
 **Action Result Pattern:**
 
 All server actions return `ActionResult<T>`:
+
 ```typescript
 type ActionResult<T> =
   | { success: true; data: T; slug?: string }
@@ -261,23 +268,23 @@ type ActionResult<T> =
 
 ### Lib Directory Reference
 
-| File | Purpose |
-|------|---------|
-| `prisma.ts` | Singleton Prisma client with PrismaPg adapter |
-| `actions.ts` | Server Actions for all recipe mutations |
-| `search.ts` | Hybrid semantic + keyword search with RRF |
-| `embeddings.ts` | HuggingFace embedding generation and query enhancement |
-| `recipe-parser.ts` | AI-powered recipe parsing (URL, YouTube, text) |
-| `ai.ts` | OpenRouter model configuration (pony-alpha) |
-| `youtube.ts` | YouTube URL parsing, transcript extraction, metadata |
-| `validations.ts` | Zod schemas for all input validation |
-| `slug.ts` | Unique slug generation with collision detection |
-| `errors.ts` | Custom error classes (AppError, ValidationError, DatabaseError, etc.) |
-| `api-response.ts` | Standardized API response helpers (success, error, paginated) |
-| `mcp-client.ts` | MCP server connection for AI chat |
-| `mcp-oauth.ts` | OAuth authentication for MCP |
-| `haptics.ts` | Mobile vibration feedback patterns |
-| `utils.ts` | `cn()` helper combining clsx and tailwind-merge |
+| File               | Purpose                                                               |
+| ------------------ | --------------------------------------------------------------------- |
+| `prisma.ts`        | Singleton Prisma client with PrismaPg adapter                         |
+| `actions.ts`       | Server Actions for all recipe mutations                               |
+| `search.ts`        | Hybrid semantic + keyword search with RRF                             |
+| `embeddings.ts`    | HuggingFace embedding generation and query enhancement                |
+| `recipe-parser.ts` | AI-powered recipe parsing (URL, YouTube, text)                        |
+| `ai.ts`            | OpenRouter model configuration (pony-alpha)                           |
+| `youtube.ts`       | YouTube URL parsing, transcript extraction, metadata                  |
+| `validations.ts`   | Zod schemas for all input validation                                  |
+| `slug.ts`          | Unique slug generation with collision detection                       |
+| `errors.ts`        | Custom error classes (AppError, ValidationError, DatabaseError, etc.) |
+| `api-response.ts`  | Standardized API response helpers (success, error, paginated)         |
+| `mcp-client.ts`    | MCP server connection for AI chat                                     |
+| `mcp-oauth.ts`     | OAuth authentication for MCP                                          |
+| `haptics.ts`       | Mobile vibration feedback patterns                                    |
+| `utils.ts`         | `cn()` helper combining clsx and tailwind-merge                       |
 
 ### Component Organization
 
@@ -315,6 +322,7 @@ type ActionResult<T> =
 **Slug Generation:** Uses `slugify` package with UUID suffix for uniqueness (see `lib/slug.ts`)
 
 **Prisma Configuration:**
+
 - Uses `postgresqlExtensions` preview feature for pgvector
 - ES Module output format (`moduleFormat = "esm"`)
 - Singleton pattern in `lib/prisma.ts` to prevent connection exhaustion
@@ -325,6 +333,7 @@ type ActionResult<T> =
 **E2E Tests (Playwright):**
 
 8 test files in `e2e/` covering:
+
 - `add-recipe.spec.ts` - Recipe creation flow
 - `categories.spec.ts` - Category pages
 - `favorites.spec.ts` - Favorite functionality
@@ -335,6 +344,7 @@ type ActionResult<T> =
 - `static-pages.spec.ts` - About, Privacy, Terms pages
 
 **Configuration** (`playwright.config.ts`):
+
 - Base URL: `localhost:3000` (configurable via `PLAYWRIGHT_BASE_URL`)
 - Browser: Chromium only
 - Retries: 2 in CI, 0 locally
@@ -344,6 +354,7 @@ type ActionResult<T> =
 ## CI/CD
 
 GitHub Actions workflows in `.github/workflows/`:
+
 - `ci.yml` - CI pipeline
 - `e2e.yml` - End-to-end test pipeline
 

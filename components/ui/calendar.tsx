@@ -5,6 +5,7 @@ import {
   DayPicker,
   getDefaultClassNames,
   type DayButton,
+  type Locale,
 } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ function Calendar({
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
+  locale,
   formatters,
   components,
   ...props
@@ -33,15 +35,16 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "bg-background group/calendar p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+        "bg-background group/calendar p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(8)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className,
       )}
       captionLayout={captionLayout}
+      locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(locale?.code, { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -74,7 +77,7 @@ function Calendar({
           defaultClassNames.dropdowns,
         ),
         dropdown_root: cn(
-          "relative cn-calendar-dropdown-root rounded-(--cell-radius)",
+          "relative rounded-(--cell-radius)",
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
@@ -85,7 +88,7 @@ function Calendar({
           "select-none font-medium",
           captionLayout === "label"
             ? "text-sm"
-            : "cn-calendar-caption-label rounded-(--cell-radius) flex items-center gap-1 text-sm  [&>svg]:text-muted-foreground [&>svg]:size-3.5",
+            : "rounded-(--cell-radius) flex items-center gap-1 text-sm [&>svg]:text-muted-foreground [&>svg]:size-3.5",
           defaultClassNames.caption_label,
         ),
         table: "w-full border-collapse",
@@ -111,12 +114,12 @@ function Calendar({
           defaultClassNames.day,
         ),
         range_start: cn(
-          "rounded-l-(--cell-radius) bg-muted elative after:bg-muted after:absolute after:inset-y-0 after:w-4 after:right-0 -z-0 isolate",
+          "rounded-l-(--cell-radius) bg-muted relative after:bg-muted after:absolute after:inset-y-0 after:w-4 after:right-0 z-0 isolate",
           defaultClassNames.range_start,
         ),
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn(
-          "rounded-r-(--cell-radius) bg-muted relative after:bg-muted after:absolute after:inset-y-0 after:w-4 after:left-0 -z-0 isolate",
+          "rounded-r-(--cell-radius) bg-muted relative after:bg-muted after:absolute after:inset-y-0 after:w-4 after:left-0 z-0 isolate",
           defaultClassNames.range_end,
         ),
         today: cn(
@@ -165,7 +168,9 @@ function Calendar({
             <ChevronDownIcon className={cn("size-4", className)} {...props} />
           );
         },
-        DayButton: CalendarDayButton,
+        DayButton: ({ ...props }) => (
+          <CalendarDayButton locale={locale} {...props} />
+        ),
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -186,8 +191,9 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
+  locale,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
   const defaultClassNames = getDefaultClassNames();
 
   const ref = React.useRef<HTMLButtonElement>(null);
@@ -199,7 +205,7 @@ function CalendarDayButton({
     <Button
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={day.date.toLocaleDateString(locale?.code)}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
