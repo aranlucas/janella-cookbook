@@ -69,7 +69,7 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleToggleFavorite}
           disabled={isFavoriting}
-          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial sm:size-auto"
+          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
         >
           <Heart
             className={`mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5 ${
@@ -86,7 +86,7 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleMarkCooked}
           disabled={isCooking}
-          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial sm:size-auto"
+          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
         >
           <ChefHat className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
           <span className="text-sm font-medium sm:text-base">I Made This</span>
@@ -105,7 +105,9 @@ export function RecipeEngagementActions({
         className="group relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
       >
         <MessageCircle className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
-        <span className="text-sm font-medium sm:text-base">Chat with Recipe</span>
+        <span className="text-sm font-medium sm:text-base">
+          Chat with Recipe
+        </span>
       </Button>
     </div>
   );

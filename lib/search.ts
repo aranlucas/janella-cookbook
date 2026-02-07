@@ -316,9 +316,7 @@ export async function keywordSearch(
 
   // Build filter conditions (shared between empty and non-empty query paths)
   const filterConditions: Prisma.RecipeWhereInput[] = [
-    ...(filters.cuisine?.length
-      ? [{ cuisine: { in: filters.cuisine } }]
-      : []),
+    ...(filters.cuisine?.length ? [{ cuisine: { in: filters.cuisine } }] : []),
     ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
     ...(filters.difficulty?.length
       ? [{ difficulty: { in: filters.difficulty } }]

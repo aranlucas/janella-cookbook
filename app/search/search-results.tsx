@@ -60,7 +60,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <h3 className="text-charcoal line-clamp-2 font-serif text-sm font-semibold sm:text-base sm:line-clamp-1 md:text-lg">
+                <h3 className="text-charcoal line-clamp-2 font-serif text-sm font-semibold sm:line-clamp-1 sm:text-base md:text-lg">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (

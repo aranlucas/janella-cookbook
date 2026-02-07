@@ -90,7 +90,10 @@ function PageHeader({
 }: PageHeaderConfig) {
   return (
     <section
-      className={cn("py-6 sm:py-8 md:py-12", background === "muted" && "bg-muted/30")}
+      className={cn(
+        "py-6 sm:py-8 md:py-12",
+        background === "muted" && "bg-muted/30",
+      )}
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
@@ -103,7 +106,9 @@ function PageHeader({
             </p>
           )}
           {actions && (
-            <div className={cn("mt-4 sm:mt-6", centered && "flex justify-center")}>
+            <div
+              className={cn("mt-4 sm:mt-6", centered && "flex justify-center")}
+            >
               {actions}
             </div>
           )}
