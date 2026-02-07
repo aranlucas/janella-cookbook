@@ -74,11 +74,11 @@ async function getAllRecipes(
 
 function RecipeGridSkeleton() {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="space-y-3">
+        <div key={i} className="space-y-2 sm:space-y-3">
           <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-5 w-3/4 sm:h-6" />
           <Skeleton className="h-4 w-full" />
         </div>
       ))}

@@ -62,48 +62,52 @@ export function RecipeEngagementActions({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <Button
-        variant={recipe.isFavorite ? "default" : "outline"}
-        size="lg"
-        onClick={handleToggleFavorite}
-        disabled={isFavoriting}
-        className="group relative overflow-hidden transition-all hover:scale-105"
-      >
-        <Heart
-          className={`mr-2 h-5 w-5 transition-transform group-hover:scale-110 ${
-            recipe.isFavorite ? "fill-current" : ""
-          }`}
-        />
-        <span className="font-medium">
-          {recipe.isFavorite ? "Favorited" : "Add to Favorites"}
-        </span>
-      </Button>
-
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={handleMarkCooked}
-        disabled={isCooking}
-        className="group relative overflow-hidden transition-all hover:scale-105"
-      >
-        <ChefHat className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
-        <span className="font-medium">I Made This</span>
-        {(recipe.cookCount || 0) > 0 && (
-          <span className="bg-terracotta text-cream ml-2 rounded-full px-2 py-0.5 text-xs font-semibold">
-            {recipe.cookCount}
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+      <div className="flex gap-2 sm:contents">
+        <Button
+          variant={recipe.isFavorite ? "default" : "outline"}
+          size="default"
+          onClick={handleToggleFavorite}
+          disabled={isFavoriting}
+          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+        >
+          <Heart
+            className={`mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5 ${
+              recipe.isFavorite ? "fill-current" : ""
+            }`}
+          />
+          <span className="text-sm font-medium sm:text-base">
+            {recipe.isFavorite ? "Favorited" : "Favorite"}
           </span>
-        )}
-      </Button>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="default"
+          onClick={handleMarkCooked}
+          disabled={isCooking}
+          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+        >
+          <ChefHat className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
+          <span className="text-sm font-medium sm:text-base">I Made This</span>
+          {(recipe.cookCount || 0) > 0 && (
+            <span className="bg-terracotta text-cream ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:ml-2 sm:px-2 sm:text-xs">
+              {recipe.cookCount}
+            </span>
+          )}
+        </Button>
+      </div>
 
       <Button
         variant="default"
-        size="lg"
+        size="default"
         onClick={handleChatWithRecipe}
-        className="group relative overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700"
+        className="group relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
       >
-        <MessageCircle className="mr-2 h-5 w-5 transition-transform group-hover:scale-110" />
-        <span className="font-medium">Chat with Recipe</span>
+        <MessageCircle className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
+        <span className="text-sm font-medium sm:text-base">
+          Chat with Recipe
+        </span>
       </Button>
     </div>
   );

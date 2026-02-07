@@ -314,32 +314,51 @@ export async function keywordSearch(
 ): Promise<{ results: SearchResult[]; total: number }> {
   const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
-  const where: Prisma.RecipeWhereInput = {
-    AND: [
-      // Search in title, description, and searchText
-      {
-        AND: searchTerms.map((term) => ({
-          OR: [
-            { title: { contains: term, mode: "insensitive" as const } },
-            { description: { contains: term, mode: "insensitive" as const } },
-            { searchText: { contains: term, mode: "insensitive" as const } },
+  // Build filter conditions (shared between empty and non-empty query paths)
+  const filterConditions: Prisma.RecipeWhereInput[] = [
+    ...(filters.cuisine?.length ? [{ cuisine: { in: filters.cuisine } }] : []),
+    ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
+    ...(filters.difficulty?.length
+      ? [{ difficulty: { in: filters.difficulty } }]
+      : []),
+    ...(filters.maxTime ? [{ totalTime: { lte: filters.maxTime } }] : []),
+    ...(filters.isFavorite !== undefined
+      ? [{ isFavorite: filters.isFavorite }]
+      : []),
+  ];
+
+  // When query is empty or whitespace-only, return all recipes matching filters
+  const where: Prisma.RecipeWhereInput =
+    searchTerms.length === 0
+      ? filterConditions.length > 0
+        ? { AND: filterConditions }
+        : {}
+      : {
+          AND: [
+            {
+              AND: searchTerms.map((term) => ({
+                OR: [
+                  {
+                    title: { contains: term, mode: "insensitive" as const },
+                  },
+                  {
+                    description: {
+                      contains: term,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  {
+                    searchText: {
+                      contains: term,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                ],
+              })),
+            },
+            ...filterConditions,
           ],
-        })),
-      },
-      // Apply filters
-      ...(filters.cuisine?.length
-        ? [{ cuisine: { in: filters.cuisine } }]
-        : []),
-      ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
-      ...(filters.difficulty?.length
-        ? [{ difficulty: { in: filters.difficulty } }]
-        : []),
-      ...(filters.maxTime ? [{ totalTime: { lte: filters.maxTime } }] : []),
-      ...(filters.isFavorite !== undefined
-        ? [{ isFavorite: filters.isFavorite }]
-        : []),
-    ],
-  };
+        };
 
   try {
     const [recipes, total] = await Promise.all([
@@ -382,6 +401,12 @@ export async function hybridSearch(
   limit = 20,
   offset = 0,
 ): Promise<{ results: SearchResult[]; total: number }> {
+  // If query is empty or whitespace-only, fall back to keyword search
+  // which handles empty queries by returning all recipes with filters
+  if (!query || query.trim().length === 0) {
+    return keywordSearch(query, filters, limit, offset);
+  }
+
   // Check if we have embeddings capability
   const hasEmbeddings = process.env.HUGGINGFACE_API_KEY;
 

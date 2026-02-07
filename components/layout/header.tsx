@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
+import { MobileNav } from "./mobile-nav";
 
 const navItems = [
   { href: "/recipes", label: "Recipes" },
@@ -16,7 +17,7 @@ const navItems = [
 export function Header() {
   return (
     <header className="border-border/20 bg-background/90 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur-xl">
-      <div className="container flex h-12 items-center sm:h-14">
+      <div className="container flex h-14 items-center gap-2">
         <Logo />
 
         {/* Desktop Navigation */}
@@ -28,7 +29,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           {/* Chat icon button visible on mobile only */}
           <Link
             href="/chat"
@@ -50,6 +51,9 @@ export function Header() {
           <div className="hidden sm:block">
             <AddRecipeButton variant="desktop" />
           </div>
+
+          {/* Hamburger menu for mobile */}
+          <MobileNav navItems={navItems} />
         </div>
       </div>
     </header>

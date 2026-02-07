@@ -22,12 +22,12 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
   if (results.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <span className="mb-4 block text-6xl">🍽️</span>
-        <h2 className="mb-2 font-serif text-xl font-semibold">
+      <div className="py-10 text-center sm:py-16">
+        <span className="mb-3 block text-4xl sm:mb-4 sm:text-6xl">🍽️</span>
+        <h2 className="mb-2 font-serif text-lg font-semibold sm:text-xl">
           No recipes found
         </h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Try different keywords or add some recipes to your collection.
         </p>
       </div>
@@ -35,32 +35,32 @@ export async function SearchResults({ query }: SearchResultsProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-muted-foreground text-sm">
+    <div className="space-y-3 sm:space-y-4">
+      <p className="text-muted-foreground text-xs sm:text-sm">
         Found {total} recipe{total !== 1 ? "s" : ""}
       </p>
 
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-2 sm:space-y-3 md:space-y-4">
         {results.map(({ recipe, score, highlights }) => (
           <Link
             key={recipe.id}
             href={`/recipe/${recipe.slug}`}
-            className="bg-warm-white flex gap-3 rounded-lg p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-4 sm:p-4"
+            className="bg-warm-white flex gap-2.5 rounded-lg p-2.5 shadow-sm transition-shadow active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4 md:hover:shadow-md"
           >
             {/* Thumbnail */}
-            <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-md sm:h-24 sm:w-32">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32">
               <RecipeImage
                 src={recipe.imageUrl}
                 alt={recipe.title}
-                sizes="(max-width: 640px) 80px, 128px"
+                sizes="(max-width: 640px) 64px, (max-width: 768px) 96px, 128px"
                 fallbackEmoji="🍽️"
               />
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-charcoal line-clamp-2 font-serif text-base font-semibold sm:line-clamp-1 sm:text-lg">
+              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
+                <h3 className="text-charcoal line-clamp-2 font-serif text-sm font-semibold sm:line-clamp-1 sm:text-base md:text-lg">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (
@@ -74,12 +74,12 @@ export async function SearchResults({ query }: SearchResultsProps) {
               </div>
 
               {recipe.description && (
-                <p className="text-muted-foreground mt-1 line-clamp-2 hidden text-xs sm:block sm:text-sm">
+                <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs sm:mt-1 sm:line-clamp-2 sm:text-sm">
                   {recipe.description}
                 </p>
               )}
 
-              <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-1.5 text-xs sm:mt-2 sm:gap-2">
+              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-[10px] sm:mt-1.5 sm:gap-1.5 sm:text-xs md:mt-2 md:gap-2">
                 {recipe.totalTime && (
                   <span className="flex items-center gap-0.5">
                     ⏱️ {recipe.totalTime} min
@@ -96,7 +96,7 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
               {/* Highlights */}
               {highlights && highlights.length > 0 && (
-                <div className="text-muted-foreground mt-1.5 hidden text-xs sm:mt-2 sm:block">
+                <div className="text-muted-foreground mt-1.5 hidden text-xs sm:mt-2 md:block">
                   {highlights.slice(0, 2).map((h, i) => (
                     <p key={i} className="line-clamp-1">
                       ...{h}...
