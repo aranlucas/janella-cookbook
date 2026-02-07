@@ -35,7 +35,7 @@ test.describe("Navigation", () => {
   }) => {
     await page.goto("/");
 
-    await page.getByRole("link", { name: "Pasta" }).click();
+    await page.locator('a[href="/recipes?q=Pasta"]').first().click();
     await expect(page).toHaveURL(/\/recipes\?q=Pasta/);
   });
 

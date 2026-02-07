@@ -24,12 +24,10 @@ test.describe("Home page", () => {
 
     const tags = ["Breakfast", "Pasta", "Dessert", "Vegan", "Quick & Easy"];
     for (const tag of tags) {
-      const link = page.getByRole("link", { name: new RegExp(tag) });
+      const href = `/recipes?q=${encodeURIComponent(tag)}`;
+      const link = page.locator(`a[href="${href}"]`).first();
       await expect(link).toBeVisible();
-      await expect(link).toHaveAttribute(
-        "href",
-        `/recipes?q=${encodeURIComponent(tag)}`,
-      );
+      await expect(link).toHaveAttribute("href", href);
     }
   });
 

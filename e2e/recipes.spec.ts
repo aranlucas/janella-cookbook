@@ -59,7 +59,11 @@ test.describe("Recipe detail page", () => {
 
     // Recipe detail page elements
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.getByText("Ingredients")).toBeVisible();
-    await expect(page.getByText("Instructions")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Ingredients" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Instructions" }),
+    ).toBeVisible();
   });
 });

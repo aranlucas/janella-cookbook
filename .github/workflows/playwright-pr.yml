@@ -1,0 +1,85 @@
+name: Playwright PR
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: playwright-pr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: janella
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d janella"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/janella?schema=public
+      NODE_ENV: test
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync database schema
+        run: pnpm run db:push
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Start app
+        run: pnpm run dev > /tmp/next-dev.log 2>&1 &
+
+      - name: Wait for app to be ready
+        run: |
+          for i in {1..90}; do
+            if curl -fsS "$PLAYWRIGHT_BASE_URL" > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "App failed to start in time."
+          tail -n 200 /tmp/next-dev.log || true
+          exit 1
+
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-pr
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload app logs
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: next-dev-log
+          path: /tmp/next-dev.log
+          retention-days: 7

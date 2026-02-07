@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { ButtonLink } from "@/components/recipe/button-link";
 import {
   Empty,
   EmptyContent,
@@ -46,12 +45,13 @@ export function ContentEmptyState({
         <EmptyContent>
           {action}
           {hasLinkAction && (
-            <Link
+            <ButtonLink
               href={actionHref}
-              className={cn(buttonVariants({ variant: "outline" }), "px-6")}
+              variant="outline"
+              className="px-6"
             >
               {actionLabel}
-            </Link>
+            </ButtonLink>
           )}
         </EmptyContent>
       )}
