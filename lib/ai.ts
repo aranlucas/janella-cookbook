@@ -1,56 +1,25 @@
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
-import { createFallback } from "ai-fallback";
 
-// Google Generative AI client (fallback)
-const google = createGoogleGenerativeAI({});
-
-// OpenRouter client configured for AI SDK (primary - free tier)
+// OpenRouter client configured for AI SDK
 const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
 /**
- * Chat model using OpenRouter's free smart router as primary.
- * openrouter/free auto-selects from available free models, with smart
- * filtering for features like image understanding, tool calling, etc.
- * Fallbacks: Google models for reliability.
+ * Chat model using OpenRouter's pony-alpha.
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
  * doesn't fully support the Responses API format.
  */
-export const chatModel = createFallback({
-  models: [
-    openrouter.chat("openrouter/free"),
-    google("gemini-2.5-flash"),
-    google("gemini-2.5-flash-lite"),
-  ],
-  onError: (error, modelId) => {
-    console.warn(`AI provider error (${modelId}):`, error.message);
-  },
-  modelResetInterval: 5 * 60 * 1000, // Reset to primary after 5 minutes
-});
+export const chatModel = openrouter.chat("openrouter/pony-alpha");
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- * Primary: openrouter/free (auto-selects best available free model)
- * Fallbacks: Google models for reliability
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
  * doesn't fully support the Responses API format.
  */
-export const model = createFallback({
-  models: [
-    openrouter.chat("openrouter/free"),
-    google("gemini-2.0-flash"),
-    google("gemini-2.5-flash"),
-    google("gemini-2.5-flash-lite"),
-  ],
-  onError: (error, modelId) => {
-    console.warn(`AI provider error (${modelId}):`, error.message);
-  },
-  modelResetInterval: 5 * 60 * 1000, // Reset to primary after 5 minutes
-});
+export const model = openrouter.chat("openrouter/pony-alpha");
