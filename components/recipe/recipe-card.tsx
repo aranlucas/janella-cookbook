@@ -44,13 +44,13 @@ export function RecipeCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
           {recipe.isFavorite && (
-            <div className="absolute top-3 right-3 z-20 rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm transition-transform hover:scale-110">
-              <span className="text-sm">❤️</span>
+            <div className="absolute top-2 right-2 z-20 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur-sm transition-transform hover:scale-110 sm:top-3 sm:right-3 sm:p-1.5">
+              <span className="text-xs sm:text-sm">❤️</span>
             </div>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-1 flex-col p-3 sm:p-4">
           <div className="mb-1 flex items-center justify-between">
             {recipe.difficulty && (
               <Badge
@@ -67,17 +67,17 @@ export function RecipeCard({
             )}
           </div>
 
-          <h3 className="text-card-foreground group-hover:text-primary mb-1 font-serif text-xl leading-tight font-bold transition-colors duration-300">
+          <h3 className="text-card-foreground group-hover:text-primary mb-1 font-serif text-base leading-tight font-bold transition-colors duration-300 sm:text-xl">
             {recipe.title}
           </h3>
 
           {recipe.description && (
-            <p className="text-muted-foreground mb-2 line-clamp-2 text-sm leading-relaxed">
+            <p className="text-muted-foreground mb-2 line-clamp-2 text-xs leading-relaxed sm:text-sm">
               {recipe.description}
             </p>
           )}
 
-          <div className="text-muted-foreground/80 mt-auto flex items-center justify-between gap-3 text-xs">
+          <div className="text-muted-foreground/80 mt-auto flex items-center justify-between gap-2 text-[10px] sm:gap-3 sm:text-xs">
             {recipe.cuisine && (
               <Badge
                 variant="outline"

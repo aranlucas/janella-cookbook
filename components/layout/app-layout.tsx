@@ -90,20 +90,20 @@ function PageHeader({
 }: PageHeaderConfig) {
   return (
     <section
-      className={cn("py-8 sm:py-12", background === "muted" && "bg-muted/30")}
+      className={cn("py-6 sm:py-8 md:py-12", background === "muted" && "bg-muted/30")}
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
-          <h1 className="text-foreground mb-4 font-serif text-4xl font-bold sm:text-5xl">
+          <h1 className="text-foreground mb-2 font-serif text-2xl font-bold sm:mb-4 sm:text-4xl md:text-5xl">
             {title}
           </h1>
           {description && (
-            <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
+            <p className="text-muted-foreground mx-auto max-w-2xl text-sm sm:text-base md:text-lg">
               {description}
             </p>
           )}
           {actions && (
-            <div className={cn("mt-6", centered && "flex justify-center")}>
+            <div className={cn("mt-4 sm:mt-6", centered && "flex justify-center")}>
               {actions}
             </div>
           )}
@@ -184,9 +184,9 @@ export function AppLayout({
           ) : (
             <section
               className={cn(
-                "py-8 sm:py-12",
-                contentType === "default" && "py-12 sm:py-16",
-                contentType === "form" && "py-6 sm:py-8",
+                "py-5 sm:py-8 md:py-12",
+                contentType === "default" && "py-6 sm:py-10 md:py-16",
+                contentType === "form" && "py-4 sm:py-6 md:py-8",
                 contentClassName,
               )}
             >

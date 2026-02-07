@@ -82,7 +82,7 @@ export default async function RecipePage({ params }: PageProps) {
   return (
     <AppLayout customContent>
       {/* Breadcrumbs and Actions */}
-      <div className="no-print container flex items-center justify-between py-4">
+      <div className="no-print container flex items-center justify-between py-3 sm:py-4">
         <BreadcrumbNav
           container={false}
           items={[
@@ -95,10 +95,10 @@ export default async function RecipePage({ params }: PageProps) {
       </div>
 
       {/* Recipe Header */}
-      <section className="container pb-6 md:pb-8">
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-2">
+      <section className="container pb-4 sm:pb-6 md:pb-8">
+        <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2">
           {/* Image */}
-          <div className="relative aspect-[4/3] overflow-hidden rounded-lg md:rounded-xl">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl sm:rounded-lg md:rounded-xl">
             {recipe.imageUrl ? (
               <a
                 href={recipe.imageUrl}
@@ -120,13 +120,13 @@ export default async function RecipePage({ params }: PageProps) {
           </div>
 
           {/* Info */}
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-3 sm:space-y-4 md:space-y-6">
             <div>
-              <h1 className="text-charcoal font-serif text-2xl font-bold sm:text-3xl md:text-4xl">
+              <h1 className="text-charcoal font-serif text-xl font-bold sm:text-2xl md:text-3xl lg:text-4xl">
                 {recipe.title}
               </h1>
               {recipe.description && (
-                <p className="text-muted-foreground mt-2 text-base md:mt-3 md:text-lg">
+                <p className="text-muted-foreground mt-1.5 text-sm sm:mt-2 sm:text-base md:mt-3 md:text-lg">
                   {recipe.description}
                 </p>
               )}
@@ -165,25 +165,25 @@ export default async function RecipePage({ params }: PageProps) {
       <Separator className="container" />
 
       {/* Recipe Content */}
-      <section className="container py-6 md:py-8">
-        <div className="grid gap-6 md:gap-8 lg:grid-cols-[1fr_2fr]">
+      <section className="container py-4 sm:py-6 md:py-8">
+        <div className="grid gap-5 sm:gap-6 md:gap-8 lg:grid-cols-[1fr_2fr]">
           {/* Ingredients */}
           <div className="lg:sticky lg:top-24 lg:self-start">
-            <h2 className="mb-3 font-serif text-xl font-semibold md:mb-4 md:text-2xl">
+            <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
               Ingredients
             </h2>
-            <div className="bg-warm-white recipe-content rounded-lg p-4 shadow-sm md:p-6">
+            <div className="bg-warm-white recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
               <IngredientList ingredients={recipe.ingredients} />
             </div>
           </div>
 
           {/* Instructions */}
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-5 sm:space-y-6 md:space-y-8">
             <div>
-              <h2 className="mb-3 font-serif text-xl font-semibold md:mb-4 md:text-2xl">
+              <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
                 Instructions
               </h2>
-              <div className="bg-warm-white recipe-content rounded-lg p-4 shadow-sm md:p-6">
+              <div className="bg-warm-white recipe-content rounded-lg p-3 shadow-sm sm:p-4 md:p-6">
                 <InstructionSteps instructions={recipe.instructions} />
               </div>
             </div>
