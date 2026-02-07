@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/accordion";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { AppLayout } from "@/components/layout/app-layout";
+import { createPageMetadata } from "@/lib/metadata";
 import type { RecipeWithRelations } from "@/types/recipe";
+import type { Metadata } from "next";
 
 export const revalidate = 86400;
 export const dynamicParams = true;
@@ -57,18 +59,27 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
   }
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const recipe = await getRecipe(slug);
 
   if (!recipe) {
-    return { title: "Recipe Not Found" };
+    return createPageMetadata({
+      title: "Recipe Not Found | Cookbook",
+      description: "This recipe could not be found.",
+      path: `/recipe/${slug}`,
+      noIndex: true,
+    });
   }
 
-  return {
+  return createPageMetadata({
     title: `${recipe.title} | Cookbook`,
     description: recipe.description || `View the recipe for ${recipe.title}`,
-  };
+    path: `/recipe/${recipe.slug}`,
+    image: recipe.imageUrl || undefined,
+  });
 }
 
 export default async function RecipePage({ params }: PageProps) {

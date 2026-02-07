@@ -15,6 +15,15 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import type { RecipeWithRelations } from "@/types/recipe";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Cookbook - Your Personal Recipe Collection",
+  description:
+    "A modern cookbook app to collect, organize, and discover recipes with intelligent semantic search.",
+  path: "/",
+});
 
 // Revalidate every 24 hours, or on-demand via revalidatePath("/")
 export const revalidate = 86400;

@@ -1,4 +1,12 @@
 import { AppLayout } from "@/components/layout/app-layout";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "About | Cookbook",
+  description: "Learn more about Janella and the story behind this cookbook.",
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

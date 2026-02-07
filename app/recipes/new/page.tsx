@@ -4,11 +4,14 @@ import { TextImportForm } from "@/components/forms/text-import-form";
 import { YouTubeImportForm } from "@/components/forms/youtube-import-form";
 import { ManualRecipeForm } from "@/components/forms/manual-recipe-form";
 import { AppLayout } from "@/components/layout/app-layout";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Add Recipe | Cookbook",
-  description: "Add a new recipe to your cookbook collection",
-};
+  description: "Add a new recipe to your cookbook collection.",
+  path: "/recipes/new",
+});
 
 export default function AddRecipePage() {
   return (

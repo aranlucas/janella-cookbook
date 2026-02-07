@@ -7,8 +7,16 @@ import { ContentEmptyState } from "@/components/ui/content-state";
 import { ButtonLink } from "@/components/recipe/button-link";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 export const revalidate = 3600;
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Dashboard | Cookbook",
+  description: "A live overview of your cookbook collection.",
+  path: "/dashboard",
+});
 
 interface DashboardStats {
   totalRecipes: number;

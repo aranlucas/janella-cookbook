@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import { createPageMetadata } from "@/lib/metadata";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Cookbook - Your Personal Recipe Collection",
-  description:
-    "A modern cookbook app to collect, organize, and discover recipes with intelligent semantic search.",
+  ...createPageMetadata({
+    title: "Cookbook - Your Personal Recipe Collection",
+    description:
+      "A modern cookbook app to collect, organize, and discover recipes with intelligent semantic search.",
+    path: "/",
+  }),
   keywords: ["cookbook", "recipes", "cooking", "meal planning", "food"],
 };
 

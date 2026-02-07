@@ -1,4 +1,12 @@
 import { AppLayout } from "@/components/layout/app-layout";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Terms of Service | Cookbook",
+  description: "Terms and conditions for using Janella Cookbook.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

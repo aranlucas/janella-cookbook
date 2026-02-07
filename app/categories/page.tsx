@@ -3,6 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentEmptyState } from "@/components/ui/content-state";
+import type { Metadata } from "next";
+import { createPageMetadata } from "@/lib/metadata";
 
 const courseIcons: Record<string, string> = {
   BREAKFAST: "🍳",
@@ -18,6 +20,12 @@ const courseIcons: Record<string, string> = {
 };
 
 export const revalidate = 86400;
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Categories | Cookbook",
+  description: "Browse recipe collections by course and cuisine.",
+  path: "/categories",
+});
 
 async function getCategories() {
   try {
