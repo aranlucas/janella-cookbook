@@ -19,39 +19,42 @@ const courseIcons: Record<string, string> = {
 export const revalidate = 86400;
 
 async function getCategories() {
-  const [courses, cuisines] = await Promise.all([
-    prisma.recipe.groupBy({
-      by: ["course"],
-      _count: true,
-      where: { course: { not: null } },
-    }),
-    prisma.recipe.groupBy({
-      by: ["cuisine"],
-      _count: true,
-      where: { cuisine: { not: null } },
-    }),
-  ]);
+  try {
+    const [courses, cuisines] = await Promise.all([
+      prisma.recipe.groupBy({
+        by: ["course"],
+        _count: true,
+        where: { course: { not: null } },
+      }),
+      prisma.recipe.groupBy({
+        by: ["cuisine"],
+        _count: true,
+        where: { cuisine: { not: null } },
+      }),
+    ]);
 
-  const categories = [
-    ...courses.map((c) => ({
-      name: c.course
-        ? c.course.charAt(0) + c.course.slice(1).toLowerCase()
-        : "Unknown",
-      value: c.course,
-      count: c._count,
-      type: "course",
-      icon: courseIcons[c.course as string] || "🍽️",
-    })),
-    ...cuisines.map((c) => ({
-      name: c.cuisine!,
-      value: c.cuisine,
-      count: c._count,
-      type: "cuisine",
-      icon: "🌍",
-    })),
-  ].sort((a, b) => b.count - a.count);
-
-  return categories;
+    return [
+      ...courses.map((c) => ({
+        name: c.course
+          ? c.course.charAt(0) + c.course.slice(1).toLowerCase()
+          : "Unknown",
+        value: c.course,
+        count: c._count,
+        type: "course",
+        icon: courseIcons[c.course as string] || "🍽️",
+      })),
+      ...cuisines.map((c) => ({
+        name: c.cuisine!,
+        value: c.cuisine,
+        count: c._count,
+        type: "cuisine",
+        icon: "🌍",
+      })),
+    ].sort((a, b) => b.count - a.count);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return [];
+  }
 }
 
 export default async function CategoriesPage() {
