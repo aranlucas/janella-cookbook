@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { ContentEmptyState } from "@/components/ui/content-state";
 import { ButtonLink } from "@/components/recipe/button-link";
 import { prisma } from "@/lib/prisma";
-import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 

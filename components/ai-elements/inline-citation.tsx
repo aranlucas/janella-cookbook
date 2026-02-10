@@ -1,9 +1,11 @@
 "use client";
 
+import type { CarouselApi } from "@/components/ui/carousel";
+import type { ComponentProps } from "react";
+
 import { Badge } from "@/components/ui/badge";
 import {
   Carousel,
-  type CarouselApi,
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
@@ -15,7 +17,6 @@ import {
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import {
-  type ComponentProps,
   createContext,
   useCallback,
   useContext,
@@ -50,7 +51,7 @@ export const InlineCitationText = ({
 export type InlineCitationCardProps = ComponentProps<typeof HoverCard>;
 
 export const InlineCitationCard = (props: InlineCitationCardProps) => (
-  <HoverCard {...props} />
+  <HoverCard closeDelay={0} openDelay={0} {...props} />
 );
 
 export type InlineCitationCardTriggerProps = ComponentProps<typeof Badge> & {
@@ -157,35 +158,25 @@ export const InlineCitationCarouselIndex = ({
   ...props
 }: InlineCitationCarouselIndexProps) => {
   const api = useCarouselApi();
-  // Initialize state from API if available
-  const [current, setCurrent] = useState(() =>
-    api ? api.selectedScrollSnap() + 1 : 0,
-  );
-  const [count, setCount] = useState(() =>
-    api ? api.scrollSnapList().length : 0,
-  );
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     if (!api) {
       return;
     }
 
-    // Update state in a callback to satisfy lint rules
-    const updateState = () => {
-      setCount(api.scrollSnapList().length);
+    setCount(api.scrollSnapList().length);
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    const handleSelect = () => {
       setCurrent(api.selectedScrollSnap() + 1);
     };
 
-    // Initial sync (deferred to next tick to avoid sync setState in effect)
-    const timeoutId = setTimeout(updateState, 0);
-
-    // Subscribe to changes
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1);
-    });
+    api.on("select", handleSelect);
 
     return () => {
-      clearTimeout(timeoutId);
+      api.off("select", handleSelect);
     };
   }, [api]);
 

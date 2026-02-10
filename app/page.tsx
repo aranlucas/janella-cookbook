@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
@@ -71,21 +70,21 @@ async function RecipeList() {
           align: "start",
           loop: true,
         }}
-        className="w-full"
+        className="w-full px-2 sm:px-3 md:px-4"
       >
-        <CarouselContent className="-ml-4">
+        <CarouselContent>
           {recipes.slice(0, 10).map((recipe) => (
             <CarouselItem
               key={recipe.id}
-              className="pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
+              className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
             >
               <RecipeCard recipe={recipe} />
             </CarouselItem>
           ))}
         </CarouselContent>
         <div className="mt-8 flex justify-center gap-2">
-          <CarouselPrevious className="static translate-y-0" />
-          <CarouselNext className="static translate-y-0" />
+          <CarouselPrevious variant="ghost" className="static translate-y-0" />
+          <CarouselNext variant="ghost" className="static translate-y-0" />
         </div>
       </Carousel>
 

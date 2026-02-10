@@ -1,5 +1,8 @@
 "use client";
 
+import type { UIMessage } from "ai";
+import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
+
 import { Button } from "@/components/ui/button";
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 import {
@@ -13,10 +16,16 @@ import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
-import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -141,31 +150,37 @@ export const MessageBranch = ({
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
   const [branches, setBranches] = useState<ReactElement[]>([]);
 
-  const handleBranchChange = (newBranch: number) => {
-    setCurrentBranch(newBranch);
-    onBranchChange?.(newBranch);
-  };
+  const handleBranchChange = useCallback(
+    (newBranch: number) => {
+      setCurrentBranch(newBranch);
+      onBranchChange?.(newBranch);
+    },
+    [onBranchChange],
+  );
 
-  const goToPrevious = () => {
+  const goToPrevious = useCallback(() => {
     const newBranch =
       currentBranch > 0 ? currentBranch - 1 : branches.length - 1;
     handleBranchChange(newBranch);
-  };
+  }, [currentBranch, branches.length, handleBranchChange]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     const newBranch =
       currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
     handleBranchChange(newBranch);
-  };
+  }, [currentBranch, branches.length, handleBranchChange]);
 
-  const contextValue: MessageBranchContextType = {
-    currentBranch,
-    totalBranches: branches.length,
-    goToPrevious,
-    goToNext,
-    branches,
-    setBranches,
-  };
+  const contextValue = useMemo<MessageBranchContextType>(
+    () => ({
+      branches,
+      currentBranch,
+      goToNext,
+      goToPrevious,
+      setBranches,
+      totalBranches: branches.length,
+    }),
+    [branches, currentBranch, goToNext, goToPrevious],
+  );
 
   return (
     <MessageBranchContext.Provider value={contextValue}>
@@ -184,7 +199,10 @@ export const MessageBranchContent = ({
   ...props
 }: MessageBranchContentProps) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = Array.isArray(children) ? children : [children];
+  const childrenArray = useMemo(
+    () => (Array.isArray(children) ? children : [children]),
+    [children],
+  );
 
   // Use useEffect to update branches when they change
   useEffect(() => {
@@ -207,13 +225,10 @@ export const MessageBranchContent = ({
   ));
 };
 
-export type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
-  from: UIMessage["role"];
-};
+export type MessageBranchSelectorProps = ComponentProps<typeof ButtonGroup>;
 
 export const MessageBranchSelector = ({
   className,
-  from,
   ...props
 }: MessageBranchSelectorProps) => {
   const { totalBranches } = useMessageBranch();
@@ -225,7 +240,10 @@ export const MessageBranchSelector = ({
 
   return (
     <ButtonGroup
-      className="[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md"
+      className={cn(
+        "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
+        className,
+      )}
       orientation="horizontal"
       {...props}
     />
@@ -259,7 +277,6 @@ export type MessageBranchNextProps = ComponentProps<typeof Button>;
 
 export const MessageBranchNext = ({
   children,
-  className,
   ...props
 }: MessageBranchNextProps) => {
   const { goToNext, totalBranches } = useMessageBranch();
@@ -302,6 +319,8 @@ export const MessageBranchPage = ({
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
+const streamdownPlugins = { cjk, code, math, mermaid };
+
 export const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps) => (
     <Streamdown
@@ -309,7 +328,7 @@ export const MessageResponse = memo(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className,
       )}
-      plugins={{ code, mermaid, math, cjk }}
+      plugins={streamdownPlugins}
       {...props}
     />
   ),

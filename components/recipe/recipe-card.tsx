@@ -32,10 +32,10 @@ export function RecipeCard({
   } as const;
 
   return (
-    <Link href={`/recipe/${recipe.slug}`} className="group block h-full">
+    <Link href={`/recipe/${recipe.slug}`} className="block h-full">
       <div
         className={cn(
-          "relative flex h-full flex-col overflow-hidden rounded-2xl border-none bg-card shadow-sm transition-all duration-500 hover:-translate-y-1.5 hover:shadow-xl dark:bg-card/40",
+          "relative flex h-full flex-col overflow-hidden rounded-2xl border-none bg-card dark:bg-card/40",
           className,
         )}
       >
@@ -44,14 +44,12 @@ export function RecipeCard({
             src={recipe.imageUrl}
             alt={recipe.title}
             priority={priority}
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            className="h-full w-full object-cover"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
           />
           {recipe.isFavorite && (
-            <div className="absolute top-2 right-2 z-20 rounded-full bg-white/90 p-1 shadow-sm backdrop-blur-sm sm:top-3 sm:right-3 sm:p-1.5">
-              <span className="group-hover:animate-heart-pop inline-block text-xs transition-transform duration-300 sm:text-sm">
-                ❤️
-              </span>
+            <div className="absolute top-2 right-2 z-20 rounded-full bg-white/90 p-1 backdrop-blur-sm sm:top-3 sm:right-3 sm:p-1.5">
+              <span className="inline-block text-xs sm:text-sm">❤️</span>
             </div>
           )}
         </div>
@@ -61,7 +59,7 @@ export function RecipeCard({
             {recipe.difficulty && (
               <Badge
                 variant={difficultyVariant[recipe.difficulty] || "secondary"}
-                className="text-[10px] font-bold tracking-wider uppercase transition-transform duration-200 group-hover:scale-105"
+                className="text-[10px] font-bold tracking-wider uppercase"
               >
                 <span className="mr-0.5">
                   {difficultyEmoji[recipe.difficulty]}
@@ -71,15 +69,13 @@ export function RecipeCard({
             )}
             {recipe.totalTime && (
               <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                <span className="inline-block transition-transform duration-300 group-hover:rotate-[360deg]">
-                  ⏱️
-                </span>
+                <span className="inline-block">⏱️</span>
                 {recipe.totalTime}m
               </span>
             )}
           </div>
 
-          <h3 className="mb-1 font-serif text-base leading-tight font-bold text-card-foreground transition-colors duration-300 group-hover:text-primary sm:text-xl">
+          <h3 className="mb-1 font-serif text-base leading-tight font-bold text-card-foreground sm:text-xl">
             {recipe.title}
           </h3>
 
@@ -93,7 +89,7 @@ export function RecipeCard({
             {recipe.cuisine && (
               <Badge
                 variant="outline"
-                className="border-border/50 bg-background/50 text-[10px] font-medium tracking-wider uppercase transition-colors duration-200 group-hover:border-[var(--highlight)] group-hover:text-[var(--highlight)]"
+                className="border-border/50 bg-background/50 text-[10px] font-medium tracking-wider uppercase"
               >
                 {recipe.cuisine}
               </Badge>

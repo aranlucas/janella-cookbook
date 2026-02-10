@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import Image from "next/image";
 import {
   Attachment,
   AttachmentPreview,
@@ -129,7 +130,7 @@ const PromptInputAttachmentsDisplay = () => {
 
 export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   const [text, setText] = useState<string>("");
-  const [location, setLocation] = useState<LocationData | null>(null);
+  const [, setLocation] = useState<LocationData | null>(null);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -556,11 +557,14 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                               );
                             case "file":
                               return (
-                                <img
+                                <Image
                                   key={`${role}-${i}`}
-                                  src={part.url}
                                   alt="Uploaded image"
                                   className="max-h-48 rounded-xl object-cover shadow-sm"
+                                  height={512}
+                                  src={part.url}
+                                  unoptimized
+                                  width={512}
                                 />
                               );
                             default:
@@ -626,8 +630,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                         </p>
                         <button
                           onClick={() => {
-                            const lastUserMessage =
-                              messages[messages.length - 1];
+                            const lastUserMessage = messages[messages.length - 1];
                             if (lastUserMessage?.role === "user") {
                               hapticLight();
                               sendMessage({

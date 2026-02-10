@@ -1,5 +1,3 @@
-const IMAGE_PROXY_PATH = "/api/images/proxy";
-
 function tryParseUrl(value: string): URL | null {
   try {
     return new URL(value);
@@ -39,14 +37,9 @@ function toHttpsUrl(url: string): string {
   return parsed.toString();
 }
 
-function toProxyUrl(url: string): string {
-  return `${IMAGE_PROXY_PATH}?url=${encodeURIComponent(url)}`;
-}
-
 /**
  * Build ordered candidates for browser rendering:
  * 1) Prefer direct HTTPS when possible.
- * 2) Fallback to server-side proxy (handles mixed-content and hotlink issues).
  */
 export function buildRecipeImageCandidates(
   input: string | null | undefined,
@@ -54,17 +47,11 @@ export function buildRecipeImageCandidates(
   const normalized = normalizeRecipeImageUrl(input);
   if (!normalized) return [];
 
-  const candidates = new Set<string>();
   const parsed = new URL(normalized);
 
   if (parsed.protocol === "http:") {
-    candidates.add(toHttpsUrl(normalized));
-    candidates.add(toProxyUrl(normalized));
-    return Array.from(candidates);
+    return [toHttpsUrl(normalized)];
   }
 
-  candidates.add(normalized);
-  candidates.add(toProxyUrl(normalized));
-
-  return Array.from(candidates);
+  return [normalized];
 }

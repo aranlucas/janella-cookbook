@@ -1,5 +1,7 @@
 "use client";
 
+import type { ComponentProps } from "react";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,8 +19,8 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { ChevronsUpDownIcon } from "lucide-react";
-import type { ComponentProps } from "react";
 import { createContext, useContext } from "react";
+
 import { Shimmer } from "./shimmer";
 
 interface PlanContextValue {
@@ -128,20 +130,17 @@ export const PlanFooter = (props: PlanFooterProps) => (
   <CardFooter data-slot="plan-footer" {...props} />
 );
 
-export type PlanTriggerProps = Omit<
-  ComponentProps<typeof CollapsibleTrigger>,
-  "render"
-> & { className?: string };
+export type PlanTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
 
 export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
   <CollapsibleTrigger
-    {...props}
     render={
       <Button
         className={cn("size-8", className)}
         data-slot="plan-trigger"
         size="icon"
         variant="ghost"
+        {...props}
       />
     }
   >
