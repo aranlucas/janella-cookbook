@@ -127,7 +127,7 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
             <Button
               variant="outline"
               size="sm"
-              className="text-destructive gap-1"
+              className="gap-1 text-destructive"
             />
           }
         >

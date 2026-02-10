@@ -35,7 +35,7 @@ export function MobileNav({ navItems }: MobileNavProps) {
       >
         <Menu className="h-6 w-6" />
       </SheetTrigger>
-      <SheetContent side="right" className="bg-background w-[280px]">
+      <SheetContent side="right" className="w-[280px] bg-background">
         <nav className="mt-8 flex flex-col gap-2">
           {navItems.map((item) => (
             <NavLink

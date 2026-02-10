@@ -17,38 +17,38 @@ export default function PrivacyPage() {
         { label: "Privacy Policy", active: true },
       ]}
     >
-      <h1 className="text-foreground mb-8 font-serif text-4xl font-bold">
+      <h1 className="mb-8 font-serif text-4xl font-bold text-foreground">
         Privacy Policy
       </h1>
 
       <div className="prose prose-stone dark:prose-invert max-w-none">
-        <p className="text-muted-foreground text-lg leading-relaxed">
+        <p className="text-lg leading-relaxed text-muted-foreground">
           Last updated: January 2026
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Introduction
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           Janella&apos;s Kitchen (&quot;we,&quot; &quot;our,&quot; or
           &quot;us&quot;) respects your privacy. This Privacy Policy explains
           how we collect, use, and act on your personal information when you
           visit our website.
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Information We Collect
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           We do not currently collect personal data or use cookies for tracking
           purposes. This is a personal project used for educational and private
           use.
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Contact Us
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           If you have any questions about this Privacy Policy, please contact
           us.
         </p>

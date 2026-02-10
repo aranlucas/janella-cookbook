@@ -175,7 +175,7 @@ export const Attachment = ({
           variant === "grid" && "size-24 overflow-hidden rounded-lg",
           variant === "inline" && [
             "flex h-8 cursor-pointer items-center gap-1.5 select-none",
-            "border-border rounded-md border px-1.5",
+            "rounded-md border border-border px-1.5",
             "text-sm font-medium transition-all",
             "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
           ],
@@ -263,9 +263,9 @@ export const AttachmentPreview = ({
     <div
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden",
-        variant === "grid" && "bg-muted size-full",
-        variant === "inline" && "bg-background size-5 rounded",
-        variant === "list" && "bg-muted size-12 rounded",
+        variant === "grid" && "size-full bg-muted",
+        variant === "inline" && "size-5 rounded bg-background",
+        variant === "list" && "size-12 rounded bg-muted",
         className,
       )}
       {...props}
@@ -299,7 +299,7 @@ export const AttachmentInfo = ({
     <div className={cn("min-w-0 flex-1", className)} {...props}>
       <span className="block truncate">{label}</span>
       {showMediaType && data.mediaType && (
-        <span className="text-muted-foreground block truncate text-xs">
+        <span className="block truncate text-xs text-muted-foreground">
           {data.mediaType}
         </span>
       )}
@@ -407,7 +407,7 @@ export const AttachmentEmpty = ({
 }: AttachmentEmptyProps) => (
   <div
     className={cn(
-      "text-muted-foreground flex items-center justify-center p-4 text-sm",
+      "flex items-center justify-center p-4 text-sm text-muted-foreground",
       className,
     )}
     {...props}

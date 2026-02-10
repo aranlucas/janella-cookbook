@@ -46,25 +46,37 @@ export function RecipeMeta({
       {/* Time info */}
       <div className="flex flex-wrap gap-3 text-xs sm:gap-4 sm:text-sm">
         {prepTime && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
+            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
+              🔪
+            </span>
             <span className="text-muted-foreground">Prep:</span>
             <span className="font-medium">{prepTime} min</span>
           </div>
         )}
         {cookTime && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
+            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
+              🔥
+            </span>
             <span className="text-muted-foreground">Cook:</span>
             <span className="font-medium">{cookTime} min</span>
           </div>
         )}
         {totalTime && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
+            <span className="inline-block transition-transform duration-300 group-hover/meta:rotate-[360deg]">
+              ⏱️
+            </span>
             <span className="text-muted-foreground">Total:</span>
             <span className="font-medium">{totalTime} min</span>
           </div>
         )}
         {servings && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
+            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
+              🍽️
+            </span>
             <span className="text-muted-foreground">Servings:</span>
             <span className="font-medium">{servings}</span>
           </div>
@@ -83,13 +95,15 @@ export function RecipeMeta({
       </div>
       {/* Rating and cook count (only show positive values) */}
       {hasPositiveRatingOrCookCount && (
-        <div className="text-muted-foreground flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
           {rating !== undefined && rating !== null && rating > 0 && (
             <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <span
                   key={i}
-                  className={i < rating ? "text-primary" : "text-muted-foreground"}
+                  className={
+                    i < rating ? "text-primary" : "text-muted-foreground"
+                  }
                 >
                   ★
                 </span>

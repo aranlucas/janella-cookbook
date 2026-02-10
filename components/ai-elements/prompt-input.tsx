@@ -1088,7 +1088,7 @@ export const PromptInputSelectTrigger = ({
 }: PromptInputSelectTriggerProps) => (
   <SelectTrigger
     className={cn(
-      "text-muted-foreground border-none bg-transparent font-medium shadow-none transition-colors",
+      "border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors",
       "hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
       className,
     )}
@@ -1172,7 +1172,7 @@ export const PromptInputTabLabel = ({
 }: PromptInputTabLabelProps) => (
   <h3
     className={cn(
-      "text-muted-foreground mb-2 px-3 text-xs font-medium",
+      "mb-2 px-3 text-xs font-medium text-muted-foreground",
       className,
     )}
     {...props}
@@ -1196,7 +1196,7 @@ export const PromptInputTabItem = ({
 }: PromptInputTabItemProps) => (
   <div
     className={cn(
-      "hover:bg-accent flex items-center gap-2 px-3 py-2 text-xs",
+      "flex items-center gap-2 px-3 py-2 text-xs hover:bg-accent",
       className,
     )}
     {...props}

@@ -70,7 +70,7 @@ export function RecipeManagementActions({
           variant="ghost"
           size="icon"
           onClick={() => router.push(`/recipe/${recipe.slug}/edit`)}
-          className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
+          className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         >
           <Pencil className="h-4 w-4" />
           <span className="sr-only">Edit recipe</span>
@@ -82,7 +82,7 @@ export function RecipeManagementActions({
             size="icon"
             onClick={() => setRegenerateDialogOpen(true)}
             disabled={isRegenerating}
-            className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
+            className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           >
             <RotateCw
               className={`h-4 w-4 ${isRegenerating ? "animate-spin" : ""}`}
@@ -95,7 +95,7 @@ export function RecipeManagementActions({
           variant="ghost"
           size="icon"
           onClick={handlePrint}
-          className="text-muted-foreground hover:text-foreground hover:bg-accent/10 h-9 w-9"
+          className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         >
           <Printer className="h-4 w-4" />
           <span className="sr-only">Print recipe</span>
@@ -105,7 +105,7 @@ export function RecipeManagementActions({
           variant="ghost"
           size="icon"
           onClick={() => setDeleteDialogOpen(true)}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-9 w-9"
+          className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
           <span className="sr-only">Delete recipe</span>

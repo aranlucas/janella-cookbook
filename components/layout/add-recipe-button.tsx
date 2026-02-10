@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -15,12 +17,14 @@ export function AddRecipeButton({
   className,
 }: AddRecipeButtonProps) {
   if (variant === "icon") {
-    // Compact icon-only button for small screens
     return (
       <Link href="/recipes/new" onClick={onClick}>
         <Button
           size="icon"
-          className={cn("h-9 w-9", className)}
+          className={cn(
+            "hover-squish h-9 w-9 transition-transform hover:rotate-90",
+            className,
+          )}
           aria-label="Add new recipe"
         >
           <Plus className="h-5 w-5" />
@@ -30,26 +34,24 @@ export function AddRecipeButton({
   }
 
   if (variant === "mobile") {
-    // Full-width button for mobile menu
     return (
       <Link
         href="/recipes/new"
         onClick={onClick}
         className={cn("w-full", className)}
       >
-        <Button className="w-full gap-2">
-          <Plus className="h-4 w-4" />
+        <Button className="hover-squish w-full gap-2">
+          <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
           Add New Recipe
         </Button>
       </Link>
     );
   }
 
-  // Standard desktop button
   return (
     <Link href="/recipes/new" className={className}>
-      <Button className="gap-2">
-        <Plus className="h-4 w-4" />
+      <Button className="animate-glow-pulse group gap-2 transition-transform active:scale-95">
+        <Plus className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
         New Recipe
       </Button>
     </Link>

@@ -34,7 +34,7 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
       {recipes.map((recipe, index) => (
         <div
           key={recipe.id}
-          className="animate-in fade-in slide-in-from-bottom-8 fill-mode-both duration-700"
+          className="animate-in duration-700 fill-mode-both fade-in slide-in-from-bottom-8"
           style={{ animationDelay: `${index * 100}ms` }}
         >
           <RecipeCard recipe={recipe} priority={index < 4} />

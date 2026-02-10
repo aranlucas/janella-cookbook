@@ -95,16 +95,16 @@ export default async function CategoriesPage() {
               href={`/recipes?category=${encodeURIComponent(category.name.toLowerCase())}`}
               className="group"
             >
-              <Card className="border-border/40 bg-card hover:border-primary/20 h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+              <Card className="h-full border-border/40 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg">
                 <CardContent className="flex h-full flex-col items-center justify-center p-8 text-center">
                   <span className="mb-4 text-4xl transition-transform duration-300 group-hover:scale-110">
                     {category.icon}
                   </span>
-                  <h3 className="text-foreground group-hover:text-primary mb-2 font-serif text-2xl font-semibold transition-colors">
+                  <h3 className="mb-2 font-serif text-2xl font-semibold text-foreground transition-colors group-hover:text-primary">
                     {category.name}
                   </h3>
-                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                    <span className="bg-muted rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                       {category.type}
                     </span>
                     <span>{category.count} recipes</span>

@@ -37,33 +37,39 @@ async function getDashboardStats(): Promise<DashboardStats> {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   try {
-    const [totalRecipes, favorites, courses, cuisines, recentlyAdded, latestRecipes] =
-      await Promise.all([
-        prisma.recipe.count(),
-        prisma.recipe.count({ where: { isFavorite: true } }),
-        prisma.recipe.groupBy({
-          by: ["course"],
-          where: { course: { not: null } },
-        }),
-        prisma.recipe.groupBy({
-          by: ["cuisine"],
-          where: { cuisine: { not: null } },
-        }),
-        prisma.recipe.count({
-          where: { createdAt: { gte: sevenDaysAgo } },
-        }),
-        prisma.recipe.findMany({
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            isFavorite: true,
-            updatedAt: true,
-          },
-          orderBy: { updatedAt: "desc" },
-          take: 6,
-        }),
-      ]);
+    const [
+      totalRecipes,
+      favorites,
+      courses,
+      cuisines,
+      recentlyAdded,
+      latestRecipes,
+    ] = await Promise.all([
+      prisma.recipe.count(),
+      prisma.recipe.count({ where: { isFavorite: true } }),
+      prisma.recipe.groupBy({
+        by: ["course"],
+        where: { course: { not: null } },
+      }),
+      prisma.recipe.groupBy({
+        by: ["cuisine"],
+        where: { cuisine: { not: null } },
+      }),
+      prisma.recipe.count({
+        where: { createdAt: { gte: sevenDaysAgo } },
+      }),
+      prisma.recipe.findMany({
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          isFavorite: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: "desc" },
+        take: 6,
+      }),
+    ]);
 
     const categories = new Set([
       ...courses.map((entry) => entry.course),
@@ -98,24 +104,28 @@ export default async function DashboardPage() {
       value: stats.totalRecipes,
       icon: BookOpen,
       tone: "text-primary",
+      emoji: "📖",
     },
     {
       label: "Favorites",
       value: stats.favorites,
       icon: Heart,
       tone: "text-accent",
+      emoji: "❤️",
     },
     {
       label: "Categories",
       value: stats.categories,
       icon: Layers,
       tone: "text-highlight",
+      emoji: "🏷️",
     },
     {
       label: "Added (7 days)",
       value: stats.recentlyAdded,
       icon: Clock3,
       tone: "text-muted-foreground",
+      emoji: "🆕",
     },
   ];
 
@@ -131,16 +141,26 @@ export default async function DashboardPage() {
     >
       <div className="space-y-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => (
-            <Card key={card.label} className="border-border/60 bg-card shadow-sm">
+          {cards.map((card, i) => (
+            <Card
+              key={card.label}
+              className="group border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              style={{
+                animationDelay: `${i * 100}ms`,
+              }}
+            >
               <CardHeader className="pb-3">
-                <CardTitle className="text-muted-foreground flex items-center justify-between text-sm font-medium">
+                <CardTitle className="flex items-center justify-between text-sm font-medium text-muted-foreground">
                   {card.label}
-                  <card.icon className={cn("h-4 w-4", card.tone)} />
+                  <span className="inline-block transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">
+                    {card.emoji}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="font-serif text-3xl font-bold">{card.value}</p>
+                <p className="font-serif text-3xl font-bold transition-transform duration-200 group-hover:scale-105">
+                  {card.value}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -148,12 +168,10 @@ export default async function DashboardPage() {
 
         <Card className="border-border/60 bg-card shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="font-serif text-xl">Recently Updated</CardTitle>
-            <ButtonLink
-              href="/recipes"
-              variant="outline"
-              size="sm"
-            >
+            <CardTitle className="font-serif text-xl">
+              Recently Updated
+            </CardTitle>
+            <ButtonLink href="/recipes" variant="outline" size="sm">
               View all
             </ButtonLink>
           </CardHeader>
@@ -173,15 +191,24 @@ export default async function DashboardPage() {
                   <Link
                     key={recipe.id}
                     href={`/recipe/${recipe.slug}`}
-                    className="border-border/70 hover:bg-muted/50 flex items-center justify-between rounded-lg border px-4 py-3 transition-colors"
+                    className="group flex items-center justify-between rounded-lg border border-border/70 px-4 py-3 transition-all duration-200 hover:translate-x-1 hover:bg-muted/50 hover:shadow-sm"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{recipe.title}</p>
-                      <p className="text-muted-foreground text-xs">
+                      <p className="truncate font-medium transition-colors duration-200 group-hover:text-primary">
+                        {recipe.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
                         Updated {recipe.updatedAt.toLocaleDateString()}
                       </p>
                     </div>
-                    {recipe.isFavorite && <Badge variant="secondary">Favorite</Badge>}
+                    {recipe.isFavorite && (
+                      <Badge
+                        variant="secondary"
+                        className="transition-transform duration-200 group-hover:scale-105"
+                      >
+                        ❤️ Favorite
+                      </Badge>
+                    )}
                   </Link>
                 ))}
               </div>

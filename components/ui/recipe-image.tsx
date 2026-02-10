@@ -121,7 +121,7 @@ function RecipeImageRenderer({
     return (
       <div
         className={cn(
-          "bg-muted/30 flex items-center justify-center",
+          "flex items-center justify-center bg-muted/30",
           fill && "absolute inset-0",
           containerClassName,
         )}
@@ -143,7 +143,9 @@ function RecipeImageRenderer({
 
   if (fill) {
     return (
-      <div className={cn("absolute inset-0 overflow-hidden", containerClassName)}>
+      <div
+        className={cn("absolute inset-0 overflow-hidden", containerClassName)}
+      >
         <Image
           src={currentSrc}
           alt={alt}
@@ -157,7 +159,9 @@ function RecipeImageRenderer({
           onLoad={handleLoad}
           onError={handleError}
         />
-        {isLoading && <div className="bg-muted/30 absolute inset-0 animate-pulse" />}
+        {isLoading && (
+          <div className="absolute inset-0 animate-pulse bg-muted/30" />
+        )}
       </div>
     );
   }
@@ -178,7 +182,9 @@ function RecipeImageRenderer({
         onLoad={handleLoad}
         onError={handleError}
       />
-      {isLoading && <div className="bg-muted/30 absolute inset-0 animate-pulse" />}
+      {isLoading && (
+        <div className="absolute inset-0 animate-pulse bg-muted/30" />
+      )}
     </div>
   );
 }

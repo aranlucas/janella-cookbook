@@ -62,24 +62,24 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       {isLoading && (
         <div className="flex items-center justify-center py-8">
           <Spinner className="h-6 w-6" />
-          <span className="text-muted-foreground ml-2 text-sm">
+          <span className="ml-2 text-sm text-muted-foreground">
             Analyzing nutrition...
           </span>
         </div>
       )}
 
       {error && (
-        <div className="bg-destructive/10 text-destructive rounded-lg p-4 text-sm">
+        <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
           Failed to generate nutrition facts. Please try again.
         </div>
       )}
 
       {completion && (
-        <div className="bg-card rounded-lg p-4 shadow-sm md:p-6">
-          <div className="text-foreground prose prose-sm max-w-none overflow-x-auto">
+        <div className="rounded-lg bg-card p-4 shadow-sm md:p-6">
+          <div className="prose prose-sm max-w-none overflow-x-auto text-foreground">
             <Streamdown mode="streaming">{completion}</Streamdown>
           </div>
-          <p className="text-muted-foreground mt-4 border-t pt-4 text-xs">
+          <p className="mt-4 border-t pt-4 text-xs text-muted-foreground">
             <strong>Note:</strong> Nutritional information is AI-generated and
             approximate. For precise values, consult a registered dietitian or
             use a nutrition calculator.
@@ -88,8 +88,8 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       )}
 
       {!hasGenerated && !isLoading && !completion && (
-        <div className="bg-muted/50 rounded-lg p-6 text-center">
-          <p className="text-muted-foreground text-sm">
+        <div className="rounded-lg bg-muted/50 p-6 text-center">
+          <p className="text-sm text-muted-foreground">
             Click &quot;Generate with AI&quot; to get estimated nutritional
             information for this recipe.
           </p>

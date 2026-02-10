@@ -29,7 +29,7 @@ export type CommitProps = ComponentProps<typeof Collapsible>;
 
 export const Commit = ({ className, children, ...props }: CommitProps) => (
   <Collapsible
-    className={cn("bg-background rounded-lg border", className)}
+    className={cn("rounded-lg border bg-background", className)}
     {...props}
   >
     {children}
@@ -93,7 +93,7 @@ export const CommitMetadata = ({
 }: CommitMetadataProps) => (
   <div
     className={cn(
-      "text-muted-foreground flex items-center gap-2 text-xs",
+      "flex items-center gap-2 text-xs text-muted-foreground",
       className,
     )}
     {...props}
@@ -300,7 +300,7 @@ export const CommitFile = ({
 }: CommitFileProps) => (
   <div
     className={cn(
-      "hover:bg-muted/50 flex items-center justify-between gap-2 rounded px-2 py-1 text-sm",
+      "flex items-center justify-between gap-2 rounded px-2 py-1 text-sm hover:bg-muted/50",
       className,
     )}
     {...props}
@@ -364,7 +364,7 @@ export const CommitFileIcon = ({
   ...props
 }: CommitFileIconProps) => (
   <FileIcon
-    className={cn("text-muted-foreground size-3.5 shrink-0", className)}
+    className={cn("size-3.5 shrink-0 text-muted-foreground", className)}
     {...props}
   />
 );

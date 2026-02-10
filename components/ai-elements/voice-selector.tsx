@@ -222,7 +222,7 @@ export const VoiceSelectorGender = ({
   }
 
   return (
-    <span className={cn("text-muted-foreground text-xs", className)} {...props}>
+    <span className={cn("text-xs text-muted-foreground", className)} {...props}>
       {children ?? icon}
     </span>
   );
@@ -367,7 +367,7 @@ export const VoiceSelectorAccent = ({
   }
 
   return (
-    <span className={cn("text-muted-foreground text-xs", className)} {...props}>
+    <span className={cn("text-xs text-muted-foreground", className)} {...props}>
       {children ?? emoji}
     </span>
   );
@@ -380,7 +380,7 @@ export const VoiceSelectorAge = ({
   ...props
 }: VoiceSelectorAgeProps) => (
   <span
-    className={cn("text-muted-foreground text-xs tabular-nums", className)}
+    className={cn("text-xs text-muted-foreground tabular-nums", className)}
     {...props}
   />
 );
@@ -403,7 +403,7 @@ export const VoiceSelectorDescription = ({
   className,
   ...props
 }: VoiceSelectorDescriptionProps) => (
-  <span className={cn("text-muted-foreground text-xs", className)} {...props} />
+  <span className={cn("text-xs text-muted-foreground", className)} {...props} />
 );
 
 export type VoiceSelectorAttributesProps = ComponentProps<"div">;

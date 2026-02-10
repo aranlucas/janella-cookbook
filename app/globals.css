@@ -241,6 +241,234 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════
+   Playful Animations & Micro-interactions
+   ═══════════════════════════════════════════════════════════ */
+
+/* Wiggle - for hover on logos, icons, buttons */
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  15% {
+    transform: rotate(-6deg);
+  }
+  30% {
+    transform: rotate(5deg);
+  }
+  45% {
+    transform: rotate(-4deg);
+  }
+  60% {
+    transform: rotate(2deg);
+  }
+  75% {
+    transform: rotate(-1deg);
+  }
+}
+
+/* Gentle float - for decorative elements */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(-6px) rotate(-1deg);
+  }
+}
+
+/* Squish/bounce on click */
+@keyframes squish {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.92, 1.08);
+  }
+  60% {
+    transform: scale(1.05, 0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Rubber-band bounce for emphasis */
+@keyframes rubber-band {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scaleX(1.15) scaleY(0.88);
+  }
+  40% {
+    transform: scaleX(0.9) scaleY(1.1);
+  }
+  50% {
+    transform: scaleX(1.05) scaleY(0.95);
+  }
+  65% {
+    transform: scaleX(0.98) scaleY(1.02);
+  }
+  75% {
+    transform: scaleX(1.02) scaleY(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Heart pop for favorites */
+@keyframes heart-pop {
+  0% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.35);
+  }
+  30% {
+    transform: scale(0.9);
+  }
+  45% {
+    transform: scale(1.15);
+  }
+  60% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Wave effect for text characters */
+@keyframes wave-char {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Glow pulse for CTA buttons */
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 4px var(--primary),
+      0 0 12px transparent;
+  }
+  50% {
+    box-shadow:
+      0 0 8px var(--primary),
+      0 0 24px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+}
+
+/* Playful squiggly underline via SVG */
+@keyframes squiggle {
+  0% {
+    background-position: 0 100%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+/* Shimmer sweep for loading/decorative */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Utility classes for the animations */
+.animate-wiggle {
+  animation: wiggle 0.6s ease-in-out;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-squish {
+  animation: squish 0.4s ease-in-out;
+}
+
+.animate-rubber-band {
+  animation: rubber-band 0.6s ease-in-out;
+}
+
+.animate-heart-pop {
+  animation: heart-pop 0.5s ease-in-out;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* Hover-triggered variants */
+.hover-wiggle:hover {
+  animation: wiggle 0.6s ease-in-out;
+}
+
+.hover-squish:active {
+  animation: squish 0.3s ease-in-out;
+}
+
+/* Stagger delay helpers for children */
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 240ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 300ms;
+}
+
+/* Tilt-on-hover card perspective */
+.card-tilt {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+.card-tilt:hover {
+  transform: rotateY(2deg) rotateX(-1deg) translateY(-4px);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Squiggly underline for nav links */
+.squiggle-underline {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4'%3E%3Cpath d='M0 3 Q5 0 10 3 Q15 6 20 3' stroke='%23e04e39' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 20px 4px;
+  background-position: 0 100%;
+  padding-bottom: 4px;
+}
+
+.squiggle-underline:hover {
+  animation: squiggle 0.4s linear infinite;
+}
+
 /* Chat interface animations */
 @keyframes chat-typing {
   0%,

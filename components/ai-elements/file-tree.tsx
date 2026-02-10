@@ -70,7 +70,7 @@ export const FileTree = ({
     >
       <div
         className={cn(
-          "bg-background rounded-lg border font-mono text-sm",
+          "rounded-lg border bg-background font-mono text-sm",
           className,
         )}
         role="tree"
@@ -124,7 +124,7 @@ export const FileTreeFolder = ({
             render={
               <button
                 className={cn(
-                  "hover:bg-muted/50 flex w-full items-center gap-1 rounded px-2 py-1 text-left transition-colors",
+                  "flex w-full items-center gap-1 rounded px-2 py-1 text-left transition-colors hover:bg-muted/50",
                   isSelected && "bg-muted",
                 )}
                 onClick={() => onSelect?.(path)}
@@ -134,7 +134,7 @@ export const FileTreeFolder = ({
           >
             <ChevronRightIcon
               className={cn(
-                "text-muted-foreground size-4 shrink-0 transition-transform",
+                "size-4 shrink-0 text-muted-foreground transition-transform",
                 isExpanded && "rotate-90",
               )}
             />
@@ -187,7 +187,7 @@ export const FileTreeFile = ({
     <FileTreeFileContext.Provider value={{ path, name }}>
       <div
         className={cn(
-          "hover:bg-muted/50 flex cursor-pointer items-center gap-1 rounded px-2 py-1 transition-colors",
+          "flex cursor-pointer items-center gap-1 rounded px-2 py-1 transition-colors hover:bg-muted/50",
           isSelected && "bg-muted",
           className,
         )}
@@ -205,7 +205,7 @@ export const FileTreeFile = ({
           <>
             <span className="size-4" /> {/* Spacer for alignment */}
             <FileTreeIcon>
-              {icon ?? <FileIcon className="text-muted-foreground size-4" />}
+              {icon ?? <FileIcon className="size-4 text-muted-foreground" />}
             </FileTreeIcon>
             <FileTreeName>{name}</FileTreeName>
           </>

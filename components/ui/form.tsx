@@ -120,18 +120,16 @@ function FormControl({ children, ...controlProps }: FormControlProps) {
     ? formDescriptionId
     : `${formDescriptionId} ${formMessageId}`;
 
-  return (
-    React.cloneElement(child, {
-      ...child.props,
-      ...controlProps,
-      "data-slot": "form-control",
-      id: formItemId,
-      "aria-describedby": childProps["aria-describedby"]
-        ? `${childProps["aria-describedby"]} ${describedBy}`
-        : describedBy,
-      "aria-invalid": !!error,
-    })
-  );
+  return React.cloneElement(child, {
+    ...child.props,
+    ...controlProps,
+    "data-slot": "form-control",
+    id: formItemId,
+    "aria-describedby": childProps["aria-describedby"]
+      ? `${childProps["aria-describedby"]} ${describedBy}`
+      : describedBy,
+    "aria-invalid": !!error,
+  });
 }
 
 function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
@@ -141,7 +139,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-description"
       id={formDescriptionId}
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );
@@ -159,7 +157,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      className={cn("text-sm text-destructive", className)}
       {...props}
     >
       {body}

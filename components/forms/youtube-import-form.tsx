@@ -73,7 +73,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                       {...field}
                       type="url"
                       placeholder="https://www.youtube.com/watch?v=... or /shorts/..."
-                      className="bg-background border-border focus:border-primary"
+                      className="border-border bg-background focus:border-primary"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -82,7 +82,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
               )}
             />
 
-            <div className="text-muted-foreground text-sm">
+            <div className="text-sm text-muted-foreground">
               <p>
                 Paste a YouTube video or Shorts URL of a cooking tutorial.
                 We&apos;ll automatically extract the recipe from the
@@ -95,7 +95,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
                 <li>Cooking times and servings</li>
                 <li>Video thumbnail as recipe image</li>
               </ul>
-              <div className="bg-muted/20 mt-3 rounded-md p-2 text-xs">
+              <div className="mt-3 rounded-md bg-muted/20 p-2 text-xs">
                 <p className="font-medium">Enhanced Import:</p>
                 <p className="mt-1">
                   Supports regular videos and YouTube Shorts. Uses advanced
@@ -113,7 +113,7 @@ export function YouTubeImportForm({ onSuccess }: YouTubeImportFormProps) {
 
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isPending}
             >
               {isPending ? (

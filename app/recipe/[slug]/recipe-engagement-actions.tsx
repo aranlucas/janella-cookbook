@@ -69,11 +69,13 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleToggleFavorite}
           disabled={isFavoriting}
-          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
         >
           <Heart
-            className={`mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5 ${
-              recipe.isFavorite ? "fill-current" : ""
+            className={`mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-125 sm:mr-2 sm:h-5 sm:w-5 ${
+              recipe.isFavorite
+                ? "animate-heart-pop fill-current"
+                : "group-hover:-rotate-12"
             }`}
           />
           <span className="text-sm font-medium sm:text-base">
@@ -86,12 +88,12 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleMarkCooked}
           disabled={isCooking}
-          className="group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
         >
-          <ChefHat className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
+          <ChefHat className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
           <span className="text-sm font-medium sm:text-base">I Made This</span>
           {(recipe.cookCount || 0) > 0 && (
-            <span className="bg-primary text-primary-foreground ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:ml-2 sm:px-2 sm:text-xs">
+            <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground transition-transform duration-200 group-hover:scale-110 sm:ml-2 sm:px-2 sm:text-xs">
               {recipe.cookCount}
             </span>
           )}
@@ -102,9 +104,9 @@ export function RecipeEngagementActions({
         variant="default"
         size="default"
         onClick={handleChatWithRecipe}
-        className="group relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
+        className="hover-squish group relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
       >
-        <MessageCircle className="mr-1.5 h-4 w-4 transition-transform group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
+        <MessageCircle className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
         <span className="text-sm font-medium sm:text-base">
           Chat with Recipe
         </span>

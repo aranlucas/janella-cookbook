@@ -15,13 +15,13 @@ export default function Error({
       <h2 className="mb-2 font-serif text-xl font-bold">
         Something went wrong
       </h2>
-      <p className="text-muted-foreground mb-6 max-w-md text-sm">
+      <p className="mb-6 max-w-md text-sm text-muted-foreground">
         We couldn&apos;t load this page. Please try again or go back home.
       </p>
       <div className="flex gap-3">
         <button
           onClick={reset}
-          className="bg-primary hover:bg-primary/90 rounded-lg px-5 py-2 text-sm font-medium text-white transition-colors"
+          className="rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
         >
           Try again
         </button>

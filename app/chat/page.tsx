@@ -18,8 +18,8 @@ interface ChatPageProps {
 function ChatLoadingState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4">
-      <div className="bg-rustic-blush h-12 w-12 animate-pulse rounded-full" />
-      <p className="text-rustic-charcoal/60 font-serif text-lg">
+      <div className="h-12 w-12 animate-pulse rounded-full bg-rustic-blush" />
+      <p className="font-serif text-lg text-rustic-charcoal/60">
         Warming up the kitchen...
       </p>
     </div>
@@ -34,7 +34,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       : undefined;
 
   return (
-    <div className="bg-rustic-cream flex h-dvh flex-col">
+    <div className="flex h-dvh flex-col bg-rustic-cream">
       <Header />
       <main className="relative flex min-h-0 flex-1 items-center justify-center p-2 sm:p-4 md:p-6">
         {/* Decorative background pattern */}

@@ -50,7 +50,7 @@ export const EnvironmentVariables = ({
   return (
     <EnvironmentVariablesContext.Provider value={{ showValues, setShowValues }}>
       <div
-        className={cn("bg-background rounded-lg border", className)}
+        className={cn("rounded-lg border bg-background", className)}
         {...props}
       >
         {children}
@@ -99,7 +99,7 @@ export const EnvironmentVariablesToggle = ({
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <span className="text-muted-foreground text-xs">
+      <span className="text-xs text-muted-foreground">
         {showValues ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
       </span>
       <Switch
@@ -212,7 +212,7 @@ export const EnvironmentVariableValue = ({
   return (
     <span
       className={cn(
-        "text-muted-foreground font-mono text-sm",
+        "font-mono text-sm text-muted-foreground",
         !showValues && "select-none",
         className,
       )}

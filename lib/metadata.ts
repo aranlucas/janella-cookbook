@@ -90,4 +90,3 @@ export function createPageMetadata(
     robots: options.noIndex ? { index: false, follow: false } : undefined,
   };
 }
-

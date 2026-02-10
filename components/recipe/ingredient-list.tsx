@@ -46,25 +46,33 @@ export function IngredientList({
       {groups.map(([groupName, groupIngredients]) => (
         <div key={groupName}>
           {groups.length > 1 && (
-            <h4 className="text-foreground mb-3 font-serif text-lg font-medium">
+            <h4 className="mb-3 font-serif text-lg font-medium text-foreground">
               {groupName}
             </h4>
           )}
           <ul className="space-y-2">
             {groupIngredients.map((ingredient) => (
-              <li key={ingredient.id} className="flex items-start gap-3">
+              <li
+                key={ingredient.id}
+                className={cn(
+                  "flex items-start gap-3 rounded-md px-2 py-1 transition-all duration-300",
+                  checked.has(ingredient.id)
+                    ? "scale-[0.98] bg-accent/5"
+                    : "hover:bg-muted/30",
+                )}
+              >
                 <Checkbox
                   id={ingredient.id}
                   checked={checked.has(ingredient.id)}
                   onCheckedChange={() => toggleIngredient(ingredient.id)}
-                  className="mt-0.5"
+                  className="mt-0.5 transition-transform duration-200 hover:scale-110"
                 />
                 <label
                   htmlFor={ingredient.id}
                   className={cn(
-                    "flex-1 cursor-pointer select-none",
+                    "flex-1 cursor-pointer transition-all duration-300 select-none",
                     checked.has(ingredient.id) &&
-                      "text-muted-foreground line-through",
+                      "text-muted-foreground/60 line-through decoration-[var(--highlight)] decoration-2",
                   )}
                 >
                   {ingredient.quantity && (
@@ -80,6 +88,11 @@ export function IngredientList({
                     <span className="text-muted-foreground">
                       {" "}
                       ({ingredient.notes})
+                    </span>
+                  )}
+                  {checked.has(ingredient.id) && (
+                    <span className="ml-1.5 inline-block animate-[rubber-band_0.4s_ease-in-out] text-xs">
+                      ✓
                     </span>
                   )}
                 </label>

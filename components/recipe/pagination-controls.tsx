@@ -31,7 +31,7 @@ export function PaginationControls({
           Previous
         </Button>
       )}
-      <span className="text-muted-foreground text-sm font-medium">
+      <span className="text-sm font-medium text-muted-foreground">
         Page {currentPage} of {totalPages}
       </span>
       {currentPage < totalPages ? (

@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { SearchBar } from "@/components/search/search-bar";
 import { AppLayout } from "@/components/layout/app-layout";
-import { CardListSkeleton, ContentEmptyState } from "@/components/ui/content-state";
+import {
+  CardListSkeleton,
+  ContentEmptyState,
+} from "@/components/ui/content-state";
 import { SearchResults } from "./search-results";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
@@ -43,7 +46,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       contentMaxWidth="4xl"
       contentClassName="py-6 sm:py-8"
     >
-      <h1 className="text-foreground mb-4 font-serif text-2xl font-bold sm:mb-6 sm:text-3xl">
+      <h1 className="mb-4 font-serif text-2xl font-bold text-foreground sm:mb-6 sm:text-3xl">
         Search Recipes
       </h1>
 
@@ -58,7 +61,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
       {query ? (
         <div>
-          <p className="text-muted-foreground mb-6 text-sm">
+          <p className="mb-6 text-sm text-muted-foreground">
             Showing results for &quot;{query}&quot;
           </p>
           <Suspense fallback={<SearchResultsSkeleton />}>

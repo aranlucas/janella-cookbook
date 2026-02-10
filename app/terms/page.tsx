@@ -18,37 +18,37 @@ export default function TermsPage() {
       ]}
       contentMaxWidth="3xl"
     >
-      <h1 className="text-foreground mb-8 font-serif text-4xl font-bold">
+      <h1 className="mb-8 font-serif text-4xl font-bold text-foreground">
         Terms of Service
       </h1>
 
       <div className="prose prose-stone dark:prose-invert max-w-none">
-        <p className="text-muted-foreground text-lg leading-relaxed">
+        <p className="text-lg leading-relaxed text-muted-foreground">
           Last updated: January 2026
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Agreement to Terms
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           By accessing or using Janella&apos;s Kitchen, you agree to be bound by
           these Terms of Service. If you disagree with any part of the terms,
           then you may not access the service.
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Content
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           Our content is for informational purposes only. The recipes are
           provided &quot;as is&quot; and we make no guarantees regarding the
           outcome.
         </p>
 
-        <h2 className="text-foreground mt-8 font-serif text-2xl font-semibold">
+        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
           Changes
         </h2>
-        <p className="text-muted-foreground mt-4">
+        <p className="mt-4 text-muted-foreground">
           We reserve the right to modify or replace these Terms at any time.
         </p>
       </div>

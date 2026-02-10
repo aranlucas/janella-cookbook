@@ -119,7 +119,11 @@ async function RecipeList({
             : "Try adjusting your filters or search terms."
         }
         action={
-          <ButtonLink href="/recipes" variant="outline" className="rounded-full px-8">
+          <ButtonLink
+            href="/recipes"
+            variant="outline"
+            className="rounded-full px-8"
+          >
             View All Recipes
           </ButtonLink>
         }

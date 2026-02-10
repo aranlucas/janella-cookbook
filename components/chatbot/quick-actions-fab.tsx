@@ -110,7 +110,7 @@ export function QuickActionsFab({
               transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
             }}
           >
-            <span className="text-rustic-charcoal rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap shadow-md backdrop-blur-sm">
+            <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-rustic-charcoal shadow-md backdrop-blur-sm">
               {action.label}
             </span>
             <Button
@@ -139,8 +139,8 @@ export function QuickActionsFab({
         className={cn(
           "h-14 w-14 rounded-full shadow-xl transition-all duration-300",
           isOpen
-            ? "bg-rustic-charcoal hover:bg-rustic-charcoal/90 rotate-45"
-            : "from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75 bg-gradient-to-br",
+            ? "rotate-45 bg-rustic-charcoal hover:bg-rustic-charcoal/90"
+            : "bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75",
         )}
         aria-label={isOpen ? "Close quick actions" : "Open quick actions"}
         aria-expanded={isOpen}
@@ -186,7 +186,7 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       className={cn(
         "fixed bottom-52 left-4 z-50 md:hidden",
         "h-12 w-12 rounded-full shadow-lg",
-        "bg-rustic-charcoal hover:bg-rustic-charcoal/90 text-white",
+        "bg-rustic-charcoal text-white hover:bg-rustic-charcoal/90",
         "transition-transform active:scale-95",
         className,
       )}

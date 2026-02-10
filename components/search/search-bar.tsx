@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,20 @@ export function SearchBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
+  const [isFocused, setIsFocused] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
       if (query.trim()) {
+        // Add squish animation to button
+        buttonRef.current?.classList.add("animate-squish");
+        setTimeout(
+          () => buttonRef.current?.classList.remove("animate-squish"),
+          400,
+        );
         const target = redirectTo || "/search";
-        // If we represent the current page, we might ideally just push params, but full path is safe.
         router.push(`${target}?q=${encodeURIComponent(query.trim())}`);
       }
     },
@@ -39,28 +46,43 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
-      <div className="relative flex gap-1.5">
+      <div
+        className={cn(
+          "relative flex gap-1.5 transition-transform duration-300",
+          isFocused && "scale-[1.02]",
+        )}
+      >
         <div className="relative flex-1">
-          <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 text-sm sm:text-base">
+          <span
+            className={cn(
+              "absolute top-1/2 left-3 -translate-y-1/2 text-sm transition-transform duration-300 sm:text-base",
+              isFocused && "scale-110 -rotate-12",
+            )}
+          >
             🔍
           </span>
           <Input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
             autoFocus={autoFocus}
             className={cn(
-              "bg-card border-border focus:border-primary pl-9 sm:pl-10",
+              "border-border bg-card pl-9 transition-shadow duration-300 focus:border-primary sm:pl-10",
+              isFocused &&
+                "shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_15%,transparent)]",
               size === "large" &&
                 "h-10 rounded-lg text-sm sm:h-12 sm:rounded-xl sm:text-lg",
             )}
           />
         </div>
         <Button
+          ref={buttonRef}
           type="submit"
           className={cn(
-            "bg-primary hover:bg-primary/90 text-primary-foreground",
+            "bg-primary text-primary-foreground transition-all duration-200 hover:bg-primary/90 active:scale-95",
             size === "large" &&
               "h-10 rounded-lg px-4 text-sm sm:h-12 sm:rounded-xl sm:px-8 sm:text-lg",
           )}

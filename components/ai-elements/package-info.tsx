@@ -38,7 +38,7 @@ export const PackageInfo = ({
     value={{ name, currentVersion, newVersion, changeType }}
   >
     <div
-      className={cn("bg-background rounded-lg border p-4", className)}
+      className={cn("rounded-lg border bg-background p-4", className)}
       {...props}
     >
       {children ?? (
@@ -80,7 +80,7 @@ export const PackageInfoName = ({
 
   return (
     <div className={cn("flex items-center gap-2", className)} {...props}>
-      <PackageIcon className="text-muted-foreground size-4" />
+      <PackageIcon className="size-4 text-muted-foreground" />
       <span className="font-mono text-sm font-medium">{children ?? name}</span>
     </div>
   );
@@ -148,7 +148,7 @@ export const PackageInfoVersion = ({
   return (
     <div
       className={cn(
-        "text-muted-foreground mt-2 flex items-center gap-2 font-mono text-sm",
+        "mt-2 flex items-center gap-2 font-mono text-sm text-muted-foreground",
         className,
       )}
       {...props}
@@ -160,7 +160,7 @@ export const PackageInfoVersion = ({
             <ArrowRightIcon className="size-3" />
           )}
           {newVersion && (
-            <span className="text-foreground font-medium">{newVersion}</span>
+            <span className="font-medium text-foreground">{newVersion}</span>
           )}
         </>
       )}
@@ -175,7 +175,7 @@ export const PackageInfoDescription = ({
   children,
   ...props
 }: PackageInfoDescriptionProps) => (
-  <p className={cn("text-muted-foreground mt-2 text-sm", className)} {...props}>
+  <p className={cn("mt-2 text-sm text-muted-foreground", className)} {...props}>
     {children}
   </p>
 );
@@ -200,7 +200,7 @@ export const PackageInfoDependencies = ({
   ...props
 }: PackageInfoDependenciesProps) => (
   <div className={cn("space-y-2", className)} {...props}>
-    <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+    <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
       Dependencies
     </span>
     <div className="space-y-1">{children}</div>
@@ -225,7 +225,7 @@ export const PackageInfoDependency = ({
   >
     {children ?? (
       <>
-        <span className="text-muted-foreground font-mono">{name}</span>
+        <span className="font-mono text-muted-foreground">{name}</span>
         {version && <span className="font-mono text-xs">{version}</span>}
       </>
     )}

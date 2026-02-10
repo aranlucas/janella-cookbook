@@ -415,7 +415,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   }, []);
 
   return (
-    <div className="chat-container border-rustic-sand/80 shadow-rustic-charcoal/5 flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl border bg-white/95 shadow-2xl backdrop-blur-sm">
+    <div className="chat-container flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-rustic-sand/80 bg-white/95 shadow-2xl shadow-rustic-charcoal/5 backdrop-blur-sm">
       {/* Header */}
       {isMobile ? (
         <MobileChatHeader
@@ -423,27 +423,27 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
           onClearChat={handleClearChat}
         />
       ) : (
-        <div className="border-rustic-sand/60 from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 relative flex shrink-0 items-center gap-4 border-b bg-gradient-to-r px-6 py-4">
+        <div className="relative flex shrink-0 items-center gap-4 border-b border-rustic-sand/60 bg-gradient-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 px-6 py-4">
           {/* Decorative dots */}
           <div className="absolute top-2 right-4 flex gap-1 opacity-30">
-            <div className="bg-rustic-terracotta h-1.5 w-1.5 rounded-full" />
-            <div className="bg-rustic-marigold h-1.5 w-1.5 rounded-full" />
-            <div className="bg-rustic-moss h-1.5 w-1.5 rounded-full" />
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-terracotta" />
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-marigold" />
+            <div className="h-1.5 w-1.5 rounded-full bg-rustic-moss" />
           </div>
 
-          <div className="from-rustic-terracotta to-rustic-terracotta/80 shadow-rustic-terracotta/20 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg transition-transform hover:scale-105">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-transform hover:scale-105">
             <ChefHat className="h-6 w-6" />
           </div>
           <div className="flex-1">
-            <h2 className="text-rustic-charcoal font-serif text-xl font-bold tracking-tight">
+            <h2 className="font-serif text-xl font-bold tracking-tight text-rustic-charcoal">
               Janella&apos;s Kitchen Assistant
             </h2>
-            <p className="text-rustic-charcoal/50 text-xs">
+            <p className="text-xs text-rustic-charcoal/50">
               Your personal cooking companion
             </p>
           </div>
           {locationEnabled && (
-            <div className="bg-rustic-moss/10 text-rustic-moss ring-rustic-moss/20 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1">
+            <div className="flex items-center gap-1.5 rounded-full bg-rustic-moss/10 px-3 py-1.5 text-xs font-medium text-rustic-moss ring-1 ring-rustic-moss/20">
               <MapPin className="h-3 w-3" />
               <span>Location on</span>
             </div>
@@ -452,28 +452,28 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       )}
 
       {/* Messages area */}
-      <Conversation className="from-rustic-cream/30 to-rustic-cream/20 flex-1 bg-gradient-to-b via-white">
+      <Conversation className="flex-1 bg-gradient-to-b from-rustic-cream/30 via-white to-rustic-cream/20">
         <ConversationContent className="px-4 py-6 md:px-6">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
               {/* Cute chef illustration area */}
               <div className="relative">
-                <div className="from-rustic-blush to-rustic-butter flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br shadow-inner">
-                  <ChefHat className="text-rustic-terracotta h-10 w-10" />
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-rustic-blush to-rustic-butter shadow-inner">
+                  <ChefHat className="h-10 w-10 text-rustic-terracotta" />
                 </div>
-                <div className="bg-rustic-marigold absolute -top-1 -right-1 flex h-7 w-7 animate-bounce items-center justify-center rounded-full shadow-md">
+                <div className="absolute -top-1 -right-1 flex h-7 w-7 animate-bounce items-center justify-center rounded-full bg-rustic-marigold shadow-md">
                   <Sparkles className="h-3.5 w-3.5 text-white" />
                 </div>
-                <div className="bg-rustic-moss/90 absolute -bottom-1 -left-2 flex h-6 w-6 items-center justify-center rounded-full shadow-md">
+                <div className="absolute -bottom-1 -left-2 flex h-6 w-6 items-center justify-center rounded-full bg-rustic-moss/90 shadow-md">
                   <Leaf className="h-3 w-3 text-white" />
                 </div>
               </div>
 
               <div className="text-center">
-                <h3 className="text-rustic-charcoal mb-2 font-serif text-2xl font-bold tracking-tight">
+                <h3 className="mb-2 font-serif text-2xl font-bold tracking-tight text-rustic-charcoal">
                   Hello there, chef!
                 </h3>
-                <p className="text-rustic-charcoal/60 max-w-sm text-sm leading-relaxed">
+                <p className="max-w-sm text-sm leading-relaxed text-rustic-charcoal/60">
                   I&apos;m here to help with recipes, meal planning, cooking
                   tips, and even grocery orders. What shall we cook today?
                 </p>
@@ -481,24 +481,24 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
 
               {/* Feature hints */}
               <div className="flex flex-wrap justify-center gap-3 text-xs">
-                <span className="bg-rustic-blush/50 text-rustic-charcoal/60 flex items-center gap-1.5 rounded-full px-3 py-1.5">
-                  <ImageIcon className="text-rustic-terracotta h-3 w-3" />
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-blush/50 px-3 py-1.5 text-rustic-charcoal/60">
+                  <ImageIcon className="h-3 w-3 text-rustic-terracotta" />
                   Snap a recipe photo
                 </span>
-                <span className="bg-rustic-butter/50 text-rustic-charcoal/60 flex items-center gap-1.5 rounded-full px-3 py-1.5">
-                  <MapPin className="text-rustic-moss h-3 w-3" />
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-butter/50 px-3 py-1.5 text-rustic-charcoal/60">
+                  <MapPin className="h-3 w-3 text-rustic-moss" />
                   Find nearby stores
                 </span>
-                <span className="bg-rustic-cream text-rustic-charcoal/60 flex items-center gap-1.5 rounded-full px-3 py-1.5">
-                  <UtensilsCrossed className="text-rustic-marigold h-3 w-3" />
+                <span className="flex items-center gap-1.5 rounded-full bg-rustic-cream px-3 py-1.5 text-rustic-charcoal/60">
+                  <UtensilsCrossed className="h-3 w-3 text-rustic-marigold" />
                   Get cooking tips
                 </span>
               </div>
 
               {/* Suggestion prompt */}
-              <div className="bg-rustic-terracotta/5 mt-2 flex items-center gap-2 rounded-full px-4 py-2 text-xs">
-                <Sparkles className="text-rustic-terracotta h-3 w-3" />
-                <span className="text-rustic-charcoal/70 font-medium">
+              <div className="mt-2 flex items-center gap-2 rounded-full bg-rustic-terracotta/5 px-4 py-2 text-xs">
+                <Sparkles className="h-3 w-3 text-rustic-terracotta" />
+                <span className="font-medium text-rustic-charcoal/70">
                   Try a suggestion below to get started
                 </span>
               </div>
@@ -521,8 +521,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                       <MessageContent
                         className={
                           role === "user"
-                            ? "from-rustic-terracotta to-rustic-terracotta/90 shadow-rustic-terracotta/10 bg-gradient-to-br text-white shadow-md"
-                            : "bg-rustic-cream/50 text-rustic-charcoal ring-rustic-sand/40 ring-1"
+                            ? "bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/90 text-white shadow-md shadow-rustic-terracotta/10"
+                            : "bg-rustic-cream/50 text-rustic-charcoal ring-1 ring-rustic-sand/40"
                         }
                       >
                         {parts.map((part, i) => {
@@ -574,23 +574,23 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               })}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <Message from="assistant">
-                  <MessageContent className="bg-rustic-cream/50 ring-rustic-sand/40 ring-1">
+                  <MessageContent className="bg-rustic-cream/50 ring-1 ring-rustic-sand/40">
                     <div className="flex items-center gap-3 py-2">
                       <div className="flex gap-1">
                         <span
-                          className="chat-typing-dot bg-rustic-terracotta/60 h-2 w-2 rounded-full"
+                          className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60"
                           style={{ animationDelay: "0ms" }}
                         />
                         <span
-                          className="chat-typing-dot bg-rustic-terracotta/60 h-2 w-2 rounded-full"
+                          className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60"
                           style={{ animationDelay: "150ms" }}
                         />
                         <span
-                          className="chat-typing-dot bg-rustic-terracotta/60 h-2 w-2 rounded-full"
+                          className="chat-typing-dot h-2 w-2 rounded-full bg-rustic-terracotta/60"
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
-                      <span className="text-rustic-charcoal/40 text-sm italic">
+                      <span className="text-sm text-rustic-charcoal/40 italic">
                         Cooking up a response...
                       </span>
                     </div>
@@ -636,7 +636,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                               });
                             }
                           }}
-                          className="bg-rustic-terracotta hover:bg-rustic-terracotta/90 self-start rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow active:scale-[0.98]"
+                          className="self-start rounded-lg bg-rustic-terracotta px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-rustic-terracotta/90 hover:shadow active:scale-[0.98]"
                         >
                           Try again
                         </button>
@@ -651,7 +651,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       </Conversation>
 
       {/* Input area */}
-      <div className="border-rustic-sand/50 to-rustic-cream/40 shrink-0 border-t bg-gradient-to-b from-white">
+      <div className="shrink-0 border-t border-rustic-sand/50 bg-gradient-to-b from-white to-rustic-cream/40">
         <div className="grid gap-3 p-3 md:p-4">
           {/* Suggestions */}
           <Suggestions className="pb-1">
@@ -660,9 +660,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                 key={suggestion.text}
                 onClick={() => handleSuggestionClick(suggestion.text)}
                 suggestion={suggestion.text}
-                className="group/chip border-rustic-sand/60 text-rustic-charcoal/80 hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta gap-1.5 bg-white shadow-sm transition-all hover:shadow"
+                className="group/chip gap-1.5 border-rustic-sand/60 bg-white text-rustic-charcoal/80 shadow-sm transition-all hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta hover:shadow"
               >
-                <span className="text-rustic-charcoal/40 group-hover/chip:text-rustic-terracotta transition-colors">
+                <span className="text-rustic-charcoal/40 transition-colors group-hover/chip:text-rustic-terracotta">
                   {suggestion.icon}
                 </span>
                 {suggestion.text}
@@ -676,7 +676,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             multiple
             accept="image/*"
             onSubmit={handleSubmit}
-            className="border-rustic-sand/60 focus-within:border-rustic-terracotta/40 focus-within:ring-rustic-terracotta/10 overflow-hidden rounded-2xl border bg-white shadow-sm transition-all focus-within:shadow-md focus-within:ring-2"
+            className="overflow-hidden rounded-2xl border border-rustic-sand/60 bg-white shadow-sm transition-all focus-within:border-rustic-terracotta/40 focus-within:shadow-md focus-within:ring-2 focus-within:ring-rustic-terracotta/10"
           >
             <PromptInputHeader>
               <PromptInputAttachmentsDisplay />
@@ -696,7 +696,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             <PromptInputFooter>
               <PromptInputTools>
                 <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger className="border-rustic-sand/60 text-rustic-charcoal/50 hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta h-8 w-8 rounded-xl border bg-white transition-all" />
+                  <PromptInputActionMenuTrigger className="h-8 w-8 rounded-xl border border-rustic-sand/60 bg-white text-rustic-charcoal/50 transition-all hover:border-rustic-terracotta/30 hover:bg-rustic-blush/30 hover:text-rustic-terracotta" />
                   <PromptInputActionMenuContent className="w-56">
                     <PromptInputActionAddAttachments label="Add recipe photo" />
                     <PromptInputActionMenuItem onClick={handleCameraCapture}>
@@ -729,7 +729,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                   variant={locationEnabled ? "default" : "ghost"}
                   className={
                     locationEnabled
-                      ? "bg-rustic-moss hover:bg-rustic-moss/90 text-white"
+                      ? "bg-rustic-moss text-white hover:bg-rustic-moss/90"
                       : "text-rustic-charcoal/40 hover:bg-rustic-cream hover:text-rustic-moss"
                   }
                 >
@@ -748,14 +748,14 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               <PromptInputSubmit
                 disabled={!text.trim() || isLoading}
                 status={status}
-                className="from-rustic-terracotta to-rustic-terracotta/85 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/80 disabled:from-rustic-sand disabled:to-rustic-sand disabled:text-rustic-charcoal/30 bg-gradient-to-br text-white shadow-sm transition-all hover:shadow-md disabled:shadow-none"
+                className="bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/85 text-white shadow-sm transition-all hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/80 hover:shadow-md disabled:from-rustic-sand disabled:to-rustic-sand disabled:text-rustic-charcoal/30 disabled:shadow-none"
               />
             </PromptInputFooter>
           </PromptInput>
 
           {/* Powered by badge */}
           <div className="flex justify-center">
-            <span className="text-rustic-charcoal/25 text-[10px] tracking-wide">
+            <span className="text-[10px] tracking-wide text-rustic-charcoal/25">
               Powered by Janella&apos;s Kitchen
             </span>
           </div>

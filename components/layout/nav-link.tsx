@@ -28,8 +28,8 @@ export function NavLink({
         href={href}
         onClick={onClick}
         className={cn(
-          "hover:text-primary rounded-lg px-4 py-3 text-lg font-medium transition-colors",
-          isActive ? "text-primary bg-primary/10" : "text-muted-foreground",
+          "rounded-lg px-4 py-3 text-lg font-medium transition-colors hover:text-primary",
+          isActive ? "bg-primary/10 text-primary" : "text-muted-foreground",
           className,
         )}
       >
@@ -42,20 +42,15 @@ export function NavLink({
     <Link
       href={href}
       className={cn(
-        "group hover:text-primary relative text-sm font-medium tracking-wide transition-colors duration-300",
-        isActive ? "text-primary font-semibold" : "text-muted-foreground",
+        "relative text-sm font-medium tracking-wide transition-colors duration-300 hover:text-primary",
+        isActive
+          ? "squiggle-underline font-semibold text-primary"
+          : "text-muted-foreground",
+        !isActive && "hover-squish squiggle-underline",
         className,
       )}
     >
       {children}
-      <span
-        className={cn(
-          "bg-primary absolute -bottom-1 left-0 h-px w-full transition-transform duration-300 ease-in-out",
-          isActive
-            ? "scale-x-100"
-            : "origin-left scale-x-0 group-hover:scale-x-100",
-        )}
-      />
     </Link>
   );
 }

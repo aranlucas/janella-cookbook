@@ -42,7 +42,7 @@ export const InlineCitationText = ({
   ...props
 }: InlineCitationTextProps) => (
   <span
-    className={cn("group-hover:bg-accent transition-colors", className)}
+    className={cn("transition-colors group-hover:bg-accent", className)}
     {...props}
   />
 );
@@ -142,7 +142,7 @@ export const InlineCitationCarouselHeader = ({
 }: InlineCitationCarouselHeaderProps) => (
   <div
     className={cn(
-      "bg-secondary flex items-center justify-between gap-2 rounded-t-md p-2",
+      "flex items-center justify-between gap-2 rounded-t-md bg-secondary p-2",
       className,
     )}
     {...props}
@@ -192,7 +192,7 @@ export const InlineCitationCarouselIndex = ({
   return (
     <div
       className={cn(
-        "text-muted-foreground flex flex-1 items-center justify-end px-3 py-1 text-xs",
+        "flex flex-1 items-center justify-end px-3 py-1 text-xs text-muted-foreground",
         className,
       )}
       {...props}
@@ -224,7 +224,7 @@ export const InlineCitationCarouselPrev = ({
       type="button"
       {...props}
     >
-      <ArrowLeftIcon className="text-muted-foreground size-4" />
+      <ArrowLeftIcon className="size-4 text-muted-foreground" />
     </button>
   );
 };
@@ -251,7 +251,7 @@ export const InlineCitationCarouselNext = ({
       type="button"
       {...props}
     >
-      <ArrowRightIcon className="text-muted-foreground size-4" />
+      <ArrowRightIcon className="size-4 text-muted-foreground" />
     </button>
   );
 };
@@ -275,10 +275,10 @@ export const InlineCitationSource = ({
       <h4 className="truncate text-sm leading-tight font-medium">{title}</h4>
     )}
     {url && (
-      <p className="text-muted-foreground truncate text-xs break-all">{url}</p>
+      <p className="truncate text-xs break-all text-muted-foreground">{url}</p>
     )}
     {description && (
-      <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
+      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
         {description}
       </p>
     )}
@@ -295,7 +295,7 @@ export const InlineCitationQuote = ({
 }: InlineCitationQuoteProps) => (
   <blockquote
     className={cn(
-      "border-muted text-muted-foreground border-l-2 pl-3 text-sm italic",
+      "border-l-2 border-muted pl-3 text-sm text-muted-foreground italic",
       className,
     )}
     {...props}

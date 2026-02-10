@@ -97,11 +97,11 @@ function PageHeader({
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
-          <h1 className="text-foreground mb-2 font-serif text-2xl font-bold sm:mb-4 sm:text-4xl md:text-5xl">
+          <h1 className="mb-2 font-serif text-2xl font-bold text-foreground sm:mb-4 sm:text-4xl md:text-5xl">
             {title}
           </h1>
           {description && (
-            <p className="text-muted-foreground mx-auto max-w-2xl text-sm sm:text-base md:text-lg">
+            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base md:text-lg">
               {description}
             </p>
           )}
@@ -147,7 +147,7 @@ export function AppLayout({
   }
 
   return (
-    <div className="bg-background flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       <Header />
 
       <div className="flex flex-1">
@@ -205,11 +205,11 @@ export function AppLayout({
               >
                 {contentType === "form" && title && (
                   <>
-                    <h1 className="text-foreground mb-2 font-serif text-2xl font-bold sm:text-3xl">
+                    <h1 className="mb-2 font-serif text-2xl font-bold text-foreground sm:text-3xl">
                       {title}
                     </h1>
                     {description && (
-                      <p className="text-muted-foreground mb-6 text-sm sm:mb-8 sm:text-base">
+                      <p className="mb-6 text-sm text-muted-foreground sm:mb-8 sm:text-base">
                         {description}
                       </p>
                     )}

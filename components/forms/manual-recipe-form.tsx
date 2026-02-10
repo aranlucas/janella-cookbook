@@ -219,7 +219,7 @@ export function ManualRecipeForm({
                       <Input
                         {...field}
                         placeholder="e.g., Grandma's Chocolate Chip Cookies"
-                        className="bg-background border-border"
+                        className="border-border bg-background"
                       />
                     </FormControl>
                     <FormMessage />
@@ -237,7 +237,7 @@ export function ManualRecipeForm({
                       <Textarea
                         {...field}
                         placeholder="A brief description of this recipe..."
-                        className="bg-background border-border"
+                        className="border-border bg-background"
                       />
                     </FormControl>
                     <FormMessage />
@@ -253,7 +253,7 @@ export function ManualRecipeForm({
                     type="number"
                     {...register("prepTime", { valueAsNumber: true })}
                     min="0"
-                    className="bg-background border-border"
+                    className="border-border bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -263,7 +263,7 @@ export function ManualRecipeForm({
                     type="number"
                     {...register("cookTime", { valueAsNumber: true })}
                     min="0"
-                    className="bg-background border-border"
+                    className="border-border bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -272,7 +272,7 @@ export function ManualRecipeForm({
                     id="servings"
                     {...register("servings")}
                     placeholder="e.g., 4-6"
-                    className="bg-background border-border"
+                    className="border-border bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -283,7 +283,7 @@ export function ManualRecipeForm({
                       form.setValue("difficulty", v as Difficulty)
                     }
                   >
-                    <SelectTrigger className="bg-background border-border">
+                    <SelectTrigger className="border-border bg-background">
                       <SelectValue>
                         {difficultyValue
                           ? difficultyValue.charAt(0) +
@@ -309,7 +309,7 @@ export function ManualRecipeForm({
                     id="cuisine"
                     {...register("cuisine")}
                     placeholder="e.g., Italian, Mexican"
-                    className="bg-background border-border"
+                    className="border-border bg-background"
                   />
                 </div>
                 <div className="space-y-2">
@@ -318,7 +318,7 @@ export function ManualRecipeForm({
                     value={courseValue}
                     onValueChange={(v) => form.setValue("course", v as Course)}
                   >
-                    <SelectTrigger className="bg-background border-border">
+                    <SelectTrigger className="border-border bg-background">
                       <SelectValue>
                         {courseValue
                           ? courseValue.charAt(0) +
@@ -366,28 +366,28 @@ export function ManualRecipeForm({
                 {ingredientFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="border-border bg-background/30 space-y-2 rounded-lg border p-3"
+                    className="space-y-2 rounded-lg border border-border bg-background/30 p-3"
                   >
                     <div className="flex items-start gap-2">
                       <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
                         <Input
                           {...register(`ingredients.${index}.quantity`)}
                           placeholder="Qty"
-                          className="bg-background border-border"
+                          className="border-border bg-background"
                         />
                         <Input
                           {...register(`ingredients.${index}.unit`)}
                           placeholder="Unit"
-                          className="bg-background border-border"
+                          className="border-border bg-background"
                         />
                         <div className="col-span-2 space-y-1 sm:col-span-2">
                           <Input
                             {...register(`ingredients.${index}.name`)}
                             placeholder="Ingredient name"
-                            className="bg-background border-border"
+                            className="border-border bg-background"
                           />
                           {form.formState.errors.ingredients?.[index]?.name && (
-                            <p className="text-destructive text-xs">
+                            <p className="text-xs text-destructive">
                               {
                                 form.formState.errors.ingredients[index].name
                                   .message
@@ -398,7 +398,7 @@ export function ManualRecipeForm({
                         <Input
                           {...register(`ingredients.${index}.group`)}
                           placeholder="Group (e.g., Green Salsa)"
-                          className="bg-background border-border"
+                          className="border-border bg-background"
                         />
                       </div>
                       <Button
@@ -406,7 +406,7 @@ export function ManualRecipeForm({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeIngredient(index)}
-                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
                         disabled={ingredientFields.length === 1}
                         aria-label={`Remove ingredient ${index + 1}`}
                       >
@@ -416,12 +416,12 @@ export function ManualRecipeForm({
                     <Input
                       {...register(`ingredients.${index}.notes`)}
                       placeholder="Notes (optional)"
-                      className="bg-background border-border"
+                      className="border-border bg-background"
                     />
                   </div>
                 ))}
                 {form.formState.errors.ingredients?.root && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-sm text-destructive">
                     {form.formState.errors.ingredients.root.message}
                   </p>
                 )}
@@ -448,10 +448,10 @@ export function ManualRecipeForm({
                 {instructionFields.map((field, index) => (
                   <div
                     key={field.id}
-                    className="border-border bg-background/30 space-y-2 rounded-lg border p-3"
+                    className="space-y-2 rounded-lg border border-border bg-background/30 p-3"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <div className="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted font-serif text-sm font-bold">
                         {index + 1}
                       </div>
                       <Button
@@ -469,22 +469,22 @@ export function ManualRecipeForm({
                     <Textarea
                       {...register(`instructions.${index}.text`)}
                       placeholder={`Step ${index + 1}...`}
-                      className="bg-background border-border min-h-[120px] sm:min-h-[96px]"
+                      className="min-h-[120px] border-border bg-background sm:min-h-[96px]"
                     />
                     <Input
                       {...register(`instructions.${index}.group`)}
                       placeholder="Step group (optional)"
-                      className="bg-background border-border"
+                      className="border-border bg-background"
                     />
                     {form.formState.errors.instructions?.[index]?.text && (
-                      <p className="text-destructive text-xs">
+                      <p className="text-xs text-destructive">
                         {form.formState.errors.instructions[index].text.message}
                       </p>
                     )}
                   </div>
                 ))}
                 {form.formState.errors.instructions?.root && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-sm text-destructive">
                     {form.formState.errors.instructions.root.message}
                   </p>
                 )}
@@ -503,7 +503,7 @@ export function ManualRecipeForm({
                   id="imageUrl"
                   {...register("imageUrl")}
                   placeholder="https://example.com/image.jpg"
-                  className="bg-background border-border"
+                  className="border-border bg-background"
                 />
               </div>
 
@@ -522,7 +522,7 @@ export function ManualRecipeForm({
                     )
                   }
                   placeholder="e.g., comfort food, family favorite, quick"
-                  className="bg-background border-border"
+                  className="border-border bg-background"
                 />
               </div>
 
@@ -532,7 +532,7 @@ export function ManualRecipeForm({
                   id="notes"
                   {...register("notes")}
                   placeholder="Any personal notes or modifications..."
-                  className="bg-background border-border"
+                  className="border-border bg-background"
                 />
               </div>
             </div>
@@ -540,7 +540,7 @@ export function ManualRecipeForm({
             <div className="hidden md:block">
               <Button
                 type="submit"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={isPending}
               >
                 {isPending ? (
@@ -557,7 +557,7 @@ export function ManualRecipeForm({
             <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 backdrop-blur md:hidden">
               <Button
                 type="submit"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                 disabled={isPending}
               >
                 {isPending ? (

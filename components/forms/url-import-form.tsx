@@ -70,7 +70,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
                       {...field}
                       type="url"
                       placeholder="https://example.com/recipe/delicious-pasta"
-                      className="bg-background border-border focus:border-primary"
+                      className="border-border bg-background focus:border-primary"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -79,7 +79,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
               )}
             />
 
-            <div className="text-muted-foreground text-sm">
+            <div className="text-sm text-muted-foreground">
               <p>
                 Paste a URL from your favorite recipe site. We&apos;ll
                 automatically extract:
@@ -95,7 +95,7 @@ export function UrlImportForm({ onSuccess }: UrlImportFormProps) {
 
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isPending}
             >
               {isPending ? (

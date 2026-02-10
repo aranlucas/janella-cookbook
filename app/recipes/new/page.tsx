@@ -25,31 +25,31 @@ export default function AddRecipePage() {
       title="Add a Recipe"
       description="Import from a website, paste text, or create from scratch."
     >
-      <Tabs defaultValue="url" className="space-y-4 sm:space-y-6">
-        <TabsList className="bg-muted/50 grid h-auto w-full grid-cols-2 sm:grid-cols-4">
+      <Tabs defaultValue="url" className="flex-col gap-4 sm:gap-6">
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg bg-muted/50 p-1 sm:grid-cols-4">
           <TabsTrigger
             value="url"
-            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
+            className="rounded-md py-2 text-xs data-active:bg-card sm:text-sm"
           >
-            From URL
+            <span className="mr-1">🔗</span> From URL
           </TabsTrigger>
           <TabsTrigger
             value="youtube"
-            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
+            className="rounded-md py-2 text-xs data-active:bg-card sm:text-sm"
           >
-            YouTube
+            <span className="mr-1">▶️</span> YouTube
           </TabsTrigger>
           <TabsTrigger
             value="text"
-            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
+            className="rounded-md py-2 text-xs data-active:bg-card sm:text-sm"
           >
-            Paste Text
+            <span className="mr-1">📝</span> Paste Text
           </TabsTrigger>
           <TabsTrigger
             value="manual"
-            className="data-[state=active]:bg-card py-2 text-xs sm:text-sm"
+            className="rounded-md py-2 text-xs data-active:bg-card sm:text-sm"
           >
-            Manual
+            <span className="mr-1">✍️</span> Manual
           </TabsTrigger>
         </TabsList>
 

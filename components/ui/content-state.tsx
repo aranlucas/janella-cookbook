@@ -45,11 +45,7 @@ export function ContentEmptyState({
         <EmptyContent>
           {action}
           {hasLinkAction && (
-            <ButtonLink
-              href={actionHref}
-              variant="outline"
-              className="px-6"
-            >
+            <ButtonLink href={actionHref} variant="outline" className="px-6">
               {actionLabel}
             </ButtonLink>
           )}
@@ -71,7 +67,7 @@ export function CardListSkeleton({
   return (
     <div className={cn("space-y-3 sm:space-y-4", className)}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-card flex gap-4 rounded-lg p-4 shadow-sm">
+        <div key={i} className="flex gap-4 rounded-lg bg-card p-4 shadow-sm">
           <Skeleton className="h-16 w-16 shrink-0 rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-5 w-3/4" />

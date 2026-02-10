@@ -87,7 +87,7 @@ Instructions:
 4. Gradually add flour
 5. Fold in chocolate chips
 6. Bake for 9-11 minutes`}
-                      className="bg-background border-border focus:border-primary min-h-[300px]"
+                      className="min-h-[300px] border-border bg-background focus:border-primary"
                       disabled={isPending}
                     />
                   </FormControl>
@@ -96,7 +96,7 @@ Instructions:
               )}
             />
 
-            <div className="text-muted-foreground text-sm">
+            <div className="text-sm text-muted-foreground">
               <p>
                 Paste any recipe text - from a cookbook, email, or anywhere
                 else. We&apos;ll use AI to extract and organize it
@@ -106,7 +106,7 @@ Instructions:
 
             <Button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground w-full"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               disabled={isPending}
             >
               {isPending ? (

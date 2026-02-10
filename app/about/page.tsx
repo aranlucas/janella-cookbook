@@ -19,18 +19,18 @@ export default function AboutPage() {
       contentMaxWidth="5xl"
     >
       <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-        <div className="bg-muted relative aspect-[3/4] w-full overflow-hidden rounded-2xl">
-          <div className="bg-muted text-muted-foreground absolute inset-0 flex items-center justify-center">
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-muted">
+          <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
             <span className="text-lg">Photo of Janella</span>
           </div>
         </div>
 
         <div className="space-y-8">
           <div>
-            <h1 className="text-foreground mb-6 font-serif text-4xl font-bold tracking-tight sm:text-5xl">
+            <h1 className="mb-6 font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
               About the <span className="text-primary italic">Cook</span>
             </h1>
-            <div className="text-muted-foreground space-y-6 text-lg leading-relaxed">
+            <div className="space-y-6 text-lg leading-relaxed text-muted-foreground">
               <p>
                 Welcome to Janella&apos;s Kitchen. This digital cookbook is a
                 labor of love, designed to organize and share the recipes that
@@ -49,21 +49,21 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="bg-muted/30 border-border/20 rounded-xl border p-8">
-            <h3 className="text-foreground mb-4 font-serif text-xl font-semibold">
+          <div className="rounded-xl border border-border/20 bg-muted/30 p-8">
+            <h3 className="mb-4 font-serif text-xl font-semibold text-foreground">
               Philosophy
             </h3>
             <ul className="space-y-3">
-              <li className="text-muted-foreground flex gap-3">
-                <span className="text-primary font-bold">01.</span>
+              <li className="flex gap-3 text-muted-foreground">
+                <span className="font-bold text-primary">01.</span>
                 <span>Fresh ingredients are the heart of every dish.</span>
               </li>
-              <li className="text-muted-foreground flex gap-3">
-                <span className="text-primary font-bold">02.</span>
+              <li className="flex gap-3 text-muted-foreground">
+                <span className="font-bold text-primary">02.</span>
                 <span>Recipes are meant to be shared and adapted.</span>
               </li>
-              <li className="text-muted-foreground flex gap-3">
-                <span className="text-primary font-bold">03.</span>
+              <li className="flex gap-3 text-muted-foreground">
+                <span className="font-bold text-primary">03.</span>
                 <span>Cooking is an act of care for yourself and others.</span>
               </li>
             </ul>
