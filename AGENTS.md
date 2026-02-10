@@ -149,8 +149,6 @@ This project uses the **App Router** (not Pages Router). Key patterns:
   - `GET /api/recipes` - List recipes with pagination/filtering
   - `GET /api/recipes/[slug]` - Single recipe by slug
   - `GET /api/schema` - Database schema export
-  - `GET /llms.txt` - LLM metadata
-  - `GET /llms-full.txt` - Full LLM metadata
 
 ### Database Architecture (PostgreSQL + pgvector)
 
