@@ -70,11 +70,11 @@ export function SearchBar({
             placeholder={placeholder}
             autoFocus={autoFocus}
             className={cn(
-              "border-border bg-card pl-9 transition-shadow duration-300 focus:border-primary sm:pl-10",
+              "border-border bg-card pl-9 text-base transition-shadow duration-300 focus:border-primary sm:pl-10 md:text-base",
               isFocused &&
                 "shadow-[0_0_0_3px_color-mix(in_srgb,var(--primary)_15%,transparent)]",
               size === "large" &&
-                "h-10 rounded-lg text-sm sm:h-12 sm:rounded-xl sm:text-lg",
+                "h-10 rounded-lg sm:h-12 sm:rounded-xl sm:text-lg md:text-lg",
             )}
           />
         </div>
