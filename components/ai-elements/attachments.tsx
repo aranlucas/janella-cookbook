@@ -370,23 +370,53 @@ export const AttachmentRemove = ({
 // AttachmentHoverCard - Hover preview
 // ============================================================================
 
-export type AttachmentHoverCardProps = ComponentProps<typeof HoverCard>;
+interface AttachmentHoverCardDelayConfig {
+  openDelay: number;
+  closeDelay: number;
+}
+
+const AttachmentHoverCardDelayContext =
+  createContext<AttachmentHoverCardDelayConfig>({
+    openDelay: 0,
+    closeDelay: 0,
+  });
+
+export type AttachmentHoverCardProps = ComponentProps<typeof HoverCard> & {
+  openDelay?: number;
+  closeDelay?: number;
+};
 
 export const AttachmentHoverCard = ({
   openDelay = 0,
   closeDelay = 0,
   ...props
 }: AttachmentHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+  <AttachmentHoverCardDelayContext.Provider value={{ openDelay, closeDelay }}>
+    <HoverCard {...props} />
+  </AttachmentHoverCardDelayContext.Provider>
 );
 
 export type AttachmentHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger
->;
+> & {
+  openDelay?: number;
+  closeDelay?: number;
+};
 
 export const AttachmentHoverCardTrigger = (
   props: AttachmentHoverCardTriggerProps,
-) => <HoverCardTrigger {...props} />;
+) => {
+  const delays = useContext(AttachmentHoverCardDelayContext);
+  const { openDelay, closeDelay, ...rest } = props;
+
+  return (
+    <HoverCardTrigger
+      closeDelay={closeDelay ?? delays.closeDelay}
+      delay={openDelay ?? delays.openDelay}
+      {...rest}
+    />
+  );
+};
 
 export type AttachmentHoverCardContentProps = ComponentProps<
   typeof HoverCardContent

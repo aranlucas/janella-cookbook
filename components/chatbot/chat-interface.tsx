@@ -630,7 +630,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                         </p>
                         <button
                           onClick={() => {
-                            const lastUserMessage = messages[messages.length - 1];
+                            const lastUserMessage =
+                              messages[messages.length - 1];
                             if (lastUserMessage?.role === "user") {
                               hapticLight();
                               sendMessage({

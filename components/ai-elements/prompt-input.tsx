@@ -674,7 +674,7 @@ export const PromptInput = ({
         }
       }
     },
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount; filesRef always current
     [usingProvider],
   );
 
@@ -1195,21 +1195,51 @@ export const PromptInputSelectValue = ({
 
 export type PromptInputHoverCardProps = ComponentProps<typeof HoverCard>;
 
+interface PromptInputHoverCardDelayConfig {
+  openDelay: number;
+  closeDelay: number;
+}
+
+const PromptInputHoverCardDelayContext =
+  createContext<PromptInputHoverCardDelayConfig>({
+    openDelay: 0,
+    closeDelay: 0,
+  });
+
 export const PromptInputHoverCard = ({
   openDelay = 0,
   closeDelay = 0,
   ...props
-}: PromptInputHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+}: PromptInputHoverCardProps & {
+  openDelay?: number;
+  closeDelay?: number;
+}) => (
+  <PromptInputHoverCardDelayContext.Provider value={{ openDelay, closeDelay }}>
+    <HoverCard {...props} />
+  </PromptInputHoverCardDelayContext.Provider>
 );
 
 export type PromptInputHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger
->;
+> & {
+  openDelay?: number;
+  closeDelay?: number;
+};
 
 export const PromptInputHoverCardTrigger = (
   props: PromptInputHoverCardTriggerProps,
-) => <HoverCardTrigger {...props} />;
+) => {
+  const delays = useContext(PromptInputHoverCardDelayContext);
+  const { openDelay, closeDelay, ...rest } = props;
+
+  return (
+    <HoverCardTrigger
+      closeDelay={closeDelay ?? delays.closeDelay}
+      delay={openDelay ?? delays.openDelay}
+      {...rest}
+    />
+  );
+};
 
 export type PromptInputHoverCardContentProps = ComponentProps<
   typeof HoverCardContent
