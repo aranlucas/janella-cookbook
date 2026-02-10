@@ -130,7 +130,10 @@ export const PlanFooter = (props: PlanFooterProps) => (
   <CardFooter data-slot="plan-footer" {...props} />
 );
 
-export type PlanTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
+export type PlanTriggerProps = Omit<
+  ComponentProps<typeof CollapsibleTrigger>,
+  "children" | "render"
+>;
 
 export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
   <CollapsibleTrigger
