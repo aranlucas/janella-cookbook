@@ -61,7 +61,7 @@ async function RecipeList() {
         </div>
         <div className="rounded-2xl border border-border/45 bg-card/65 p-5 text-center sm:p-6">
           <h2 className="font-serif text-2xl font-semibold text-foreground">
-            Keep Building Your Favorites
+            Keep Building This List
           </h2>
           <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             Explore more recipes and tap the heart to grow this list into your
