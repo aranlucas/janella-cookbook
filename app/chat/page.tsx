@@ -36,17 +36,12 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   return (
     <div className="flex h-dvh flex-col bg-rustic-cream">
       <Header />
-      <main className="relative flex min-h-0 flex-1 items-center justify-center p-2 sm:p-4 md:p-6">
-        {/* Decorative background pattern */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d2926' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        <Suspense fallback={<ChatLoadingState />}>
-          <ChatInterface recipeContext={recipeContext} />
-        </Suspense>
+      <main className="relative flex min-h-0 flex-1 overflow-hidden bg-[radial-gradient(1200px_520px_at_50%_-12%,rgba(224,78,57,0.09),transparent_60%),linear-gradient(180deg,#f8f5f0_0%,#f3eee6_100%)]">
+        <div className="relative z-10 flex min-h-0 w-full flex-1 px-2 py-2 sm:px-4 sm:py-4">
+          <Suspense fallback={<ChatLoadingState />}>
+            <ChatInterface recipeContext={recipeContext} />
+          </Suspense>
+        </div>
       </main>
     </div>
   );
