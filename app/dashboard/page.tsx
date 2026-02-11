@@ -22,6 +22,10 @@ interface DashboardStats {
   favorites: number;
   categories: number;
   recentlyAdded: number;
+  recentlyAddedPrevPeriod: number;
+  recentlyUpdated: number;
+  createdLast30Days: number;
+  favoritesLast30Days: number;
   latestRecipes: Array<{
     id: string;
     title: string;
@@ -34,6 +38,10 @@ interface DashboardStats {
 async function getDashboardStats(): Promise<DashboardStats> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
   try {
     const [
@@ -42,6 +50,10 @@ async function getDashboardStats(): Promise<DashboardStats> {
       courses,
       cuisines,
       recentlyAdded,
+      recentlyAddedPrevPeriod,
+      recentlyUpdated,
+      createdLast30Days,
+      favoritesLast30Days,
       latestRecipes,
     ] = await Promise.all([
       prisma.recipe.count(),
@@ -56,6 +68,23 @@ async function getDashboardStats(): Promise<DashboardStats> {
       }),
       prisma.recipe.count({
         where: { createdAt: { gte: sevenDaysAgo } },
+      }),
+      prisma.recipe.count({
+        where: {
+          createdAt: { gte: fourteenDaysAgo, lt: sevenDaysAgo },
+        },
+      }),
+      prisma.recipe.count({
+        where: { updatedAt: { gte: sevenDaysAgo } },
+      }),
+      prisma.recipe.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+      prisma.recipe.count({
+        where: {
+          isFavorite: true,
+          updatedAt: { gte: thirtyDaysAgo },
+        },
       }),
       prisma.recipe.findMany({
         select: {
@@ -80,6 +109,10 @@ async function getDashboardStats(): Promise<DashboardStats> {
       favorites,
       categories,
       recentlyAdded,
+      recentlyAddedPrevPeriod,
+      recentlyUpdated,
+      createdLast30Days,
+      favoritesLast30Days,
       latestRecipes,
     };
   } catch (error) {
@@ -89,6 +122,10 @@ async function getDashboardStats(): Promise<DashboardStats> {
       favorites: 0,
       categories: 0,
       recentlyAdded: 0,
+      recentlyAddedPrevPeriod: 0,
+      recentlyUpdated: 0,
+      createdLast30Days: 0,
+      favoritesLast30Days: 0,
       latestRecipes: [],
     };
   }
@@ -104,6 +141,10 @@ export default async function DashboardPage() {
       icon: BookOpen,
       tone: "text-primary",
       emoji: "📖",
+      trend:
+        stats.createdLast30Days > 0
+          ? `${stats.createdLast30Days} added in 30 days`
+          : "No new recipes this month",
     },
     {
       label: "Favorites",
@@ -111,6 +152,10 @@ export default async function DashboardPage() {
       icon: Heart,
       tone: "text-accent",
       emoji: "❤️",
+      trend:
+        stats.favoritesLast30Days > 0
+          ? `${stats.favoritesLast30Days} touched in 30 days`
+          : "No favorite activity this month",
     },
     {
       label: "Categories",
@@ -118,6 +163,10 @@ export default async function DashboardPage() {
       icon: Layers,
       tone: "text-highlight",
       emoji: "🏷️",
+      trend:
+        stats.categories > 0
+          ? "Across courses and cuisines"
+          : "Add recipes to build categories",
     },
     {
       label: "Added (7 days)",
@@ -125,6 +174,10 @@ export default async function DashboardPage() {
       icon: Clock3,
       tone: "text-muted-foreground",
       emoji: "🆕",
+      trend:
+        stats.recentlyAdded - stats.recentlyAddedPrevPeriod >= 0
+          ? `+${stats.recentlyAdded - stats.recentlyAddedPrevPeriod} vs prior 7 days`
+          : `${stats.recentlyAdded - stats.recentlyAddedPrevPeriod} vs prior 7 days`,
     },
   ];
 
@@ -160,9 +213,16 @@ export default async function DashboardPage() {
                 <p className="font-serif text-3xl font-bold transition-transform duration-200 group-hover:scale-105">
                   {card.value}
                 </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {card.trend}
+                </p>
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="rounded-xl border border-border/45 bg-card/60 px-4 py-3 text-sm text-muted-foreground">
+          {stats.recentlyUpdated} recipes were updated in the last 7 days.
         </div>
 
         <Card className="border-border/60 bg-card shadow-sm">

@@ -9,6 +9,24 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default function PrivacyPage() {
+  const sections = [
+    {
+      id: "introduction",
+      title: "Introduction",
+      body: "Janella's Kitchen (\"we,\" \"our,\" or \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and act on your personal information when you visit our website.",
+    },
+    {
+      id: "information",
+      title: "Information We Collect",
+      body: "We do not currently collect personal data or use cookies for tracking purposes. This is a personal project used for educational and private use.",
+    },
+    {
+      id: "contact",
+      title: "Contact Us",
+      body: "If you have any questions about this Privacy Policy, please contact us.",
+    },
+  ] as const;
+
   return (
     <AppLayout
       contentType="default"
@@ -16,42 +34,50 @@ export default function PrivacyPage() {
         { label: "Home", href: "/" },
         { label: "Privacy Policy", active: true },
       ]}
+      contentMaxWidth="5xl"
     >
-      <h1 className="mb-8 font-serif text-4xl font-bold text-foreground">
-        Privacy Policy
-      </h1>
+      <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
+        <aside className="hidden lg:block">
+          <nav className="sticky top-28 rounded-xl border border-border/45 bg-card/70 p-4">
+            <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+              On This Page
+            </p>
+            <ul className="space-y-2">
+              {sections.map((section) => (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-      <div className="prose prose-stone dark:prose-invert max-w-none">
-        <p className="text-lg leading-relaxed text-muted-foreground">
-          Last updated: January 2026
-        </p>
+        <div className="space-y-8 rounded-2xl border border-border/45 bg-card/55 p-6 sm:p-8">
+          <header className="space-y-3">
+            <h1 className="font-serif text-4xl font-bold text-foreground">
+              Privacy Policy
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Last updated: January 2026
+            </p>
+          </header>
 
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Introduction
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          Janella&apos;s Kitchen (&quot;we,&quot; &quot;our,&quot; or
-          &quot;us&quot;) respects your privacy. This Privacy Policy explains
-          how we collect, use, and act on your personal information when you
-          visit our website.
-        </p>
-
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Information We Collect
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          We do not currently collect personal data or use cookies for tracking
-          purposes. This is a personal project used for educational and private
-          use.
-        </p>
-
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Contact Us
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          If you have any questions about this Privacy Policy, please contact
-          us.
-        </p>
+          {sections.map((section) => (
+            <section key={section.id} id={section.id} className="space-y-3">
+              <h2 className="font-serif text-2xl font-semibold text-foreground">
+                {section.title}
+              </h2>
+              <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
+                {section.body}
+              </p>
+            </section>
+          ))}
+        </div>
       </div>
     </AppLayout>
   );

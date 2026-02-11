@@ -107,7 +107,7 @@ export default async function HomePage() {
       <Header />
 
       <main className="flex-1">
-        <section className="grain relative flex min-h-[50vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-secondary/60 via-background to-background px-4 py-10 sm:min-h-[60vh] md:min-h-[65vh] md:py-20">
+        <section className="grain relative flex min-h-[42vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-secondary/60 via-background to-background px-4 py-8 sm:min-h-[50vh] md:min-h-[56vh] md:py-14">
           {/* Floating food emojis */}
           <FloatingEmojis />
 
@@ -138,7 +138,7 @@ export default async function HomePage() {
                 </span>
               </AnimatedSubtitle>
 
-              <AnimatedSearchArea className="mt-6 sm:mt-8 md:mt-10">
+              <AnimatedSearchArea className="mt-5 sm:mt-7 md:mt-8">
                 <Suspense fallback={<div className="h-12 sm:h-14 md:h-16" />}>
                   <SearchBar
                     size="large"
@@ -148,7 +148,7 @@ export default async function HomePage() {
                 </Suspense>
 
                 {/* Quick Tags */}
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 text-xs sm:mt-8 sm:gap-2 sm:text-sm">
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 text-xs sm:mt-6 sm:gap-2 sm:text-sm">
                   <span className="mr-1 font-medium text-muted-foreground sm:mr-2">
                     Try:
                   </span>
@@ -176,7 +176,7 @@ export default async function HomePage() {
         </section>
 
         {/* Recipe Section */}
-        <AnimatedSection className="overflow-hidden py-10 sm:py-14 md:py-20">
+        <AnimatedSection className="overflow-hidden py-7 sm:py-10 md:py-12">
           <div className="container">
             <div className="mb-8 text-center sm:mb-12">
               <span className="mb-2 inline-block rounded-full bg-accent/10 px-3 py-1 text-[10px] font-bold tracking-wider text-accent uppercase sm:mb-3 sm:px-4 sm:py-1.5 sm:text-xs">

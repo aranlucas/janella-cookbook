@@ -19,6 +19,23 @@ const courseIcons: Record<string, string> = {
   SIDE: "🍟",
 };
 
+function formatCategoryName(value: string): string {
+  return value
+    .split(",")
+    .map((segment) =>
+      segment
+        .trim()
+        .split(/\s+/)
+        .map((word) =>
+          word.length > 0
+            ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            : "",
+        )
+        .join(" "),
+    )
+    .join(", ");
+}
+
 export const revalidate = 86400;
 
 export const metadata: Metadata = createPageMetadata({
@@ -45,7 +62,7 @@ async function getCategories() {
     return [
       ...courses.map((c) => ({
         name: c.course
-          ? c.course.charAt(0) + c.course.slice(1).toLowerCase()
+          ? formatCategoryName(c.course)
           : "Unknown",
         value: c.course,
         count: c._count,
@@ -53,7 +70,7 @@ async function getCategories() {
         icon: courseIcons[c.course as string] || "🍽️",
       })),
       ...cuisines.map((c) => ({
-        name: c.cuisine!,
+        name: formatCategoryName(c.cuisine || ""),
         value: c.cuisine,
         count: c._count,
         type: "cuisine",
@@ -92,22 +109,25 @@ export default async function CategoriesPage() {
           {categories.map((category) => (
             <Link
               key={`${category.type}-${category.name}`}
-              href={`/recipes?category=${encodeURIComponent(category.name.toLowerCase())}`}
+              href={`/recipes?category=${encodeURIComponent((category.value || category.name).toLowerCase())}`}
               className="group"
             >
-              <Card className="h-full border-border/40 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-lg">
+              <Card className="h-full border-border/45 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-lg">
                 <CardContent className="flex h-full flex-col items-center justify-center p-8 text-center">
                   <span className="mb-4 text-4xl transition-transform duration-300 group-hover:scale-110">
                     {category.icon}
                   </span>
-                  <h3 className="mb-2 font-serif text-2xl font-semibold text-foreground transition-colors group-hover:text-primary">
+                  <h3
+                    className="mb-2 line-clamp-2 min-h-[3.8rem] font-serif text-2xl font-semibold text-foreground transition-colors group-hover:text-primary"
+                    title={category.name}
+                  >
                     {category.name}
                   </h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
-                      {category.type}
+                      {category.type === "course" ? "Course" : "Cuisine"}
                     </span>
-                    <span>{category.count} recipes</span>
+                    <span className="font-medium">{category.count} recipes</span>
                   </div>
                 </CardContent>
               </Card>

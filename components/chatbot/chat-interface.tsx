@@ -400,9 +400,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     <div className="chat-container relative flex h-full w-full flex-col overflow-hidden bg-transparent">
       {/* Messages area */}
       <Conversation className="relative z-10 flex-1 bg-transparent">
-        <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-8 pt-12 md:px-6 md:pt-14">
+        <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 md:px-6 md:pt-8">
           {messages.length === 0 ? (
-            <div className="flex h-full min-h-[18vh] flex-col items-center justify-center gap-4 px-4 text-center">
+            <div className="flex h-full min-h-[10vh] flex-col items-center justify-center gap-4 px-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rustic-terracotta text-white shadow-sm">
                 <ChefHat className="h-6 w-6" />
               </div>
@@ -413,6 +413,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                 <p className="mx-auto max-w-md text-base leading-relaxed text-rustic-charcoal/75">
                   Ask for recipes, substitutions, meal prep ideas, or cooking
                   help based on what you have.
+                </p>
+                <p className="text-sm text-rustic-charcoal/60">
+                  Start with a quick prompt below or type your own question.
                 </p>
               </div>
             </div>
@@ -581,7 +584,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       </Conversation>
 
       {/* Input area */}
-      <div className="relative z-10 shrink-0 pb-4">
+      <div className="sticky bottom-0 z-10 shrink-0 bg-gradient-to-t from-rustic-cream via-rustic-cream/96 to-transparent pt-2 pb-3">
         <div className="mx-auto grid w-full max-w-3xl gap-3 px-3 md:px-4">
           {/* Suggestions */}
           {messages.length === 0 && (

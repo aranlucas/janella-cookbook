@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/prisma";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { AppLayout } from "@/components/layout/app-layout";
+import { ButtonLink } from "@/components/recipe/button-link";
 import {
   ContentEmptyState,
   RecipeGridSkeleton,
@@ -49,6 +50,33 @@ async function RecipeList() {
         actionHref="/recipes"
         actionLabel="Browse Recipes"
       />
+    );
+  }
+
+  if (recipes.length <= 3) {
+    return (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-border/45 bg-card/60 p-4 sm:p-6">
+          <RecipeGrid recipes={recipes} />
+        </div>
+        <div className="rounded-2xl border border-border/45 bg-card/65 p-5 text-center sm:p-6">
+          <h2 className="font-serif text-2xl font-semibold text-foreground">
+            Keep Building Your Favorites
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Explore more recipes and tap the heart to grow this list into your
+            go-to lineup.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+            <ButtonLink href="/recipes" variant="outline">
+              Browse All Recipes
+            </ButtonLink>
+            <ButtonLink href="/recipes?sort=quick" variant="default">
+              Find Quick Dinners
+            </ButtonLink>
+          </div>
+        </div>
+      </div>
     );
   }
 

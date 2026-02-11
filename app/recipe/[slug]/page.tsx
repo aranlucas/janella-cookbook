@@ -109,7 +109,7 @@ export default async function RecipePage({ params }: PageProps) {
       <section className="container pb-4 sm:pb-6 md:pb-8">
         <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2">
           {/* Image */}
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl sm:rounded-lg md:rounded-xl">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border/45 bg-card/55">
             {recipe.imageUrl ? (
               <a
                 href={recipe.imageUrl}
@@ -133,11 +133,11 @@ export default async function RecipePage({ params }: PageProps) {
           {/* Info */}
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
             <div>
-              <h1 className="font-serif text-xl font-bold text-foreground sm:text-2xl md:text-3xl lg:text-4xl">
+              <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
                 {recipe.title}
               </h1>
               {recipe.description && (
-                <p className="mt-1.5 text-sm text-muted-foreground sm:mt-2 sm:text-base md:mt-3 md:text-lg">
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base md:mt-3 md:text-lg">
                   {recipe.description}
                 </p>
               )}
@@ -166,7 +166,7 @@ export default async function RecipePage({ params }: PageProps) {
             )}
 
             {/* Engagement Actions */}
-            <div className="no-print pt-2">
+            <div className="no-print sticky bottom-2 z-30 rounded-xl border border-border/50 bg-background/95 p-2 shadow-lg backdrop-blur sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
               <RecipeEngagementActions recipe={recipe} />
             </div>
           </div>
@@ -183,7 +183,7 @@ export default async function RecipePage({ params }: PageProps) {
             <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
               Ingredients
             </h2>
-            <div className="recipe-content rounded-lg bg-card p-3 shadow-sm sm:p-4 md:p-6">
+            <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
               <IngredientList ingredients={recipe.ingredients} />
             </div>
           </div>
@@ -194,7 +194,7 @@ export default async function RecipePage({ params }: PageProps) {
               <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
                 Instructions
               </h2>
-              <div className="recipe-content rounded-lg bg-card p-3 shadow-sm sm:p-4 md:p-6">
+              <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
                 <InstructionSteps instructions={recipe.instructions} />
               </div>
             </div>

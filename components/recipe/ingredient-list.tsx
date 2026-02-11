@@ -50,15 +50,15 @@ export function IngredientList({
               {groupName}
             </h4>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {groupIngredients.map((ingredient) => (
               <li
                 key={ingredient.id}
                 className={cn(
-                  "flex items-start gap-3 rounded-md px-2 py-1 transition-all duration-300",
+                  "flex items-start gap-3 rounded-lg border border-border/35 px-2.5 py-2 transition-all duration-300",
                   checked.has(ingredient.id)
-                    ? "scale-[0.98] bg-accent/5"
-                    : "hover:bg-muted/30",
+                    ? "scale-[0.98] bg-accent/7"
+                    : "bg-background/55 hover:bg-muted/35",
                 )}
               >
                 <Checkbox
@@ -70,7 +70,7 @@ export function IngredientList({
                 <label
                   htmlFor={ingredient.id}
                   className={cn(
-                    "flex-1 cursor-pointer transition-all duration-300 select-none",
+                    "flex-1 cursor-pointer text-sm leading-relaxed text-foreground transition-all duration-300 select-none sm:text-base",
                     checked.has(ingredient.id) &&
                       "text-muted-foreground/60 line-through decoration-[var(--highlight)] decoration-2",
                   )}

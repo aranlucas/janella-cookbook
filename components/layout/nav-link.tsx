@@ -29,7 +29,9 @@ export function NavLink({
         onClick={onClick}
         className={cn(
           "rounded-lg px-4 py-3 text-lg font-medium transition-colors hover:text-primary",
-          isActive ? "bg-primary/10 text-primary" : "text-muted-foreground",
+          isActive
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground/95 hover:text-foreground",
           className,
         )}
       >
@@ -45,7 +47,7 @@ export function NavLink({
         "relative text-sm font-medium tracking-wide transition-colors duration-300 hover:text-primary",
         isActive
           ? "squiggle-underline font-semibold text-primary"
-          : "text-muted-foreground",
+          : "text-muted-foreground/95",
         !isActive && "hover-squish squiggle-underline",
         className,
       )}

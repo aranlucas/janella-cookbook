@@ -72,6 +72,8 @@ export default async function EditRecipePage({ params }: PageProps) {
         { label: "Edit", active: true },
       ]}
       title="Edit Recipe"
+      description="Update details, ingredients, and steps. Changes are saved when you press Update Recipe."
+      contentClassName="py-5 sm:py-7"
     >
       <ManualRecipeForm initialData={recipe} />
     </AppLayout>

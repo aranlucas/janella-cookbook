@@ -29,7 +29,7 @@ export function BreadcrumbNav({
   maxWidth = "none",
 }: BreadcrumbNavProps) {
   const content = (
-    <Breadcrumb>
+    <Breadcrumb className="[&_[data-slot=breadcrumb-list]]:text-muted-foreground/95 [&_[data-slot=breadcrumb-page]]:font-medium [&_[data-slot=breadcrumb-separator]]:text-muted-foreground/80">
       <BreadcrumbList>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

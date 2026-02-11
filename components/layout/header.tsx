@@ -16,12 +16,12 @@ const navItems = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/20 bg-background/90 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center gap-2">
+    <header className="sticky top-0 z-50 w-full border-b border-border/35 bg-background/92 backdrop-blur-xl supports-[backdrop-filter]:bg-background/72">
+      <div className="container flex h-14 items-center gap-2 sm:h-16">
         <Logo />
 
         {/* Desktop Navigation */}
-        <nav className="ml-4 hidden items-center space-x-4 md:flex">
+        <nav className="ml-3 hidden items-center space-x-5 md:flex">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href}>
               {item.label}

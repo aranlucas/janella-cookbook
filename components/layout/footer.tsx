@@ -2,16 +2,16 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-muted/50 pt-10 pb-8">
+    <footer className="border-t border-border/40 bg-muted/55 pt-10 pb-8">
       <div className="container">
-        <div className="grid gap-8 md:grid-cols-4 lg:gap-10">
+        <div className="grid gap-8 md:grid-cols-4 md:gap-10 lg:gap-12">
           {/* Brand Column */}
           <div className="space-y-4 md:col-span-2">
             <h3 className="font-serif text-2xl font-bold tracking-tight text-foreground">
               Janella&apos;s{" "}
               <span className="text-primary italic">Kitchen</span>
             </h3>
-            <p className="max-w-xs leading-relaxed text-muted-foreground">
+            <p className="max-w-xs leading-relaxed text-muted-foreground/95">
               A personal collection of cherished recipes, built with love for
               home cooks everywhere. Good food, simply found.
             </p>
@@ -22,7 +22,7 @@ export function Footer() {
             <h4 className="font-serif text-lg font-semibold text-foreground">
               Explore
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-muted-foreground/95">
               <li>
                 <Link
                   href="/recipes"
@@ -55,7 +55,7 @@ export function Footer() {
             <h4 className="font-serif text-lg font-semibold text-foreground">
               Connect
             </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-muted-foreground/95">
               <li>
                 <Link
                   href="/about"
@@ -68,7 +68,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground md:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground/95 md:flex-row">
           <p>
             Made with{" "}
             <span
