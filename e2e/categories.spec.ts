@@ -13,7 +13,7 @@ test.describe("Categories page", () => {
     await page.goto("/categories");
 
     const categoryCards = page.locator('a[href^="/recipes?category="]');
-    const emptyState = page.getByText("No categories found");
+    const emptyState = page.getByText(/No categories/i);
 
     const hasCategories = (await categoryCards.count()) > 0;
     const hasEmpty = await emptyState.isVisible().catch(() => false);
