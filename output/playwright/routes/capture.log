@@ -1,0 +1,111 @@
+=== / (home) ===
+### Ran Playwright code
+```js
+await page.goto('http://localhost:3000/');
+```
+### Page
+- Page URL: http://localhost:3000/
+- Page Title: Cookbook - Your Personal Recipe Collection
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-01-935Z.yml)
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-01-065Z.log#L1-L5
+### Page
+- Page URL: http://localhost:3000/
+- Page Title: Cookbook - Your Personal Recipe Collection
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-03-803Z.yml)
+### Result
+{"url":"http://localhost:3000/","title":"Cookbook - Your Personal Recipe Collection"}
+### Ran Playwright code
+```js
+await (async (page) => { await page.screenshot({ path: 'output/playwright/routes/home.png', fullPage: true }); return { url: page.url(), title: await page.title() }; })(page);
+```
+### Page
+- Page URL: http://localhost:3000/
+- Page Title: Cookbook - Your Personal Recipe Collection
+- Console: 0 errors, 13 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-01-065Z.log#L6-L13
+
+=== /recipes (recipes) ===
+### Ran Playwright code
+```js
+await page.goto('http://localhost:3000/recipes');
+```
+### Page
+- Page URL: http://localhost:3000/recipes
+- Page Title: All Recipes | Cookbook
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-09-842Z.yml)
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-09-184Z.log#L1-L5
+### Page
+- Page URL: http://localhost:3000/recipes
+- Page Title: All Recipes | Cookbook
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-11-689Z.yml)
+### Result
+{"url":"http://localhost:3000/recipes","title":"All Recipes | Cookbook"}
+### Ran Playwright code
+```js
+await (async (page) => { await page.screenshot({ path: 'output/playwright/routes/recipes.png', fullPage: true }); return { url: page.url(), title: await page.title() }; })(page);
+```
+### Page
+- Page URL: http://localhost:3000/recipes
+- Page Title: All Recipes | Cookbook
+- Console: 0 errors, 13 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-09-184Z.log#L6-L13
+
+=== /recipes/new (recipes-new) ===
+### Ran Playwright code
+```js
+await page.goto('http://localhost:3000/recipes/new');
+```
+### Page
+- Page URL: http://localhost:3000/recipes/new
+- Page Title: Add Recipe | Cookbook
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-17-128Z.yml)
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-16-736Z.log#L1-L4
+### Page
+- Page URL: http://localhost:3000/recipes/new
+- Page Title: Add Recipe | Cookbook
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-18-896Z.yml)
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-16-736Z.log#L5
+### Result
+{"url":"http://localhost:3000/recipes/new","title":"Add Recipe | Cookbook"}
+### Ran Playwright code
+```js
+await (async (page) => { await page.screenshot({ path: 'output/playwright/routes/recipes-new.png', fullPage: true }); return { url: page.url(), title: await page.title() }; })(page);
+```
+### Page
+- Page URL: http://localhost:3000/recipes/new
+- Page Title: Add Recipe | Cookbook
+- Console: 0 errors, 13 warnings
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-16-736Z.log#L6-L13
+
+=== /search (search) ===
+### Ran Playwright code
+```js
+await page.goto('http://localhost:3000/search');
+```
+### Page
+- Page URL: http://localhost:3000/search
+- Page Title: Search | Cookbook
+- Console: 0 errors, 5 warnings
+### Snapshot
+- [Snapshot](.playwright-cli/page-2026-02-11T00-58-26-435Z.yml)
+### Events
+- New console entries: .playwright-cli/console-2026-02-11T00-58-23-892Z.log#L1-L5

@@ -1,0 +1,77 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Janella's Cookbook" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img "Janella's Cookbook" [ref=e7]
+        - navigation [ref=e8]:
+          - link "Recipes" [ref=e9] [cursor=pointer]:
+            - /url: /recipes
+          - link "AI Assistant" [ref=e10] [cursor=pointer]:
+            - /url: /chat
+        - link "New Recipe" [ref=e13] [cursor=pointer]:
+          - /url: /recipes/new
+          - button "New Recipe" [ref=e14]:
+            - img
+            - text: New Recipe
+    - main [ref=e16]:
+      - navigation "breadcrumb" [ref=e18]:
+        - list [ref=e19]:
+          - listitem [ref=e20]:
+            - link "Home" [ref=e21] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e22]:
+            - img [ref=e23]
+          - listitem [ref=e25]:
+            - link "Search" [disabled] [ref=e26]
+      - generic [ref=e28]:
+        - heading "Search Recipes" [level=1] [ref=e29]
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - generic [ref=e33]: 🔍
+            - searchbox "Search for recipes..." [active] [ref=e34]
+          - button "Search" [ref=e35]
+        - generic [ref=e36]:
+          - generic [ref=e38]: 🔍
+          - generic [ref=e39]:
+            - generic [ref=e40]: Start searching
+            - generic [ref=e41]: Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".
+    - contentinfo [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - heading "Janella's Kitchen" [level=3] [ref=e46]
+            - paragraph [ref=e47]: A personal collection of cherished recipes, built with love for home cooks everywhere. Good food, simply found.
+          - generic [ref=e48]:
+            - heading "Explore" [level=4] [ref=e49]
+            - list [ref=e50]:
+              - listitem [ref=e51]:
+                - link "All Recipes" [ref=e52] [cursor=pointer]:
+                  - /url: /recipes
+              - listitem [ref=e53]:
+                - link "By Category" [ref=e54] [cursor=pointer]:
+                  - /url: /categories
+              - listitem [ref=e55]:
+                - link "Favorites" [ref=e56] [cursor=pointer]:
+                  - /url: /favorites
+          - generic [ref=e57]:
+            - heading "Connect" [level=4] [ref=e58]
+            - list [ref=e59]:
+              - listitem [ref=e60]:
+                - link "About Janella" [ref=e61] [cursor=pointer]:
+                  - /url: /about
+        - generic [ref=e62]:
+          - paragraph [ref=e63]:
+            - text: Made with
+            - generic [ref=e64]: ❤️
+            - text: © 2026 Janella's Kitchen
+          - generic [ref=e65]:
+            - link "Privacy Policy" [ref=e66] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms of Service" [ref=e67] [cursor=pointer]:
+              - /url: /terms
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e73] [cursor=pointer]:
+    - img [ref=e74]
+  - alert [ref=e77]

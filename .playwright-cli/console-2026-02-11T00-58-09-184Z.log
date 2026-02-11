@@ -1,0 +1,13 @@
+[     319ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Outfit-Variable.woff2 @ http://localhost:3000/recipes:1
+[     319ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:1
+[     322ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Fraunces-Variable.woff2 @ http://localhost:3000/recipes:1
+[     322ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:1
+[     574ms] [WARNING] Image with src "/logo-bg.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes @ http://localhost:3000/_next/static/chunks/a191e_next_dist_0da38164._.js:2297
+[    4323ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Fraunces-Variable.woff2 @ http://localhost:3000/recipes:0
+[    4323ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:0
+[    4323ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Outfit-Variable.woff2 @ http://localhost:3000/recipes:0
+[    4323ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:0
+[    4333ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Fraunces-Variable.woff2 @ http://localhost:3000/recipes:0
+[    4333ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:0
+[    4333ms] [WARNING] Failed to decode downloaded font: http://localhost:3000/fonts/Outfit-Variable.woff2 @ http://localhost:3000/recipes:0
+[    4333ms] [WARNING] OTS parsing error: invalid sfntVersion: 168430090 @ http://localhost:3000/recipes:0
