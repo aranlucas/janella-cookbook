@@ -99,7 +99,7 @@
   --secondary-foreground: #2d2926;
 
   --muted: #e8ddd4; /* Sand */
-  --muted-foreground: #6b635c; /* Warm Grey */
+  --muted-foreground: #5b534c; /* Warmer, higher-contrast grey */
 
   --accent: #4a5d43; /* Deep Forest */
   --accent-foreground: #ffffff;
@@ -149,7 +149,7 @@
   --secondary-foreground: #f7e9d4;
 
   --muted: #3a3634;
-  --muted-foreground: #a39a92;
+  --muted-foreground: #c0b7ae;
 
   --accent: #6b7e5f; /* Lighter forest for contrast */
   --accent-foreground: #ffffff;

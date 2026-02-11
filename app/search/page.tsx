@@ -6,6 +6,7 @@ import {
   ContentEmptyState,
 } from "@/components/ui/content-state";
 import { SearchResults } from "./search-results";
+import { SearchDiscovery } from "@/components/search/search-discovery";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -44,7 +45,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
         { label: "Search", active: true },
       ]}
       contentMaxWidth="4xl"
-      contentClassName="py-6 sm:py-8"
+      contentClassName="py-5 sm:py-7"
     >
       <h1 className="mb-4 font-serif text-2xl font-bold text-foreground sm:mb-6 sm:text-3xl">
         Search Recipes
@@ -69,11 +70,15 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </Suspense>
         </div>
       ) : (
-        <ContentEmptyState
-          icon="🔍"
-          title="Start searching"
-          description='Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".'
-        />
+        <div className="space-y-6">
+          <ContentEmptyState
+            icon="🔍"
+            title="Start searching"
+            description='Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".'
+            className="border border-border/45 bg-card/70"
+          />
+          <SearchDiscovery />
+        </div>
       )}
     </AppLayout>
   );

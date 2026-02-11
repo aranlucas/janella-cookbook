@@ -50,7 +50,7 @@ export function RecipeMeta({
             <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
               🔪
             </span>
-            <span className="text-muted-foreground">Prep:</span>
+            <span className="text-muted-foreground/95">Prep:</span>
             <span className="font-medium">{prepTime} min</span>
           </div>
         )}
@@ -59,7 +59,7 @@ export function RecipeMeta({
             <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
               🔥
             </span>
-            <span className="text-muted-foreground">Cook:</span>
+            <span className="text-muted-foreground/95">Cook:</span>
             <span className="font-medium">{cookTime} min</span>
           </div>
         )}
@@ -68,7 +68,7 @@ export function RecipeMeta({
             <span className="inline-block transition-transform duration-300 group-hover/meta:rotate-[360deg]">
               ⏱️
             </span>
-            <span className="text-muted-foreground">Total:</span>
+            <span className="text-muted-foreground/95">Total:</span>
             <span className="font-medium">{totalTime} min</span>
           </div>
         )}
@@ -77,7 +77,7 @@ export function RecipeMeta({
             <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
               🍽️
             </span>
-            <span className="text-muted-foreground">Servings:</span>
+            <span className="text-muted-foreground/95">Servings:</span>
             <span className="font-medium">{servings}</span>
           </div>
         )}

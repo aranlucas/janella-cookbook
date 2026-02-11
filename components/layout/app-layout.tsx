@@ -91,23 +91,23 @@ function PageHeader({
   return (
     <section
       className={cn(
-        "py-6 sm:py-8 md:py-12",
-        background === "muted" && "bg-muted/30",
+        "py-5 sm:py-7 md:py-10",
+        background === "muted" && "border-b border-border/30 bg-muted/35",
       )}
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
-          <h1 className="mb-2 font-serif text-2xl font-bold text-foreground sm:mb-4 sm:text-4xl md:text-5xl">
+          <h1 className="mb-2 font-serif text-3xl font-bold text-foreground sm:mb-3 sm:text-4xl md:text-5xl">
             {title}
           </h1>
           {description && (
-            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base md:text-lg">
+            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base md:text-lg">
               {description}
             </p>
           )}
           {actions && (
             <div
-              className={cn("mt-4 sm:mt-6", centered && "flex justify-center")}
+              className={cn("mt-4 sm:mt-5", centered && "flex justify-center")}
             >
               {actions}
             </div>
@@ -162,13 +162,13 @@ export function AppLayout({
                   className={cn(
                     "container",
                     pageHeader.background === "muted" && "bg-muted/30",
-                    "pt-4 pb-0",
+                    "pt-4 pb-1",
                   )}
                 >
                   <BreadcrumbNav
                     items={breadcrumbs}
                     container={false}
-                    className="mb-0"
+                    className="mb-0 text-muted-foreground [&_[data-slot=breadcrumb-list]]:text-sm [&_[data-slot=breadcrumb-list]]:text-muted-foreground"
                   />
                 </div>
               )}
@@ -189,8 +189,8 @@ export function AppLayout({
           ) : (
             <section
               className={cn(
-                "py-5 sm:py-8 md:py-12",
-                contentType === "default" && "py-6 sm:py-10 md:py-16",
+                "py-4 sm:py-8 md:py-10",
+                contentType === "default" && "py-5 sm:py-9 md:py-12",
                 contentType === "form" && "py-4 sm:py-6 md:py-8",
                 contentClassName,
               )}

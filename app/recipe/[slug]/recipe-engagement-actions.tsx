@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { toggleFavorite, markAsCooked } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
+import { cn } from "@/lib/utils";
 
 interface RecipeEngagementActionsProps {
   recipe: RecipeWithRelations;
+  className?: string;
 }
 
 export function RecipeEngagementActions({
   recipe: initialRecipe,
+  className,
 }: RecipeEngagementActionsProps) {
   const router = useRouter();
   const [recipe, setRecipe] = useState(initialRecipe);
@@ -62,7 +65,12 @@ export function RecipeEngagementActions({
   };
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+    <div
+      className={cn(
+        "flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3",
+        className,
+      )}
+    >
       <div className="flex gap-2 sm:contents">
         <Button
           variant={recipe.isFavorite ? "default" : "outline"}

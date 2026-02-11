@@ -37,27 +37,27 @@ export async function SearchResults({ query }: SearchResultsProps) {
         Found {total} recipe{total !== 1 ? "s" : ""}
       </p>
 
-      <div className="space-y-2 sm:space-y-3 md:space-y-4">
+      <div className="space-y-2.5 sm:space-y-3 md:space-y-4">
         {results.map(({ recipe, score, highlights }) => (
           <Link
             key={recipe.id}
             href={`/recipe/${recipe.slug}`}
-            className="flex gap-2.5 rounded-lg bg-card p-2.5 shadow-sm transition-shadow active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4 md:hover:shadow-md"
+            className="group flex gap-2.5 rounded-xl border border-border/45 bg-card p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4"
           >
             {/* Thumbnail */}
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-24 md:h-24 md:w-32">
               <RecipeImage
                 src={recipe.imageUrl}
                 alt={recipe.title}
                 sizes="(max-width: 640px) 64px, (max-width: 768px) 96px, 128px"
-                fallbackEmoji="🍽️"
+                fallbackEmoji="🍲"
               />
             </div>
 
             {/* Content */}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <h3 className="line-clamp-2 font-serif text-sm font-semibold text-foreground sm:line-clamp-1 sm:text-base md:text-lg">
+                <h3 className="line-clamp-2 font-serif text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:line-clamp-1 sm:text-base md:text-lg">
                   {recipe.title}
                 </h3>
                 {score > 0.5 && (

@@ -78,6 +78,38 @@ jobs:
 
           echo "base_url=$URL" >> "$GITHUB_OUTPUT"
 
+      - name: Wait for deployment to be ready
+        run: |
+          BASE_URL="${{ steps.url.outputs.base_url }}"
+          BASE_URL="${BASE_URL%/}"
+
+          echo "Waiting for deployment at: $BASE_URL"
+
+          ATTEMPTS=60
+          SLEEP_SECONDS=5
+          READY=0
+
+          for i in $(seq 1 "$ATTEMPTS"); do
+            HTTP_CODE="$(curl -L -s -o /tmp/deploy-body.txt -w "%{http_code}" "$BASE_URL" || true)"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              if grep -qiE "janella|cookbook|recipes" /tmp/deploy-body.txt && \
+                 ! grep -qiE "authentication required|vercel security checkpoint|404|not found" /tmp/deploy-body.txt; then
+                READY=1
+                echo "Deployment is ready (attempt $i/$ATTEMPTS)."
+                break
+              fi
+            fi
+
+            echo "Attempt $i/$ATTEMPTS: not ready (status: ${HTTP_CODE:-unknown}), retrying in ${SLEEP_SECONDS}s..."
+            sleep "$SLEEP_SECONDS"
+          done
+
+          if [ "$READY" -ne 1 ]; then
+            echo "::error::Deployment did not become ready in time."
+            exit 1
+          fi
+
       - name: Run Playwright tests
         run: pnpm exec playwright test
         env:

@@ -9,6 +9,24 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export default function TermsPage() {
+  const sections = [
+    {
+      id: "agreement",
+      title: "Agreement to Terms",
+      body: "By accessing or using Janella's Kitchen, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, then you may not access the service.",
+    },
+    {
+      id: "content",
+      title: "Content",
+      body: "Our content is for informational purposes only. The recipes are provided \"as is\" and we make no guarantees regarding the outcome.",
+    },
+    {
+      id: "changes",
+      title: "Changes",
+      body: "We reserve the right to modify or replace these Terms at any time.",
+    },
+  ] as const;
+
   return (
     <AppLayout
       contentType="default"
@@ -16,41 +34,50 @@ export default function TermsPage() {
         { label: "Home", href: "/" },
         { label: "Terms of Service", active: true },
       ]}
-      contentMaxWidth="3xl"
+      contentMaxWidth="5xl"
     >
-      <h1 className="mb-8 font-serif text-4xl font-bold text-foreground">
-        Terms of Service
-      </h1>
+      <div className="grid gap-8 lg:grid-cols-[15rem_1fr]">
+        <aside className="hidden lg:block">
+          <nav className="sticky top-28 rounded-xl border border-border/45 bg-card/70 p-4">
+            <p className="mb-3 text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+              On This Page
+            </p>
+            <ul className="space-y-2">
+              {sections.map((section) => (
+                <li key={section.id}>
+                  <a
+                    href={`#${section.id}`}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-      <div className="prose prose-stone dark:prose-invert max-w-none">
-        <p className="text-lg leading-relaxed text-muted-foreground">
-          Last updated: January 2026
-        </p>
+        <div className="space-y-8 rounded-2xl border border-border/45 bg-card/55 p-6 sm:p-8">
+          <header className="space-y-3">
+            <h1 className="font-serif text-4xl font-bold text-foreground">
+              Terms of Service
+            </h1>
+            <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+              Last updated: January 2026
+            </p>
+          </header>
 
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Agreement to Terms
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          By accessing or using Janella&apos;s Kitchen, you agree to be bound by
-          these Terms of Service. If you disagree with any part of the terms,
-          then you may not access the service.
-        </p>
-
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Content
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          Our content is for informational purposes only. The recipes are
-          provided &quot;as is&quot; and we make no guarantees regarding the
-          outcome.
-        </p>
-
-        <h2 className="mt-8 font-serif text-2xl font-semibold text-foreground">
-          Changes
-        </h2>
-        <p className="mt-4 text-muted-foreground">
-          We reserve the right to modify or replace these Terms at any time.
-        </p>
+          {sections.map((section) => (
+            <section key={section.id} id={section.id} className="space-y-3">
+              <h2 className="font-serif text-2xl font-semibold text-foreground">
+                {section.title}
+              </h2>
+              <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
+                {section.body}
+              </p>
+            </section>
+          ))}
+        </div>
       </div>
     </AppLayout>
   );

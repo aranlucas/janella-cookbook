@@ -25,6 +25,32 @@ export default function AddRecipePage() {
       title="Add a Recipe"
       description="Import from a website, paste text, or create from scratch."
     >
+      <div className="mb-5 rounded-2xl border border-border/45 bg-card/65 p-4 sm:mb-6 sm:p-5">
+        <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+          Recipe Import Flow
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg bg-background/70 p-3">
+            <p className="text-xs font-semibold text-foreground">1. Choose Source</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              URL, YouTube, text paste, or manual.
+            </p>
+          </div>
+          <div className="rounded-lg bg-background/70 p-3">
+            <p className="text-xs font-semibold text-foreground">2. Review Extracted Data</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Verify ingredients and instruction structure.
+            </p>
+          </div>
+          <div className="rounded-lg bg-background/70 p-3">
+            <p className="text-xs font-semibold text-foreground">3. Save and Edit</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Save recipe, then fine-tune details in the editor.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="url" className="flex-col gap-4 sm:gap-6">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg bg-muted/50 p-1 sm:grid-cols-4">
           <TabsTrigger
@@ -69,6 +95,11 @@ export default function AddRecipePage() {
           <ManualRecipeForm />
         </TabsContent>
       </Tabs>
+
+      <div className="mt-6 rounded-xl border border-border/45 bg-card/65 p-4 text-sm text-muted-foreground">
+        Tip: if a URL or video import is close but not perfect, save first and
+        use the edit page for fast clean-up.
+      </div>
     </AppLayout>
   );
 }

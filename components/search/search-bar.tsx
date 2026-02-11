@@ -12,6 +12,7 @@ interface SearchBarProps {
   autoFocus?: boolean;
   size?: "default" | "large";
   redirectTo?: string;
+  storageKey?: string;
 }
 
 export function SearchBar({
@@ -20,6 +21,7 @@ export function SearchBar({
   autoFocus = false,
   size = "default",
   redirectTo = "/search",
+  storageKey = "janella_recent_searches",
 }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -30,18 +32,30 @@ export function SearchBar({
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (query.trim()) {
+      const trimmed = query.trim();
+      if (trimmed) {
         // Add squish animation to button
         buttonRef.current?.classList.add("animate-squish");
         setTimeout(
           () => buttonRef.current?.classList.remove("animate-squish"),
           400,
         );
+        if (typeof window !== "undefined") {
+          try {
+            const existing = window.localStorage.getItem(storageKey);
+            const parsed = existing ? (JSON.parse(existing) as string[]) : [];
+            const next = [trimmed, ...parsed.filter((item) => item !== trimmed)]
+              .slice(0, 8);
+            window.localStorage.setItem(storageKey, JSON.stringify(next));
+          } catch {
+            // Ignore storage parsing failures and continue search navigation.
+          }
+        }
         const target = redirectTo || "/search";
-        router.push(`${target}?q=${encodeURIComponent(query.trim())}`);
+        router.push(`${target}?q=${encodeURIComponent(trimmed)}`);
       }
     },
-    [query, router, redirectTo],
+    [query, router, redirectTo, storageKey],
   );
 
   return (

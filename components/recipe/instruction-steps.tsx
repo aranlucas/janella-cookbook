@@ -38,17 +38,17 @@ export function InstructionSteps({
               {groupName}
             </h4>
           )}
-          <ol className="space-y-6">
+          <ol className="space-y-4">
             {groupInstructions.map((instruction, index) => (
               <li
                 key={instruction.id}
-                className="group/step relative pl-12 transition-all duration-200 hover:translate-x-1"
+                className="group/step relative rounded-xl border border-border/35 bg-background/55 p-4 pl-12 transition-all duration-200 hover:translate-x-1 hover:border-primary/25"
               >
                 <span className="absolute top-0 left-0 flex h-8 w-8 items-center justify-center rounded-full bg-muted font-serif font-bold text-foreground transition-all duration-300 group-hover/step:scale-110 group-hover/step:bg-[var(--highlight)] group-hover/step:text-[var(--highlight-foreground)]">
                   {index + 1}
                 </span>
                 <div className="space-y-2">
-                  <p className="leading-relaxed text-foreground">
+                  <p className="text-sm leading-relaxed text-foreground sm:text-base">
                     {instruction.text}
                   </p>
                   {instruction.duration && (

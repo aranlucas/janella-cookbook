@@ -19,9 +19,20 @@ export default function AboutPage() {
       contentMaxWidth="5xl"
     >
       <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-muted">
-          <div className="absolute inset-0 flex items-center justify-center bg-muted text-muted-foreground">
-            <span className="text-lg">Photo of Janella</span>
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl border border-border/45 bg-gradient-to-br from-card via-muted/55 to-secondary/35">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(224,78,57,0.12),transparent_38%),radial-gradient(circle_at_78%_30%,rgba(240,168,48,0.12),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.18),rgba(0,0,0,0))]" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-8 text-center">
+            <div className="flex h-28 w-28 items-center justify-center rounded-full border border-primary/35 bg-background/85 font-serif text-4xl font-bold text-primary shadow-sm">
+              J
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+                Kitchen Notes
+              </p>
+              <p className="mx-auto max-w-xs font-serif text-xl text-foreground">
+                “Cook what you love. Share what you learn.”
+              </p>
+            </div>
           </div>
         </div>
 
