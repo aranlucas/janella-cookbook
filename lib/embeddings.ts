@@ -25,7 +25,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
 
   try {
     const result = await hf.featureExtraction({
-      model: "google/embeddinggemma-300m",
+      model: "Qwen/Qwen3-Embedding-8B",
       inputs: text.slice(0, 8000), // Limit input length to avoid token limits
     });
 
