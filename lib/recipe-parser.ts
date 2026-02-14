@@ -226,29 +226,77 @@ function validateUrl(url: string): URL {
 }
 
 /**
+ * Fetch markdown content for a URL via markdown.new
+ * Returns null if the service is unavailable or returns an error
+ */
+async function fetchMarkdown(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(`https://markdown.new/${url}`, {
+      headers: {
+        Accept: "text/markdown",
+      },
+      signal: AbortSignal.timeout(20000), // 20 second timeout (external service)
+    });
+
+    if (!response.ok) return null;
+
+    const text = await response.text();
+    // Sanity check: ensure we got meaningful content
+    if (!text || text.trim().length < 50) return null;
+
+    return text;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch raw HTML for a URL (used for image extraction and as fallback)
+ */
+async function fetchHtml(url: string): Promise<string> {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
+      Accept: "text/html,application/xhtml+xml",
+    },
+    signal: AbortSignal.timeout(15000), // 15 second timeout
+  });
+
+  if (!response.ok) {
+    throw new RecipeParseError(
+      `Failed to fetch URL: ${response.status} ${response.statusText}`,
+      url,
+    );
+  }
+
+  return response.text();
+}
+
+/**
  * Parse a recipe from a URL
+ * Uses markdown.new for cleaner content extraction, with HTML fallback
  */
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   const validatedUrl = validateUrl(url);
+  const href = validatedUrl.href;
 
-  let html: string;
   try {
-    const response = await fetch(validatedUrl.href, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
-        Accept: "text/html,application/xhtml+xml",
-      },
-      signal: AbortSignal.timeout(15000), // 15 second timeout
-    });
+    // Fetch markdown (for AI extraction) and HTML (for image extraction) in parallel
+    const [markdown, html] = await Promise.all([
+      fetchMarkdown(href),
+      fetchHtml(href),
+    ]);
 
-    if (!response.ok) {
-      throw new RecipeParseError(
-        `Failed to fetch URL: ${response.status} ${response.statusText}`,
-        url,
-      );
+    // Extract image from HTML (needs structured data like JSON-LD, OG tags)
+    const imageUrl = extractImageFromHtml(html, href);
+
+    if (markdown) {
+      // Use markdown for AI extraction (cleaner, fewer tokens)
+      return extractRecipeFromMarkdown(markdown, href, imageUrl);
     }
 
-    html = await response.text();
+    // Fall back to HTML-based extraction
+    return extractRecipeWithAI(html, href, imageUrl);
   } catch (error) {
     if (error instanceof RecipeParseError) throw error;
     throw new RecipeParseError(
@@ -256,20 +304,107 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
       url,
     );
   }
-
-  return extractRecipeWithAI(html, url);
 }
 
 /**
- * Extract recipe using AI from HTML content
+ * Validate AI output and build a ParsedRecipe from the structured result
+ */
+function buildParsedRecipe(
+  parsed: z.infer<typeof recipeSchema>,
+  sourceUrl: string,
+  imageUrl: string | undefined,
+): ParsedRecipe {
+  if (!parsed.title || parsed.title === "Untitled Recipe") {
+    throw new RecipeParseError(
+      "Could not extract recipe title from the page",
+      sourceUrl,
+    );
+  }
+
+  if (!parsed.ingredients || parsed.ingredients.length === 0) {
+    throw new RecipeParseError(
+      "Could not extract any ingredients from the page",
+      sourceUrl,
+    );
+  }
+
+  return {
+    title: parsed.title,
+    description: parsed.description,
+    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
+      ...ing,
+      sortOrder: i,
+    })),
+    instructions: (parsed.instructions || []).map((inst, i: number) => ({
+      text: inst?.text || "",
+      group: inst?.group,
+      sortOrder: i,
+    })),
+    prepTime: parsed.prepTime,
+    cookTime: parsed.cookTime,
+    totalTime: parsed.totalTime,
+    servings: parsed.servings,
+    cuisine: parsed.cuisine,
+    course: parsed.course as Course | undefined,
+    difficulty: parsed.difficulty as Difficulty | undefined,
+    imageUrl,
+  };
+}
+
+/**
+ * Extract recipe using AI from markdown content (preferred path via markdown.new)
+ */
+async function extractRecipeFromMarkdown(
+  markdown: string,
+  sourceUrl: string,
+  imageUrl: string | undefined,
+): Promise<ParsedRecipe> {
+  // Validate and truncate to fit within model's context window
+  const validatedContent = validateAndTruncateContent(markdown.trim());
+
+  try {
+    const { output: parsed } = await generateText({
+      model: model,
+      output: Output.object({ schema: recipeSchema }),
+      system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content in Markdown format.
+
+CRITICAL INSTRUCTIONS:
+- The content has been pre-converted to Markdown, so most irrelevant page elements have been removed
+- Focus ONLY on the actual recipe content (ingredients, instructions, title, description, etc.)
+- Be accurate and only include information that is part of the recipe itself
+- Extract ALL ingredients with their exact quantities, units, and any preparation notes
+- Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
+- If ingredients are grouped (e.g., "For the avocado topping"), preserve that group information
+- Include prep time, cook time, and total time if mentioned
+- Extract servings/yield information
+- Identify the cuisine type and meal course if evident
+- Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
+- For instructions, maintain the original step numbering and any substeps
+- Look for recipe variations, notes, or tips that are part of the recipe
+- Ignore any user comments, related recipes, or other non-recipe content
+- Output in structured JSON format`,
+      prompt: `Extract the complete recipe from this webpage content:\n\n${validatedContent}`,
+    });
+
+    return buildParsedRecipe(parsed, sourceUrl, imageUrl);
+  } catch (error) {
+    if (error instanceof RecipeParseError) throw error;
+    throw new ExternalApiError(
+      "OpenRouter",
+      `Failed to parse recipe with AI: ${error instanceof Error ? error.message : "Unknown error"}`,
+      error,
+    );
+  }
+}
+
+/**
+ * Extract recipe using AI from HTML content (fallback when markdown.new is unavailable)
  */
 async function extractRecipeWithAI(
   html: string,
   sourceUrl: string,
+  imageUrl: string | undefined,
 ): Promise<ParsedRecipe> {
-  // Extract the main image before processing content
-  const imageUrl = extractImageFromHtml(html, sourceUrl);
-
   // Clean and validate HTML - send full page content to LLM
   const cleanedHtml = html.replace(/\s+/g, " ").trim();
 
@@ -300,42 +435,7 @@ CRITICAL INSTRUCTIONS:
       prompt: `Extract the complete recipe from this webpage HTML. Ignore navigation, ads, and other irrelevant content. Focus only on the recipe itself:\n\n${validatedContent}`,
     });
 
-    // Validate we got a proper recipe
-    if (!parsed.title || parsed.title === "Untitled Recipe") {
-      throw new RecipeParseError(
-        "Could not extract recipe title from the page",
-        sourceUrl,
-      );
-    }
-
-    if (!parsed.ingredients || parsed.ingredients.length === 0) {
-      throw new RecipeParseError(
-        "Could not extract any ingredients from the page",
-        sourceUrl,
-      );
-    }
-
-    return {
-      title: parsed.title,
-      description: parsed.description,
-      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-        ...ing,
-        sortOrder: i,
-      })),
-      instructions: (parsed.instructions || []).map((inst, i: number) => ({
-        text: inst?.text || "",
-        group: inst?.group,
-        sortOrder: i,
-      })),
-      prepTime: parsed.prepTime,
-      cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime,
-      servings: parsed.servings,
-      cuisine: parsed.cuisine,
-      course: parsed.course as Course | undefined,
-      difficulty: parsed.difficulty as Difficulty | undefined,
-      imageUrl,
-    };
+    return buildParsedRecipe(parsed, sourceUrl, imageUrl);
   } catch (error) {
     if (error instanceof RecipeParseError) throw error;
     throw new ExternalApiError(
