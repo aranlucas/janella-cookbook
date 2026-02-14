@@ -28,7 +28,7 @@ railway run pnpm run db:migrate # Run with specific service
 **Required Environment Variables:**
 
 - `DATABASE_URL` - PostgreSQL connection string (access via Railway)
-- `OPENROUTER_API_KEY` - Recipe parsing via OpenRouter (pony-alpha model)
+- `OPENROUTER_API_KEY` - Recipe parsing via OpenRouter (arcee-ai/trinity-large-preview model)
 - `HUGGINGFACE_API_KEY` - Embedding generation (google/embeddinggemma-300m, 768 dims)
 
 **Optional Environment Variables:**
@@ -189,7 +189,7 @@ Located in `lib/search.ts`, implements dual-mode search:
 
 **Recipe Parsing** (`lib/recipe-parser.ts`):
 
-- Uses OpenRouter pony-alpha model via AI SDK (`lib/ai.ts`)
+- Uses OpenRouter arcee-ai/trinity-large-preview model via AI SDK (`lib/ai.ts`)
 - Forces Chat Completions API (not Responses API) for OpenRouter compatibility
 - Zod schema validation for structured output
 
@@ -198,7 +198,7 @@ Located in `lib/search.ts`, implements dual-mode search:
 1. Fetch HTML from URL
 2. Try JSON-LD extraction (schema.org Recipe format)
 3. Fallback: Extract main content with Cheerio + Readability
-4. Parse with OpenRouter pony-alpha in structured output mode
+4. Parse with OpenRouter arcee-ai/trinity-large-preview in structured output mode
 
 **YouTube Import** (`parseRecipeFromYouTube` + `lib/youtube.ts`):
 
@@ -278,7 +278,7 @@ type ActionResult<T> =
 | `search.ts`        | Hybrid semantic + keyword search with RRF                             |
 | `embeddings.ts`    | HuggingFace embedding generation and query enhancement                |
 | `recipe-parser.ts` | AI-powered recipe parsing (URL, YouTube, text)                        |
-| `ai.ts`            | OpenRouter model configuration (pony-alpha)                           |
+| `ai.ts`            | OpenRouter model configuration (arcee-ai/trinity-large-preview)       |
 | `youtube.ts`       | YouTube URL parsing, transcript extraction, metadata                  |
 | `validations.ts`   | Zod schemas for all input validation                                  |
 | `slug.ts`          | Unique slug generation with collision detection                       |
