@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
@@ -28,6 +29,44 @@ function revalidateRecipes(slug?: string) {
     revalidatePath(`/recipe/${slug}`);
     revalidatePath(`/recipe/${slug}/edit`);
   }
+}
+
+/**
+ * Defer embedding generation to run after the response is sent.
+ * Uses Next.js after() so the user gets their recipe immediately
+ * while the embedding is generated in the background for search.
+ */
+function deferEmbeddingGeneration(
+  recipeId: string,
+  recipeData: {
+    title: string;
+    description?: string | null;
+    cuisine?: string | null;
+    course?: string | null;
+    tags?: { name: string }[];
+    ingredients?: { name: string }[];
+    instructions?: { text: string }[];
+    totalTime?: number | null;
+    difficulty?: string | null;
+  },
+) {
+  if (!process.env.HUGGINGFACE_API_KEY) return;
+
+  after(async () => {
+    try {
+      const { searchText, embedding } =
+        await generateRecipeEmbedding(recipeData);
+      const embeddingString = `[${embedding.join(",")}]`;
+
+      await prisma.$executeRaw`
+        UPDATE "Recipe"
+        SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
+        WHERE id = ${recipeId}
+      `;
+    } catch (e) {
+      console.error("Background embedding generation failed:", e);
+    }
+  });
 }
 
 // Helper to create recipe in DB with embedding
@@ -170,29 +209,6 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
     // Generate unique slug for new recipe
     const slug = await generateUniqueSlug(parsed.title);
 
-    // Generate embedding
-    let searchText: string | undefined;
-    let embeddingData: number[] | undefined;
-
-    if (process.env.HUGGINGFACE_API_KEY) {
-      try {
-        const embedResult = await generateRecipeEmbedding({
-          title: parsed.title,
-          description: parsed.description,
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          ingredients: parsed.ingredients,
-          instructions: parsed.instructions,
-          totalTime: parsed.totalTime,
-          difficulty: parsed.difficulty,
-        });
-        searchText = embedResult.searchText;
-        embeddingData = embedResult.embedding;
-      } catch (e) {
-        console.error("Failed to generate embedding:", e);
-      }
-    }
-
     // Create recipe
     const recipe = await createRecipeInDb({
       title: parsed.title,
@@ -211,7 +227,6 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
       sourceUrl: parsedUrl.toString(),
       sourceType: "URL_IMPORT",
       imageUrl: parsed.imageUrl,
-      searchText,
       ingredients: parsed.ingredients.map((ing, index) => ({
         quantity: ing.quantity,
         unit: ing.unit,
@@ -228,15 +243,17 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
       })),
     });
 
-    // Update embedding
-    if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
-    }
+    // Defer embedding generation to run after the response
+    deferEmbeddingGeneration(recipe.id, {
+      title: parsed.title,
+      description: parsed.description,
+      cuisine: parsed.cuisine,
+      course: parsed.course,
+      ingredients: parsed.ingredients,
+      instructions: parsed.instructions,
+      totalTime: parsed.totalTime,
+      difficulty: parsed.difficulty,
+    });
 
     revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
@@ -262,27 +279,6 @@ export async function importFromText(text: string): Promise<ActionResult> {
     // Generate slug
     const slug = await generateUniqueSlug(parsed.title);
 
-    // Generate embedding
-    let searchText: string | undefined;
-    let embeddingData: number[] | undefined;
-
-    try {
-      const embedResult = await generateRecipeEmbedding({
-        title: parsed.title,
-        description: parsed.description,
-        cuisine: parsed.cuisine,
-        course: parsed.course,
-        ingredients: parsed.ingredients,
-        instructions: parsed.instructions,
-        totalTime: parsed.totalTime,
-        difficulty: parsed.difficulty,
-      });
-      searchText = embedResult.searchText;
-      embeddingData = embedResult.embedding;
-    } catch (e) {
-      console.error("Failed to generate embedding:", e);
-    }
-
     // Create recipe
     const recipe = await createRecipeInDb({
       title: parsed.title,
@@ -300,7 +296,6 @@ export async function importFromText(text: string): Promise<ActionResult> {
       course: parsed.course,
       sourceType: "NATURAL_LANGUAGE",
       imageUrl: parsed.imageUrl,
-      searchText,
       ingredients: parsed.ingredients.map((ing, index) => ({
         quantity: ing.quantity,
         unit: ing.unit,
@@ -317,15 +312,17 @@ export async function importFromText(text: string): Promise<ActionResult> {
       })),
     });
 
-    // Update embedding
-    if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
-    }
+    // Defer embedding generation to run after the response
+    deferEmbeddingGeneration(recipe.id, {
+      title: parsed.title,
+      description: parsed.description,
+      cuisine: parsed.cuisine,
+      course: parsed.course,
+      ingredients: parsed.ingredients,
+      instructions: parsed.instructions,
+      totalTime: parsed.totalTime,
+      difficulty: parsed.difficulty,
+    });
 
     revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
@@ -382,29 +379,6 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
     // Generate unique slug for new recipe
     const slug = await generateUniqueSlug(parsed.title);
 
-    // Generate embedding
-    let searchText: string | undefined;
-    let embeddingData: number[] | undefined;
-
-    if (process.env.HUGGINGFACE_API_KEY) {
-      try {
-        const embedResult = await generateRecipeEmbedding({
-          title: parsed.title,
-          description: parsed.description,
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          ingredients: parsed.ingredients,
-          instructions: parsed.instructions,
-          totalTime: parsed.totalTime,
-          difficulty: parsed.difficulty,
-        });
-        searchText = embedResult.searchText;
-        embeddingData = embedResult.embedding;
-      } catch (e) {
-        console.error("Failed to generate embedding:", e);
-      }
-    }
-
     // Create recipe
     const recipe = await createRecipeInDb({
       title: parsed.title,
@@ -423,7 +397,6 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
       sourceUrl: parsedUrl.toString(),
       sourceType: "URL_IMPORT",
       imageUrl: parsed.imageUrl,
-      searchText,
       ingredients: parsed.ingredients.map((ing, index) => ({
         quantity: ing.quantity,
         unit: ing.unit,
@@ -440,15 +413,17 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
       })),
     });
 
-    // Update embedding
-    if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
-    }
+    // Defer embedding generation to run after the response
+    deferEmbeddingGeneration(recipe.id, {
+      title: parsed.title,
+      description: parsed.description,
+      cuisine: parsed.cuisine,
+      course: parsed.course,
+      ingredients: parsed.ingredients,
+      instructions: parsed.instructions,
+      totalTime: parsed.totalTime,
+      difficulty: parsed.difficulty,
+    });
 
     revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
@@ -492,30 +467,6 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
         )
       : [];
 
-    // Generate embedding
-    let searchText: string | undefined;
-    let embeddingData: number[] | undefined;
-
-    if (process.env.HUGGINGFACE_API_KEY) {
-      try {
-        const embedResult = await generateRecipeEmbedding({
-          title: input.title,
-          description: input.description,
-          cuisine: input.cuisine,
-          course: input.course,
-          tags: input.tags?.map((t) => ({ name: t })),
-          ingredients: input.ingredients,
-          instructions: input.instructions,
-          totalTime,
-          difficulty: input.difficulty,
-        });
-        searchText = embedResult.searchText;
-        embeddingData = embedResult.embedding;
-      } catch (e) {
-        console.error("Failed to generate embedding:", e);
-      }
-    }
-
     // Create recipe
     const recipe = await createRecipeInDb({
       title: input.title,
@@ -533,7 +484,6 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
       imageUrl: input.imageUrl,
       notes: input.notes,
       rating: input.rating,
-      searchText,
       ingredients: input.ingredients.map((ing, index) => ({
         quantity: ing.quantity,
         unit: ing.unit,
@@ -552,15 +502,18 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
       tagIds: tagConnections,
     });
 
-    // Update embedding
-    if (embeddingData) {
-      const embeddingString = `[${embeddingData.join(",")}]`;
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET embedding = ${embeddingString}::vector
-        WHERE id = ${recipe.id}
-      `;
-    }
+    // Defer embedding generation to run after the response
+    deferEmbeddingGeneration(recipe.id, {
+      title: input.title,
+      description: input.description,
+      cuisine: input.cuisine,
+      course: input.course,
+      tags: input.tags?.map((t) => ({ name: t })),
+      ingredients: input.ingredients,
+      instructions: input.instructions,
+      totalTime,
+      difficulty: input.difficulty,
+    });
 
     revalidateRecipes(slug);
     return { success: true, data: recipe, slug };
@@ -699,39 +652,24 @@ export async function updateRecipe(
       },
     });
 
-    // Regenerate embedding if content changed
+    // Defer embedding regeneration if content changed
     if (
-      process.env.HUGGINGFACE_API_KEY &&
-      (input.title ||
-        input.description ||
-        input.ingredients ||
-        input.instructions)
+      input.title ||
+      input.description ||
+      input.ingredients ||
+      input.instructions
     ) {
-      try {
-        const recipeForEmbedding = {
-          title: recipe.title,
-          description: recipe.description,
-          cuisine: recipe.cuisine,
-          course: recipe.course,
-          tags: recipe.tags,
-          ingredients: recipe.ingredients,
-          instructions: recipe.instructions,
-          totalTime: recipe.totalTime,
-          difficulty: recipe.difficulty,
-        };
-
-        const { searchText, embedding } =
-          await generateRecipeEmbedding(recipeForEmbedding);
-        const embeddingString = `[${embedding.join(",")}]`;
-
-        await prisma.$executeRaw`
-          UPDATE "Recipe"
-          SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
-          WHERE id = ${id}
-        `;
-      } catch (e) {
-        console.error("Failed to regenerate embedding:", e);
-      }
+      deferEmbeddingGeneration(id, {
+        title: recipe.title,
+        description: recipe.description,
+        cuisine: recipe.cuisine,
+        course: recipe.course,
+        tags: recipe.tags,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        totalTime: recipe.totalTime,
+        difficulty: recipe.difficulty,
+      });
     }
 
     revalidateRecipes(slug);
