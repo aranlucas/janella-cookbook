@@ -20,17 +20,19 @@
  */
 
 import { NextRequest } from "next/server";
+import { ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiNotFound, apiError } from "@/lib/api-response";
+import { toAppError } from "@/lib/errors";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  try {
-    const { slug } = await params;
+  const { slug } = await params;
 
-    const recipe = await prisma.recipe.findUnique({
+  const recipeResult = await ResultAsync.fromPromise(
+    prisma.recipe.findUnique({
       where: { slug },
       include: {
         ingredients: { orderBy: { sortOrder: "asc" } },
@@ -38,15 +40,17 @@ export async function GET(
         tags: true,
         images: true,
       },
-    });
+    }),
+    (error) => toAppError(error),
+  );
 
-    if (!recipe) {
-      return apiNotFound("Recipe", slug);
-    }
-
-    return apiSuccess(recipe);
-  } catch (error) {
-    console.error("Error fetching recipe:", error);
-    return apiError(error);
+  if (recipeResult.isErr()) {
+    return apiError(recipeResult.error);
   }
+
+  if (!recipeResult.value) {
+    return apiNotFound("Recipe", slug);
+  }
+
+  return apiSuccess(recipeResult.value);
 }

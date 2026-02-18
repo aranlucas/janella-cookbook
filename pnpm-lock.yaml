@@ -100,6 +100,9 @@ importers:
       nanoid:
         specifier: ^5.1.6
         version: 5.1.6
+      neverthrow:
+        specifier: ^8.2.0
+        version: 8.2.0
       next:
         specifier: 16.1.6
         version: 16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1513,6 +1516,15 @@ packages:
       {
         integrity: sha512-o6KKQpnCldWMqo8yTD5ClZUKN8hx/26CuZPAcMTCKgP07fDa73KtbW1O0yj0R3o8tekevYNmjHTIicf/cDu+4A==,
       }
+
+  "@rollup/rollup-linux-x64-gnu@4.57.1":
+    resolution:
+      {
+        integrity: sha512-ABca4ceT4N+Tv/GtotnWAeXZUZuM/9AQyCyKYyKnpk4yoA7QIAuBt6Hkgpw8kActYlew2mvckXkvx0FfoInnLg==,
+      }
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
 
   "@rtsao/scc@1.1.0":
     resolution:
@@ -5333,6 +5345,13 @@ packages:
         integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==,
       }
 
+  neverthrow@8.2.0:
+    resolution:
+      {
+        integrity: sha512-kOCT/1MCPAxY5iUV3wytNFUMUolzuwd/VF/1KCx7kf6CutrOsTie+84zTGTpgQycjvfLdBBdvBvFLqFD2c0wkQ==,
+      }
+    engines: { node: ">=18" }
+
   next-themes@0.4.6:
     resolution:
       {
@@ -7902,6 +7921,9 @@ snapshots:
       react: 19.2.4
 
   "@rive-app/webgl2@2.34.2": {}
+
+  "@rollup/rollup-linux-x64-gnu@4.57.1":
+    optional: true
 
   "@rtsao/scc@1.1.0": {}
 
@@ -10597,6 +10619,10 @@ snapshots:
   napi-postinstall@0.3.4: {}
 
   natural-compare@1.4.0: {}
+
+  neverthrow@8.2.0:
+    optionalDependencies:
+      "@rollup/rollup-linux-x64-gnu": 4.57.1
 
   next-themes@0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:

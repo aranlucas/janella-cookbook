@@ -30,98 +30,98 @@
  *   },
  *   meta: { pagination, timestamp, version }
  * }
- *
- * Search Tips:
- * - Use natural language: "quick vegetarian pasta dishes"
- * - Include time constraints: "dinner recipes under 30 minutes"
- * - Specify cuisines: "authentic Italian pizza recipes"
- * - Combine with filters for best results
  */
 
 import { NextRequest } from "next/server";
+import { ResultAsync } from "neverthrow";
 import { hybridSearch } from "@/lib/search";
 import { apiSuccess, apiError, apiValidationError } from "@/lib/api-response";
+import { toAppError, ValidationError } from "@/lib/errors";
 import type { SearchRequest } from "@/types/recipe";
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: SearchRequest = await request.json();
+  const bodyResult = await ResultAsync.fromPromise(
+    request.json() as Promise<SearchRequest>,
+    () => new ValidationError("Invalid JSON in request body"),
+  );
 
-    // Validate query
-    if (!body.query || body.query.trim().length === 0) {
-      return apiValidationError("Query is required", {
-        query: ["Query cannot be empty"],
-      });
-    }
-
-    if (body.query.length > 500) {
-      return apiValidationError("Query too long", {
-        query: ["Query must be 500 characters or less"],
-      });
-    }
-
-    const limit = Math.min(Math.max(body.limit || 20, 1), 100);
-    const offset = Math.max(body.offset || 0, 0);
-
-    const { results, total } = await hybridSearch(
-      body.query,
-      body.filters || {},
-      limit,
-      offset,
-    );
-
-    // Generate suggested filters based on results
-    const suggestedFilters: string[] = [];
-
-    // Suggest cuisine filters if we have a small set of cuisines
-    const cuisines = new Set(
-      results.map((r) => r.recipe.cuisine).filter(Boolean),
-    );
-    if (cuisines.size > 0 && cuisines.size <= 3) {
-      suggestedFilters.push(
-        `Try filtering by cuisine: ${Array.from(cuisines).join(", ")}`,
-      );
-    }
-
-    // Suggest quick filter if applicable
-    const quickRecipes = results.filter(
-      (r) => r.recipe.totalTime && r.recipe.totalTime < 30,
-    );
-    if (quickRecipes.length > 0 && quickRecipes.length < results.length) {
-      suggestedFilters.push(
-        `${quickRecipes.length} quick recipes available (under 30 min) - use maxTime filter`,
-      );
-    }
-
-    // Suggest difficulty filter if mixed
-    const difficulties = new Set(
-      results.map((r) => r.recipe.difficulty).filter(Boolean),
-    );
-    if (difficulties.size > 1) {
-      suggestedFilters.push(
-        `Filter by difficulty: ${Array.from(difficulties).join(", ")}`,
-      );
-    }
-
-    return apiSuccess(
-      {
-        results,
-        total,
-        query: body.query,
-        suggestedFilters:
-          suggestedFilters.length > 0 ? suggestedFilters : undefined,
-      },
-      {
-        pagination: {
-          total,
-          limit,
-          offset,
-          hasMore: offset + results.length < total,
-        },
-      },
-    );
-  } catch (error) {
-    console.error("Error searching recipes:", error);
-    return apiError(error);
+  if (bodyResult.isErr()) {
+    return apiError(bodyResult.error);
   }
+
+  const body = bodyResult.value;
+
+  if (!body.query || body.query.trim().length === 0) {
+    return apiValidationError("Query is required", {
+      query: ["Query cannot be empty"],
+    });
+  }
+
+  if (body.query.length > 500) {
+    return apiValidationError("Query too long", {
+      query: ["Query must be 500 characters or less"],
+    });
+  }
+
+  const limit = Math.min(Math.max(body.limit || 20, 1), 100);
+  const offset = Math.max(body.offset || 0, 0);
+
+  const searchResult = await ResultAsync.fromPromise(
+    hybridSearch(body.query, body.filters || {}, limit, offset),
+    (error) => toAppError(error),
+  );
+
+  if (searchResult.isErr()) {
+    return apiError(searchResult.error);
+  }
+
+  const { results, total } = searchResult.value;
+
+  // Generate suggested filters based on results
+  const suggestedFilters: string[] = [];
+
+  const cuisines = new Set(
+    results.map((r) => r.recipe.cuisine).filter(Boolean),
+  );
+  if (cuisines.size > 0 && cuisines.size <= 3) {
+    suggestedFilters.push(
+      `Try filtering by cuisine: ${Array.from(cuisines).join(", ")}`,
+    );
+  }
+
+  const quickRecipes = results.filter(
+    (r) => r.recipe.totalTime && r.recipe.totalTime < 30,
+  );
+  if (quickRecipes.length > 0 && quickRecipes.length < results.length) {
+    suggestedFilters.push(
+      `${quickRecipes.length} quick recipes available (under 30 min) - use maxTime filter`,
+    );
+  }
+
+  const difficulties = new Set(
+    results.map((r) => r.recipe.difficulty).filter(Boolean),
+  );
+  if (difficulties.size > 1) {
+    suggestedFilters.push(
+      `Filter by difficulty: ${Array.from(difficulties).join(", ")}`,
+    );
+  }
+
+  return apiSuccess(
+    {
+      results,
+      total,
+      query: body.query,
+      suggestedFilters:
+        suggestedFilters.length > 0 ? suggestedFilters : undefined,
+    },
+    {
+      pagination: {
+        total,
+        limit,
+        offset,
+        hasMore: offset + results.length < total,
+      },
+    },
+  );
 }

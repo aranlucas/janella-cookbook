@@ -155,10 +155,12 @@ export function apiNotFound(
 }
 
 /**
- * Wrap an async handler with standardized error handling
+ * Wrap an async handler with standardized error handling.
+ * Handlers may return either success or error responses — all thrown errors
+ * are caught and converted to a standard apiError response.
  */
 export function withApiErrorHandler<T>(
-  handler: () => Promise<NextResponse<ApiSuccessResponse<T>>>,
+  handler: () => Promise<NextResponse<ApiResponse<T>>>,
 ): Promise<NextResponse<ApiResponse<T>>> {
-  return handler().catch((error) => apiError(error));
+  return handler().catch((error: unknown) => apiError(error));
 }
