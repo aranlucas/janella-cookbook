@@ -37,11 +37,11 @@ import { ResultAsync } from "neverthrow";
 import { hybridSearch } from "@/lib/search";
 import { apiSuccess, apiError, apiValidationError } from "@/lib/api-response";
 import { toAppError, ValidationError } from "@/lib/errors";
-import type { SearchRequest } from "@/types/recipe";
+import { searchRequestSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   const bodyResult = await ResultAsync.fromPromise(
-    request.json() as Promise<SearchRequest>,
+    request.json() as Promise<unknown>,
     () => new ValidationError("Invalid JSON in request body"),
   );
 
@@ -49,25 +49,20 @@ export async function POST(request: NextRequest) {
     return apiError(bodyResult.error);
   }
 
-  const body = bodyResult.value;
-
-  if (!body.query || body.query.trim().length === 0) {
-    return apiValidationError("Query is required", {
-      query: ["Query cannot be empty"],
-    });
+  const parsed = searchRequestSchema.safeParse(bodyResult.value);
+  if (!parsed.success) {
+    return apiValidationError(
+      "Invalid search request",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
   }
 
-  if (body.query.length > 500) {
-    return apiValidationError("Query too long", {
-      query: ["Query must be 500 characters or less"],
-    });
-  }
-
-  const limit = Math.min(Math.max(body.limit || 20, 1), 100);
-  const offset = Math.max(body.offset || 0, 0);
+  const { query, filters, limit: rawLimit, offset: rawOffset } = parsed.data;
+  const limit = Math.min(rawLimit ?? 20, 100);
+  const offset = rawOffset ?? 0;
 
   const searchResult = await ResultAsync.fromPromise(
-    hybridSearch(body.query, body.filters || {}, limit, offset),
+    hybridSearch(query, filters || {}, limit, offset),
     (error) => toAppError(error),
   );
 
@@ -111,7 +106,7 @@ export async function POST(request: NextRequest) {
     {
       results,
       total,
-      query: body.query,
+      query,
       suggestedFilters:
         suggestedFilters.length > 0 ? suggestedFilters : undefined,
     },
