@@ -12,7 +12,7 @@
  *     cuisines: string[] - Distinct cuisines in the database
  *     courses: Course[] - Courses that have recipes
  *     difficulties: Difficulty[] - Difficulties that have recipes
- *     tags: Tag[] - All available tags
+ *     tags: Array<{ id, name, slug, recipeCount: number }>
  *     timeRange: { min, max } - Range of totalTime values
  *     counts: {
  *       total: number - Total recipe count
