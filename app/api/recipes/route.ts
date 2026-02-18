@@ -60,7 +60,10 @@ const recipesQuerySchema = z.object({
   course: z.enum(courseValues).optional(),
   difficulty: z.enum(difficultyValues).optional(),
   tag: z.string().optional(),
-  favorite: z.string().optional(),
+  favorite: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
   maxTime: z.coerce.number().positive().optional(),
 });
 
@@ -108,7 +111,7 @@ export async function GET(request: NextRequest) {
     where.tags = { some: { slug: tag } };
   }
 
-  if (favorite === "true") {
+  if (favorite) {
     where.isFavorite = true;
   }
 

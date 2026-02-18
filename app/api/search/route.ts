@@ -57,12 +57,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { query, filters, limit: rawLimit, offset: rawOffset } = parsed.data;
-  const limit = Math.min(rawLimit ?? 20, 100);
-  const offset = rawOffset ?? 0;
+  const { query, filters, limit = 20, offset = 0 } = parsed.data;
 
   const searchResult = await ResultAsync.fromPromise(
-    hybridSearch(query, filters || {}, limit, offset),
+    hybridSearch(query, filters ?? {}, limit, offset),
     (error) => toAppError(error),
   );
 
