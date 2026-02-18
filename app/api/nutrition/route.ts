@@ -20,7 +20,7 @@ const nutritionRequestSchema = z.object({
 
 export async function POST(req: Request) {
   const bodyResult = await ResultAsync.fromPromise(
-    req.json() as Promise<unknown>,
+    req.json(),
     () => new ValidationError("Invalid JSON in request body"),
   );
 

@@ -1,13 +1,25 @@
 import { ToolLoopAgent, createAgentUIStreamResponse, type UIMessage } from "ai";
 import { auth, createMCPClient } from "@ai-sdk/mcp";
+import { z } from "zod";
 import { ResultAsync } from "neverthrow";
 import { MCPOAuthProvider, AuthRequiredError } from "@/lib/mcp-oauth";
 import { headers } from "next/headers";
 import { chatModel } from "@/lib/ai";
-import { apiError } from "@/lib/api-response";
+import { apiError, apiValidationError } from "@/lib/api-response";
 import { toAppError, ValidationError } from "@/lib/errors";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
+
+const chatBodySchema = z.object({
+  messages: z.array(z.custom<UIMessage>()),
+  location: z
+    .object({
+      latitude: z.number(),
+      longitude: z.number(),
+      accuracy: z.number().optional(),
+    })
+    .optional(),
+});
 
 async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
@@ -16,18 +28,9 @@ async function getBaseUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
-interface LocationData {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
-
 export async function POST(request: Request) {
   const bodyResult = await ResultAsync.fromPromise(
-    request.json() as Promise<{
-      messages: UIMessage[];
-      location?: LocationData;
-    }>,
+    request.json(),
     () => new ValidationError("Invalid JSON in request body"),
   );
 
@@ -35,7 +38,15 @@ export async function POST(request: Request) {
     return apiError(bodyResult.error);
   }
 
-  const { messages, location } = bodyResult.value;
+  const parsed = chatBodySchema.safeParse(bodyResult.value);
+  if (!parsed.success) {
+    return apiValidationError(
+      "Invalid request body",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
+  }
+
+  const { messages, location } = parsed.data;
   const baseUrl = await getBaseUrl();
   const authProvider = new MCPOAuthProvider(baseUrl);
 

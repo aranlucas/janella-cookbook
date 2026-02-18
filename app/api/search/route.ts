@@ -41,7 +41,7 @@ import { searchRequestSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
   const bodyResult = await ResultAsync.fromPromise(
-    request.json() as Promise<unknown>,
+    request.json(),
     () => new ValidationError("Invalid JSON in request body"),
   );
 
