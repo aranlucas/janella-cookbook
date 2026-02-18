@@ -36,7 +36,7 @@ import { NextRequest } from "next/server";
 import { ResultAsync } from "neverthrow";
 import { hybridSearch } from "@/lib/search";
 import { apiSuccess, apiError, apiValidationError } from "@/lib/api-response";
-import { toAppError, ValidationError } from "@/lib/errors";
+import { ValidationError } from "@/lib/errors";
 import { searchRequestSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
@@ -59,10 +59,7 @@ export async function POST(request: NextRequest) {
 
   const { query, filters, limit = 20, offset = 0 } = parsed.data;
 
-  const searchResult = await ResultAsync.fromPromise(
-    hybridSearch(query, filters ?? {}, limit, offset),
-    (error) => toAppError(error),
-  );
+  const searchResult = await hybridSearch(query, filters ?? {}, limit, offset);
 
   if (searchResult.isErr()) {
     return apiError(searchResult.error);

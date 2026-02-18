@@ -1,4 +1,5 @@
 import { InferenceClient } from "@huggingface/inference";
+import { ok, err, errAsync, ResultAsync } from "neverthrow";
 import { ExternalApiError } from "./errors";
 
 const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
@@ -7,56 +8,61 @@ const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
  * Generate an embedding vector for the given text using Hugging Face's embedding model
  * Model: google/embeddinggemma-300m (768 dimensions)
  * Free tier: 30,000 requests/month
+ *
+ * Returns Result instead of throwing.
  */
-export async function generateEmbedding(text: string): Promise<number[]> {
+export function generateEmbedding(
+  text: string,
+): ResultAsync<number[], ExternalApiError> {
   if (!process.env.HUGGINGFACE_API_KEY) {
-    throw new ExternalApiError(
-      "Hugging Face",
-      "HUGGINGFACE_API_KEY environment variable is not set",
+    return errAsync(
+      new ExternalApiError(
+        "Hugging Face",
+        "HUGGINGFACE_API_KEY environment variable is not set",
+      ),
     );
   }
 
   if (!text || text.trim().length === 0) {
-    throw new ExternalApiError(
-      "Hugging Face",
-      "Cannot generate embedding for empty text",
+    return errAsync(
+      new ExternalApiError(
+        "Hugging Face",
+        "Cannot generate embedding for empty text",
+      ),
     );
   }
 
-  try {
-    const result = await hf.featureExtraction({
+  return ResultAsync.fromPromise(
+    hf.featureExtraction({
       model: "google/embeddinggemma-300m",
       inputs: text.slice(0, 8000), // Limit input length to avoid token limits
-    });
-
-    // Validate the result is a 1D array of numbers
+    }),
+    (error) => {
+      const message =
+        error instanceof Error ? error.message : "Unknown embedding error";
+      return new ExternalApiError("Hugging Face", message, error);
+    },
+  ).andThen((result) => {
     if (!Array.isArray(result)) {
-      throw new ExternalApiError(
-        "Hugging Face",
-        `Expected array response, got ${typeof result}`,
+      return err(
+        new ExternalApiError(
+          "Hugging Face",
+          `Expected array response, got ${typeof result}`,
+        ),
       );
     }
 
-    // Handle potential 2D array response (batch mode)
     if (result.length > 0 && Array.isArray(result[0])) {
-      throw new ExternalApiError(
-        "Hugging Face",
-        "Expected 1D array response, got 2D array",
+      return err(
+        new ExternalApiError(
+          "Hugging Face",
+          "Expected 1D array response, got 2D array",
+        ),
       );
     }
 
-    return result as number[];
-  } catch (error) {
-    // Re-throw if already an AppError
-    if (error instanceof ExternalApiError) {
-      throw error;
-    }
-
-    // Wrap other errors
-    const message =
-      error instanceof Error ? error.message : "Unknown embedding error";
-    throw new ExternalApiError("Hugging Face", message, error);
-  }
+    return ok(result as number[]);
+  });
 }
 
 /**
@@ -109,7 +115,7 @@ export function generateSearchText(recipe: {
 /**
  * Generate embedding for a recipe and return both the search text and embedding
  */
-export async function generateRecipeEmbedding(recipe: {
+export function generateRecipeEmbedding(recipe: {
   title: string;
   description?: string | null;
   cuisine?: string | null;
@@ -119,11 +125,15 @@ export async function generateRecipeEmbedding(recipe: {
   instructions?: { text: string }[];
   totalTime?: number | null;
   difficulty?: string | null;
-}): Promise<{ searchText: string; embedding: number[] }> {
+}): ResultAsync<
+  { searchText: string; embedding: number[] },
+  ExternalApiError
+> {
   const searchText = generateSearchText(recipe);
-  const embedding = await generateEmbedding(searchText);
-
-  return { searchText, embedding };
+  return generateEmbedding(searchText).map((embedding) => ({
+    searchText,
+    embedding,
+  }));
 }
 
 /**

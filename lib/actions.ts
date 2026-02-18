@@ -53,18 +53,23 @@ function deferEmbeddingGeneration(
   if (!process.env.HUGGINGFACE_API_KEY) return;
 
   after(async () => {
-    try {
-      const { searchText, embedding } =
-        await generateRecipeEmbedding(recipeData);
-      const embeddingString = `[${embedding.join(",")}]`;
+    const result = await generateRecipeEmbedding(recipeData);
+    if (result.isErr()) {
+      console.error("Background embedding generation failed:", result.error);
+      return;
+    }
 
+    const { searchText, embedding } = result.value;
+    const embeddingString = `[${embedding.join(",")}]`;
+
+    try {
       await prisma.$executeRaw`
         UPDATE "Recipe"
         SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
         WHERE id = ${recipeId}
       `;
     } catch (e) {
-      console.error("Background embedding generation failed:", e);
+      console.error("Background embedding SQL update failed:", e);
     }
   });
 }
@@ -183,7 +188,11 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
     });
 
     // Parse recipe from URL
-    const parsed = await parseRecipeFromUrl(parsedUrl.toString());
+    const parsedResult = await parseRecipeFromUrl(parsedUrl.toString());
+    if (parsedResult.isErr()) {
+      return { success: false, error: parsedResult.error.message };
+    }
+    const parsed = parsedResult.value;
 
     // If recipe exists, update it; otherwise create new one
     if (existingRecipe) {
@@ -207,7 +216,11 @@ export async function importFromUrl(url: string): Promise<ActionResult> {
     }
 
     // Generate unique slug for new recipe
-    const slug = await generateUniqueSlug(parsed.title);
+    const slugResult = await generateUniqueSlug(parsed.title);
+    if (slugResult.isErr()) {
+      return { success: false, error: slugResult.error.message };
+    }
+    const slug = slugResult.value;
 
     // Create recipe
     const recipe = await createRecipeInDb({
@@ -274,10 +287,18 @@ export async function importFromText(text: string): Promise<ActionResult> {
     }
 
     // Parse recipe from text
-    const parsed = await parseRecipeFromText(text);
+    const parsedResult = await parseRecipeFromText(text);
+    if (parsedResult.isErr()) {
+      return { success: false, error: parsedResult.error.message };
+    }
+    const parsed = parsedResult.value;
 
     // Generate slug
-    const slug = await generateUniqueSlug(parsed.title);
+    const slugResult = await generateUniqueSlug(parsed.title);
+    if (slugResult.isErr()) {
+      return { success: false, error: slugResult.error.message };
+    }
+    const slug = slugResult.value;
 
     // Create recipe
     const recipe = await createRecipeInDb({
@@ -353,7 +374,11 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
     });
 
     // Parse recipe from YouTube video
-    const parsed = await parseRecipeFromYouTube(parsedUrl.toString());
+    const parsedResult = await parseRecipeFromYouTube(parsedUrl.toString());
+    if (parsedResult.isErr()) {
+      return { success: false, error: parsedResult.error.message };
+    }
+    const parsed = parsedResult.value;
 
     // If recipe exists, update it; otherwise create new one
     if (existingRecipe) {
@@ -377,7 +402,11 @@ export async function importFromYouTube(url: string): Promise<ActionResult> {
     }
 
     // Generate unique slug for new recipe
-    const slug = await generateUniqueSlug(parsed.title);
+    const slugResult = await generateUniqueSlug(parsed.title);
+    if (slugResult.isErr()) {
+      return { success: false, error: slugResult.error.message };
+    }
+    const slug = slugResult.value;
 
     // Create recipe
     const recipe = await createRecipeInDb({
@@ -444,7 +473,11 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     }
 
     // Generate unique slug
-    const slug = await generateUniqueSlug(input.title);
+    const slugResult = await generateUniqueSlug(input.title);
+    if (slugResult.isErr()) {
+      return { success: false, error: slugResult.error.message };
+    }
+    const slug = slugResult.value;
 
     // Calculate total time
     const totalTime =
@@ -519,7 +552,10 @@ export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error creating recipe:", error);
-    return { success: false, error: "Failed to create recipe" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create recipe",
+    };
   }
 }
 
@@ -546,7 +582,11 @@ export async function updateRecipe(
     // Generate new slug if title changed
     let slug = existing.slug;
     if (input.title && input.title !== existing.title) {
-      slug = await generateUniqueSlug(input.title, id);
+      const slugResult = await generateUniqueSlug(input.title, id);
+      if (slugResult.isErr()) {
+        return { success: false, error: slugResult.error.message };
+      }
+      slug = slugResult.value;
     }
 
     // Calculate total time
@@ -676,7 +716,10 @@ export async function updateRecipe(
     return { success: true, data: recipe, slug };
   } catch (error) {
     console.error("Error updating recipe:", error);
-    return { success: false, error: "Failed to update recipe" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update recipe",
+    };
   }
 }
 
@@ -701,7 +744,13 @@ export async function toggleFavorite(
     return { success: true, data: recipe };
   } catch (error) {
     console.error("Error toggling favorite:", error);
-    return { success: false, error: "Failed to update favorite status" };
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update favorite status",
+    };
   }
 }
 
@@ -729,14 +778,17 @@ export async function markAsCooked(
     return { success: true, data: recipe };
   } catch (error) {
     console.error("Error marking as cooked:", error);
-    return { success: false, error: "Failed to mark as cooked" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to mark as cooked",
+    };
   }
 }
 
 // Delete a recipe
 export async function deleteRecipe(
   id: string,
-): Promise<{ success: true } | { success: false; error: string }> {
+): Promise<ActionResult<null>> {
   try {
     const existing = await prisma.recipe.findUnique({ where: { id } });
 
@@ -747,10 +799,13 @@ export async function deleteRecipe(
     await prisma.recipe.delete({ where: { id } });
 
     revalidateRecipes();
-    return { success: true };
+    return { success: true, data: null };
   } catch (error) {
     console.error("Error deleting recipe:", error);
-    return { success: false, error: "Failed to delete recipe" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete recipe",
+    };
   }
 }
 
@@ -775,7 +830,11 @@ export async function regenerateFromSource(id: string): Promise<ActionResult> {
     }
 
     // Parse the recipe from the source URL again
-    const parsed = await parseRecipeFromUrl(existing.sourceUrl);
+    const parsedResult = await parseRecipeFromUrl(existing.sourceUrl);
+    if (parsedResult.isErr()) {
+      return { success: false, error: parsedResult.error.message };
+    }
+    const parsed = parsedResult.value;
 
     // Update the recipe with the newly parsed data
     const result = await updateRecipe(id, {

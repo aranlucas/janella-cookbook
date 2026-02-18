@@ -2,7 +2,13 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
-import { RecipeParseError, ExternalApiError } from "./errors";
+import { errAsync, ResultAsync } from "neverthrow";
+import {
+  RecipeParseError,
+  ExternalApiError,
+  toAppError,
+  type AppError,
+} from "./errors";
 import { model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
@@ -10,6 +16,7 @@ import {
   extractYouTubeVideoId,
   getYouTubeTranscript,
   getYouTubeVideoMetadata,
+  type TranscriptResult,
 } from "./youtube";
 
 // Model context window configuration
@@ -273,10 +280,22 @@ async function fetchHtml(url: string): Promise<string> {
 }
 
 /**
- * Parse a recipe from a URL
- * Uses markdown.new for cleaner content extraction, with HTML fallback
+ * Parse a recipe from a URL.
+ * Uses markdown.new for cleaner content extraction, with HTML fallback.
+ * Returns ResultAsync instead of throwing.
  */
-export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
+export function parseRecipeFromUrl(
+  url: string,
+): ResultAsync<ParsedRecipe, AppError> {
+  return ResultAsync.fromPromise(parseRecipeFromUrlImpl(url), (error) =>
+    error instanceof RecipeParseError || error instanceof ExternalApiError
+      ? error
+      : toAppError(error),
+  );
+}
+
+/** Internal throwing implementation for parseRecipeFromUrl */
+async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
   const validatedUrl = validateUrl(url);
   const href = validatedUrl.href;
 
@@ -447,9 +466,21 @@ CRITICAL INSTRUCTIONS:
 }
 
 /**
- * Parse a recipe from natural language text
+ * Parse a recipe from natural language text.
+ * Returns ResultAsync instead of throwing.
  */
-export async function parseRecipeFromText(text: string): Promise<ParsedRecipe> {
+export function parseRecipeFromText(
+  text: string,
+): ResultAsync<ParsedRecipe, AppError> {
+  return ResultAsync.fromPromise(parseRecipeFromTextImpl(text), (error) =>
+    error instanceof RecipeParseError || error instanceof ExternalApiError
+      ? error
+      : toAppError(error),
+  );
+}
+
+/** Internal throwing implementation for parseRecipeFromText */
+async function parseRecipeFromTextImpl(text: string): Promise<ParsedRecipe> {
   if (!text || text.trim().length < 20) {
     throw new RecipeParseError("Please provide more recipe text to parse");
   }
@@ -504,24 +535,42 @@ Be accurate and organized. Extract all ingredients and instructions even if form
 }
 
 /**
- * Parse a recipe from a YouTube video URL
- * Extracts the transcript and parses it into structured recipe data
+ * Parse a recipe from a YouTube video URL.
+ * Extracts the transcript and parses it into structured recipe data.
+ * Returns ResultAsync instead of throwing.
  */
-export async function parseRecipeFromYouTube(
+export function parseRecipeFromYouTube(
   url: string,
-): Promise<ParsedRecipe> {
-  // Extract video ID from URL
-  const videoId = extractYouTubeVideoId(url);
+): ResultAsync<ParsedRecipe, AppError> {
+  // Extract video ID (sync Result)
+  const videoIdResult = extractYouTubeVideoId(url);
+  if (videoIdResult.isErr()) {
+    return errAsync(videoIdResult.error);
+  }
+  const videoId = videoIdResult.value;
 
-  // Get video metadata
+  // Get video metadata (pure, cannot fail)
   const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
 
-  // Fetch transcript or description (may also return video title)
-  const {
-    text: content,
-    title: videoTitle,
-    source,
-  } = await getYouTubeTranscript(videoId);
+  // Fetch transcript, then parse it into a recipe
+  return getYouTubeTranscript(videoId).andThen((transcript) =>
+    ResultAsync.fromPromise(
+      parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl),
+      (error) =>
+        error instanceof RecipeParseError || error instanceof ExternalApiError
+          ? error
+          : toAppError(error),
+    ),
+  );
+}
+
+/** Internal throwing implementation for YouTube transcript parsing */
+async function parseYouTubeTranscriptImpl(
+  url: string,
+  transcript: TranscriptResult,
+  thumbnailUrl: string,
+): Promise<ParsedRecipe> {
+  const { text: content, title: videoTitle, source } = transcript;
 
   if (!content || content.trim().length < 50) {
     throw new RecipeParseError(

@@ -1,23 +1,31 @@
 import { YoutubeTranscript } from "youtube-transcript";
 import { Innertube } from "youtubei.js/web";
-import { RecipeParseError, ExternalApiError } from "./errors";
+import { ok, err, ResultAsync, type Result } from "neverthrow";
+import {
+  RecipeParseError,
+  ExternalApiError,
+  type AppError,
+} from "./errors";
+
+export type TranscriptResult = {
+  text: string;
+  title?: string;
+  source?: "transcript" | "description";
+};
 
 /**
- * Extract YouTube video ID from various URL formats
- * Supports:
- * - https://www.youtube.com/watch?v=VIDEO_ID
- * - https://youtu.be/VIDEO_ID
- * - https://www.youtube.com/embed/VIDEO_ID
- * - https://www.youtube.com/shorts/VIDEO_ID
- * - https://m.youtube.com/watch?v=VIDEO_ID
+ * Extract YouTube video ID from various URL formats.
+ * Returns Result instead of throwing.
  */
-export function extractYouTubeVideoId(url: string): string {
+export function extractYouTubeVideoId(
+  url: string,
+): Result<string, RecipeParseError> {
   try {
     const parsedUrl = new URL(url);
 
     // Handle youtu.be short URLs
     if (parsedUrl.hostname === "youtu.be") {
-      return parsedUrl.pathname.slice(1).split("?")[0];
+      return ok(parsedUrl.pathname.slice(1).split("?")[0]);
     }
 
     // Handle youtube.com URLs
@@ -29,48 +37,65 @@ export function extractYouTubeVideoId(url: string): string {
       // Handle /watch?v=VIDEO_ID
       const videoId = parsedUrl.searchParams.get("v");
       if (videoId) {
-        return videoId;
+        return ok(videoId);
       }
 
       // Handle /shorts/VIDEO_ID
       const shortsMatch = parsedUrl.pathname.match(/\/shorts\/([^/?]+)/);
       if (shortsMatch) {
-        return shortsMatch[1];
+        return ok(shortsMatch[1]);
       }
 
       // Handle /embed/VIDEO_ID
       const embedMatch = parsedUrl.pathname.match(/\/embed\/([^/?]+)/);
       if (embedMatch) {
-        return embedMatch[1];
+        return ok(embedMatch[1]);
       }
 
       // Handle /v/VIDEO_ID
       const vMatch = parsedUrl.pathname.match(/\/v\/([^/?]+)/);
       if (vMatch) {
-        return vMatch[1];
+        return ok(vMatch[1]);
       }
     }
 
-    throw new RecipeParseError(
-      "Could not extract video ID from YouTube URL",
-      url,
+    return err(
+      new RecipeParseError("Could not extract video ID from YouTube URL", url),
     );
-  } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
-    throw new RecipeParseError("Invalid YouTube URL format", url);
+  } catch {
+    return err(new RecipeParseError("Invalid YouTube URL format", url));
   }
 }
 
 /**
- * Get video transcript from YouTube using youtubei.js (primary) with fallback to youtube-transcript
- * If transcript is unavailable, falls back to video description
- * youtubei.js is more robust and less likely to be blocked by YouTube
+ * Get video transcript from YouTube using youtubei.js (primary) with fallback to youtube-transcript.
+ * If transcript is unavailable, falls back to video description.
+ * Returns ResultAsync instead of throwing.
  */
-export async function getYouTubeTranscript(videoId: string): Promise<{
-  text: string;
-  title?: string;
-  source?: "transcript" | "description";
-}> {
+export function getYouTubeTranscript(
+  videoId: string,
+): ResultAsync<TranscriptResult, AppError> {
+  return ResultAsync.fromPromise(
+    getYouTubeTranscriptImpl(videoId),
+    (error) =>
+      error instanceof ExternalApiError || error instanceof RecipeParseError
+        ? error
+        : new ExternalApiError(
+            "YouTube",
+            error instanceof Error
+              ? error.message
+              : "Unknown transcript error",
+            error,
+          ),
+  );
+}
+
+/**
+ * Internal implementation that uses throw/catch for complex fallback logic.
+ */
+async function getYouTubeTranscriptImpl(
+  videoId: string,
+): Promise<TranscriptResult> {
   let videoDescription: string | undefined;
   let videoTitle: string | undefined;
 
@@ -91,14 +116,14 @@ export async function getYouTubeTranscript(videoId: string): Promise<{
     const transcriptData = await info.getTranscript();
 
     if (!transcriptData) {
-      throw new Error("No transcript available");
+      throw new ExternalApiError("YouTube", "No transcript available");
     }
 
     // The transcript data structure from youtubei.js
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const segments = (transcriptData as any).content?.body?.initial_segments;
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
-      throw new Error("No transcript segments found");
+      throw new ExternalApiError("YouTube", "No transcript segments found");
     }
 
     // Combine all transcript segments into a single text
@@ -113,7 +138,7 @@ export async function getYouTubeTranscript(videoId: string): Promise<{
       .join(" ");
 
     if (!text || text.trim().length === 0) {
-      throw new Error("Transcript is empty");
+      throw new ExternalApiError("YouTube", "Transcript is empty");
     }
 
     return {
@@ -135,7 +160,7 @@ export async function getYouTubeTranscript(videoId: string): Promise<{
       const transcript = await YoutubeTranscript.fetchTranscript(videoId);
 
       if (!transcript || transcript.length === 0) {
-        throw new Error("No transcript available");
+        throw new ExternalApiError("YouTube", "No transcript available");
       }
 
       // Combine all transcript segments into a single text
