@@ -44,8 +44,10 @@ export function SearchBar({
           try {
             const existing = window.localStorage.getItem(storageKey);
             const parsed = existing ? (JSON.parse(existing) as string[]) : [];
-            const next = [trimmed, ...parsed.filter((item) => item !== trimmed)]
-              .slice(0, 8);
+            const next = [
+              trimmed,
+              ...parsed.filter((item) => item !== trimmed),
+            ].slice(0, 8);
             window.localStorage.setItem(storageKey, JSON.stringify(next));
           } catch {
             // Ignore storage parsing failures and continue search navigation.

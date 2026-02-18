@@ -678,7 +678,7 @@ export const PromptInput = ({
         }
       }
     },
-     
+
     [usingProvider],
   );
 

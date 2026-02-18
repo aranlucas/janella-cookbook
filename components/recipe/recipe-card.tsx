@@ -33,7 +33,9 @@ export function RecipeCard({
 
   const servingsLabel = recipe.servings?.trim();
   const hasServingsLabel =
-    servingsLabel && /serving/i.test(servingsLabel) ? servingsLabel : servingsLabel;
+    servingsLabel && /serving/i.test(servingsLabel)
+      ? servingsLabel
+      : servingsLabel;
 
   return (
     <Link href={`/recipe/${recipe.slug}`} className="group block h-full">

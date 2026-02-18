@@ -51,7 +51,10 @@ function sortRecipesInMemory(
       case "newest":
         return b.createdAt.getTime() - a.createdAt.getTime();
       case "quick":
-        return (a.totalTime ?? Number.MAX_SAFE_INTEGER) - (b.totalTime ?? Number.MAX_SAFE_INTEGER);
+        return (
+          (a.totalTime ?? Number.MAX_SAFE_INTEGER) -
+          (b.totalTime ?? Number.MAX_SAFE_INTEGER)
+        );
       case "favorites":
         if (a.isFavorite === b.isFavorite) {
           return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -112,7 +115,13 @@ async function getAllRecipes(
         ITEMS_PER_PAGE,
         offset,
       );
-      return { recipes: sortRecipesInMemory(results.map((r) => r.recipe), sort), total };
+      return {
+        recipes: sortRecipesInMemory(
+          results.map((r) => r.recipe),
+          sort,
+        ),
+        total,
+      };
     }
 
     const orderByMap: Record<SortOption, unknown> = {

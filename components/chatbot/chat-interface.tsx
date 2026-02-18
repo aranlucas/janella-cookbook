@@ -400,7 +400,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     <div className="chat-container relative flex h-full w-full flex-col overflow-hidden bg-transparent">
       {/* Messages area */}
       <Conversation className="relative z-10 flex-1 bg-transparent">
-        <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6 md:px-6 md:pt-8">
+        <ConversationContent className="mx-auto w-full max-w-3xl px-4 pt-6 pb-6 md:px-6 md:pt-8">
           {messages.length === 0 ? (
             <div className="flex h-full min-h-[10vh] flex-col items-center justify-center gap-4 px-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rustic-terracotta text-white shadow-sm">
@@ -596,7 +596,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                     onClick={() => handleSuggestionClick(suggestion.text)}
                     suggestion={suggestion.text}
                     variant="ghost"
-                    className="group/chip h-11 w-full justify-start gap-2 bg-white text-rustic-charcoal/95 ring-1 ring-rustic-sand/35 shadow-[0_8px_18px_-14px_rgba(45,41,38,0.35)] transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:ring-rustic-terracotta/35"
+                    className="group/chip h-11 w-full justify-start gap-2 bg-white text-rustic-charcoal/95 shadow-[0_8px_18px_-14px_rgba(45,41,38,0.35)] ring-1 ring-rustic-sand/35 transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:ring-rustic-terracotta/35"
                   >
                     <span className="text-rustic-charcoal/65 transition-colors group-hover/chip:text-rustic-terracotta">
                       {suggestion.icon}
@@ -612,7 +612,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                     onClick={() => handleSuggestionClick(suggestion.text)}
                     suggestion={suggestion.text}
                     variant="ghost"
-                    className="group/chip gap-1.5 bg-white text-rustic-charcoal/95 ring-1 ring-rustic-sand/35 shadow-[0_8px_18px_-14px_rgba(45,41,38,0.4)] transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:ring-rustic-terracotta/35"
+                    className="group/chip gap-1.5 bg-white text-rustic-charcoal/95 shadow-[0_8px_18px_-14px_rgba(45,41,38,0.4)] ring-1 ring-rustic-sand/35 transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:ring-rustic-terracotta/35"
                   >
                     <span className="text-rustic-charcoal/65 transition-colors group-hover/chip:text-rustic-terracotta">
                       {suggestion.icon}
@@ -630,7 +630,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             multiple
             accept="image/*"
             onSubmit={handleSubmit}
-            className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_12px_28px_-18px_rgba(45,41,38,0.35)] ring-1 ring-rustic-sand/35 transition-all focus-within:ring-rustic-terracotta/45 focus-within:shadow-[0_20px_34px_-20px_rgba(224,78,57,0.32)] [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0"
+            className="overflow-hidden rounded-[1.35rem] bg-white shadow-[0_12px_28px_-18px_rgba(45,41,38,0.35)] ring-1 ring-rustic-sand/35 transition-all focus-within:shadow-[0_20px_34px_-20px_rgba(224,78,57,0.32)] focus-within:ring-rustic-terracotta/45 [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0"
           >
             <PromptInputHeader>
               <PromptInputAttachmentsDisplay />
@@ -707,7 +707,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               />
             </PromptInputFooter>
           </PromptInput>
-
         </div>
       </div>
     </div>

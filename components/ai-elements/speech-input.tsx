@@ -64,7 +64,11 @@ const getSpeechRecognitionCtor = (): SpeechRecognitionCtor | null => {
   }
 
   const speechWindow = window as SpeechRecognitionWindow;
-  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
+  return (
+    speechWindow.SpeechRecognition ??
+    speechWindow.webkitSpeechRecognition ??
+    null
+  );
 };
 
 type SpeechInputMode = "speech-recognition" | "media-recorder" | "none";
