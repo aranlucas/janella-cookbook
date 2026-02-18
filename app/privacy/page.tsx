@@ -13,7 +13,7 @@ export default function PrivacyPage() {
     {
       id: "introduction",
       title: "Introduction",
-      body: "Janella's Kitchen (\"we,\" \"our,\" or \"us\") respects your privacy. This Privacy Policy explains how we collect, use, and act on your personal information when you visit our website.",
+      body: 'Janella\'s Kitchen ("we," "our," or "us") respects your privacy. This Privacy Policy explains how we collect, use, and act on your personal information when you visit our website.',
     },
     {
       id: "information",

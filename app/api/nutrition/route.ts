@@ -1,8 +1,10 @@
 import { streamText } from "ai";
 import { z } from "zod";
+import { ResultAsync } from "neverthrow";
 import { model } from "@/lib/ai";
+import { apiError, apiValidationError } from "@/lib/api-response";
+import { ValidationError } from "@/lib/errors";
 
-// Request validation schema
 const nutritionRequestSchema = z.object({
   title: z.string(),
   ingredients: z.array(
@@ -17,29 +19,43 @@ const nutritionRequestSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const validated = nutritionRequestSchema.parse(body);
+  const bodyResult = await ResultAsync.fromPromise(
+    req.json(),
+    () => new ValidationError("Invalid JSON in request body"),
+  );
 
-    // Format ingredients for the prompt
-    const ingredientsList = validated.ingredients
-      .map((ing) => {
-        const parts = [
-          ing.quantity,
-          ing.unit,
-          ing.name,
-          ing.notes ? `(${ing.notes})` : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-        return `- ${parts}`;
-      })
-      .join("\n");
+  if (bodyResult.isErr()) {
+    return apiError(bodyResult.error);
+  }
 
-    const prompt = `Analyze this recipe and provide nutritional information per serving:
+  const parsed = nutritionRequestSchema.safeParse(bodyResult.value);
+  if (!parsed.success) {
+    return apiValidationError(
+      "Invalid request body",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
+  }
 
-Recipe: ${validated.title}
-Servings: ${validated.servings || "Not specified"}
+  const { title, ingredients, servings } = parsed.data;
+
+  const ingredientsList = ingredients
+    .map((ing) => {
+      const parts = [
+        ing.quantity,
+        ing.unit,
+        ing.name,
+        ing.notes ? `(${ing.notes})` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return `- ${parts}`;
+    })
+    .join("\n");
+
+  const prompt = `Analyze this recipe and provide nutritional information per serving:
+
+Recipe: ${title}
+Servings: ${servings || "Not specified"}
 
 Ingredients:
 ${ingredientsList}
@@ -53,23 +69,11 @@ Please provide:
 
 Format your response in a clear, easy-to-read way. Be realistic with estimates and note that these are approximations.`;
 
-    const result = streamText({
-      model: model,
-      prompt: prompt,
-      temperature: 0.7,
-    });
+  const result = streamText({
+    model: model,
+    prompt: prompt,
+    temperature: 0.7,
+  });
 
-    return result.toUIMessageStreamResponse();
-  } catch (error) {
-    console.error("Error generating nutrition facts:", error);
-    return new Response(
-      JSON.stringify({
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate nutrition facts",
-      }),
-      { status: 500 },
-    );
-  }
+  return result.toUIMessageStreamResponse();
 }

@@ -31,19 +31,25 @@ export default function AddRecipePage() {
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           <div className="rounded-lg bg-background/70 p-3">
-            <p className="text-xs font-semibold text-foreground">1. Choose Source</p>
+            <p className="text-xs font-semibold text-foreground">
+              1. Choose Source
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               URL, YouTube, text paste, or manual.
             </p>
           </div>
           <div className="rounded-lg bg-background/70 p-3">
-            <p className="text-xs font-semibold text-foreground">2. Review Extracted Data</p>
+            <p className="text-xs font-semibold text-foreground">
+              2. Review Extracted Data
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Verify ingredients and instruction structure.
             </p>
           </div>
           <div className="rounded-lg bg-background/70 p-3">
-            <p className="text-xs font-semibold text-foreground">3. Save and Edit</p>
+            <p className="text-xs font-semibold text-foreground">
+              3. Save and Edit
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
               Save recipe, then fine-tune details in the editor.
             </p>

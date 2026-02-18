@@ -61,9 +61,7 @@ async function getCategories() {
 
     return [
       ...courses.map((c) => ({
-        name: c.course
-          ? formatCategoryName(c.course)
-          : "Unknown",
+        name: c.course ? formatCategoryName(c.course) : "Unknown",
         value: c.course,
         count: c._count,
         type: "course",
@@ -127,7 +125,9 @@ export default async function CategoriesPage() {
                     <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
                       {category.type === "course" ? "Course" : "Cuisine"}
                     </span>
-                    <span className="font-medium">{category.count} recipes</span>
+                    <span className="font-medium">
+                      {category.count} recipes
+                    </span>
                   </div>
                 </CardContent>
               </Card>

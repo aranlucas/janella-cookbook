@@ -1,10 +1,25 @@
 import { ToolLoopAgent, createAgentUIStreamResponse, type UIMessage } from "ai";
 import { auth, createMCPClient } from "@ai-sdk/mcp";
+import { z } from "zod";
+import { ResultAsync } from "neverthrow";
 import { MCPOAuthProvider, AuthRequiredError } from "@/lib/mcp-oauth";
 import { headers } from "next/headers";
 import { chatModel } from "@/lib/ai";
+import { apiError, apiValidationError } from "@/lib/api-response";
+import { toAppError, ValidationError } from "@/lib/errors";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
+
+const chatBodySchema = z.object({
+  messages: z.array(z.custom<UIMessage>()),
+  location: z
+    .object({
+      latitude: z.number(),
+      longitude: z.number(),
+      accuracy: z.number().optional(),
+    })
+    .optional(),
+});
 
 async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
@@ -13,51 +28,85 @@ async function getBaseUrl(): Promise<string> {
   return `${protocol}://${host}`;
 }
 
-interface LocationData {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
-
 export async function POST(request: Request) {
-  const { messages, location } = (await request.json()) as {
-    messages: UIMessage[];
-    location?: LocationData;
-  };
+  const bodyResult = await ResultAsync.fromPromise(
+    request.json(),
+    () => new ValidationError("Invalid JSON in request body"),
+  );
+
+  if (bodyResult.isErr()) {
+    return apiError(bodyResult.error);
+  }
+
+  const parsed = chatBodySchema.safeParse(bodyResult.value);
+  if (!parsed.success) {
+    return apiValidationError(
+      "Invalid request body",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
+  }
+
+  const { messages, location } = parsed.data;
   const baseUrl = await getBaseUrl();
   const authProvider = new MCPOAuthProvider(baseUrl);
 
-  try {
-    // Attempt to authenticate with the MCP server
-    await auth(authProvider, { serverUrl: new URL(MCP_SERVER_URL) });
+  // Auth is handled separately — AuthRequiredError needs its own 401 response
+  const authResult = await ResultAsync.fromPromise(
+    auth(authProvider, { serverUrl: new URL(MCP_SERVER_URL) }),
+    (error) => error,
+  );
 
-    const mcpClient = await createMCPClient({
-      transport: {
-        type: "http",
-        url: MCP_SERVER_URL,
-        authProvider,
-      },
-    });
+  if (authResult.isErr()) {
+    const error = authResult.error;
+    if (error instanceof AuthRequiredError) {
+      return Response.json(
+        {
+          error: "auth_required",
+          authorizationUrl: error.authorizationUrl,
+        },
+        { status: 401 },
+      );
+    }
+    return apiError(toAppError(error));
+  }
 
-    const tools = await mcpClient.tools();
+  const mcpResult = await ResultAsync.fromPromise(
+    (async () => {
+      const mcpClient = await createMCPClient({
+        transport: {
+          type: "http",
+          url: MCP_SERVER_URL,
+          authProvider,
+        },
+      });
 
-    // Discover and load all available resources
-    const resourceList = await mcpClient.listResources();
+      const tools = await mcpClient.tools();
+      const resourceList = await mcpClient.listResources();
 
-    const resourceContents = await Promise.all(
-      (resourceList.resources ?? []).map(async (r) => {
-        const data = await mcpClient.readResource({ uri: r.uri });
-        return `## ${r.name}:\n${JSON.stringify(data.contents)}`;
-      }),
-    );
+      const resourceContents = await Promise.all(
+        (resourceList.resources ?? []).map(async (r) => {
+          const data = await mcpClient.readResource({ uri: r.uri });
+          return `## ${r.name}:\n${JSON.stringify(data.contents)}`;
+        }),
+      );
 
-    const resourceContext =
-      resourceContents.length > 0 ? `\n\n${resourceContents.join("\n\n")}` : "";
+      return { tools, resourceContents };
+    })(),
+    (error) => toAppError(error),
+  );
 
-    const agent = new ToolLoopAgent({
-      model: chatModel,
-      tools,
-      instructions: `You are a knowledgeable and encouraging culinary assistant for the Janella Cookbook app, designed for a home cook who enjoys making meals from scratch. Your role is to provide accessible recipes, explain techniques when needed, and seamlessly handle grocery ordering to support home cooking.
+  if (mcpResult.isErr()) {
+    return apiError(mcpResult.error);
+  }
+
+  const { tools, resourceContents } = mcpResult.value;
+  const resourceContext =
+    resourceContents.length > 0 ? `\n\n${resourceContents.join("\n\n")}` : "";
+
+  const agent = new ToolLoopAgent({
+    model: chatModel,
+    tools,
+    instructions: `You are a knowledgeable and encouraging culinary assistant for the Janella Cookbook app, designed for a home cook who enjoys making meals from scratch. Your role is to provide accessible recipes, explain techniques when needed, and seamlessly handle grocery ordering to support home cooking.
 
 ## Core Principles
 
@@ -147,25 +196,10 @@ ${
 - Phrase it naturally, like: "To help find grocery stores near you, could you enable location sharing using the pin icon in the chat input?"`
 }
 ${resourceContext}`,
-    });
+  });
 
-    return createAgentUIStreamResponse({
-      agent,
-      uiMessages: messages,
-    });
-  } catch (error) {
-    // Handle OAuth redirect requirement
-    if (error instanceof AuthRequiredError) {
-      return Response.json(
-        {
-          error: "auth_required",
-          authorizationUrl: error.authorizationUrl,
-        },
-        { status: 401 },
-      );
-    }
-
-    console.error("Chat API error:", error);
-    return Response.json({ error: "Internal server error" }, { status: 500 });
-  }
+  return createAgentUIStreamResponse({
+    agent,
+    uiMessages: messages,
+  });
 }

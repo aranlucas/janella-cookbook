@@ -18,7 +18,7 @@ export default function TermsPage() {
     {
       id: "content",
       title: "Content",
-      body: "Our content is for informational purposes only. The recipes are provided \"as is\" and we make no guarantees regarding the outcome.",
+      body: 'Our content is for informational purposes only. The recipes are provided "as is" and we make no guarantees regarding the outcome.',
     },
     {
       id: "changes",

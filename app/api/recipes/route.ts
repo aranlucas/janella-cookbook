@@ -31,11 +31,15 @@
  */
 
 import { NextRequest } from "next/server";
+import { z } from "zod";
+import { ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { apiPaginated, apiError, apiValidationError } from "@/lib/api-response";
-import type { Course, Difficulty, Prisma } from "@prisma/client";
+import { toAppError } from "@/lib/errors";
+import { courseValues, difficultyValues } from "@/lib/validations";
+import type { Prisma } from "@prisma/client";
 
-const VALID_SORT_FIELDS = [
+const SORT_FIELDS = [
   "createdAt",
   "updatedAt",
   "title",
@@ -47,106 +51,76 @@ const VALID_SORT_FIELDS = [
   "lastCooked",
 ] as const;
 
-const VALID_COURSES: Course[] = [
-  "BREAKFAST",
-  "LUNCH",
-  "DINNER",
-  "APPETIZER",
-  "SIDE",
-  "DESSERT",
-  "SNACK",
-  "DRINK",
-  "SAUCE",
-  "BREAD",
-];
-
-const VALID_DIFFICULTIES: Difficulty[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
+const recipesQuerySchema = z.object({
+  limit: z.coerce.number().min(1).max(100).default(20),
+  offset: z.coerce.number().min(0).default(0),
+  sort: z.enum(SORT_FIELDS).default("createdAt"),
+  order: z.enum(["asc", "desc"] as const).default("desc"),
+  cuisine: z.string().optional(),
+  course: z.enum(courseValues).optional(),
+  difficulty: z.enum(difficultyValues).optional(),
+  tag: z.string().optional(),
+  favorite: z
+    .string()
+    .optional()
+    .transform((v) => v === "true"),
+  maxTime: z.coerce.number().positive().optional(),
+});
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
 
-    // Parse pagination
-    const limit = Math.min(
-      Math.max(parseInt(searchParams.get("limit") || "20", 10) || 20, 1),
-      100,
+  const parsed = recipesQuerySchema.safeParse(Object.fromEntries(searchParams));
+
+  if (!parsed.success) {
+    return apiValidationError(
+      "Invalid query parameters",
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
     );
-    const offset = Math.max(
-      parseInt(searchParams.get("offset") || "0", 10) || 0,
-      0,
-    );
+  }
 
-    // Parse sorting
-    const sortField = searchParams.get("sort") || "createdAt";
-    const sortOrder = searchParams.get("order") === "asc" ? "asc" : "desc";
+  const {
+    limit,
+    offset,
+    sort,
+    order,
+    cuisine,
+    course,
+    difficulty,
+    tag,
+    favorite,
+    maxTime,
+  } = parsed.data;
 
-    if (
-      !VALID_SORT_FIELDS.includes(
-        sortField as (typeof VALID_SORT_FIELDS)[number],
-      )
-    ) {
-      return apiValidationError(
-        `Invalid sort field: ${sortField}. Valid fields: ${VALID_SORT_FIELDS.join(", ")}`,
-      );
-    }
+  // Build where clause
+  const where: Prisma.RecipeWhereInput = {};
 
-    // Parse filters
-    const cuisine = searchParams.get("cuisine");
-    const courseParam = searchParams.get("course")?.toUpperCase() as
-      | Course
-      | undefined;
-    const difficultyParam = searchParams.get("difficulty")?.toUpperCase() as
-      | Difficulty
-      | undefined;
-    const tagSlug = searchParams.get("tag");
-    const favoriteParam = searchParams.get("favorite");
-    const maxTimeParam = searchParams.get("maxTime");
+  if (cuisine) {
+    where.cuisine = { equals: cuisine, mode: "insensitive" };
+  }
 
-    // Validate enum filters
-    if (courseParam && !VALID_COURSES.includes(courseParam)) {
-      return apiValidationError(
-        `Invalid course: ${courseParam}. Valid courses: ${VALID_COURSES.join(", ")}`,
-      );
-    }
+  if (course) {
+    where.course = course;
+  }
 
-    if (difficultyParam && !VALID_DIFFICULTIES.includes(difficultyParam)) {
-      return apiValidationError(
-        `Invalid difficulty: ${difficultyParam}. Valid difficulties: ${VALID_DIFFICULTIES.join(", ")}`,
-      );
-    }
+  if (difficulty) {
+    where.difficulty = difficulty;
+  }
 
-    // Build where clause
-    const where: Prisma.RecipeWhereInput = {};
+  if (tag) {
+    where.tags = { some: { slug: tag } };
+  }
 
-    if (cuisine) {
-      where.cuisine = { equals: cuisine, mode: "insensitive" };
-    }
+  if (favorite) {
+    where.isFavorite = true;
+  }
 
-    if (courseParam) {
-      where.course = courseParam;
-    }
+  if (maxTime) {
+    where.totalTime = { lte: maxTime };
+  }
 
-    if (difficultyParam) {
-      where.difficulty = difficultyParam;
-    }
-
-    if (tagSlug) {
-      where.tags = { some: { slug: tagSlug } };
-    }
-
-    if (favoriteParam === "true") {
-      where.isFavorite = true;
-    }
-
-    if (maxTimeParam) {
-      const maxTime = parseInt(maxTimeParam, 10);
-      if (!isNaN(maxTime) && maxTime > 0) {
-        where.totalTime = { lte: maxTime };
-      }
-    }
-
-    // Fetch recipes and count in parallel
-    const [recipes, total] = await Promise.all([
+  const dbResult = await ResultAsync.fromPromise(
+    Promise.all([
       prisma.recipe.findMany({
         where,
         include: {
@@ -155,16 +129,20 @@ export async function GET(request: NextRequest) {
           tags: true,
           images: true,
         },
-        orderBy: { [sortField]: sortOrder },
+        orderBy: { [sort]: order },
         take: limit,
         skip: offset,
       }),
       prisma.recipe.count({ where }),
-    ]);
+    ]),
+    (error) => toAppError(error),
+  );
 
-    return apiPaginated(recipes, { total, limit, offset });
-  } catch (error) {
-    console.error("Error fetching recipes:", error);
-    return apiError(error);
+  if (dbResult.isErr()) {
+    return apiError(dbResult.error);
   }
+
+  const [recipes, total] = dbResult.value;
+
+  return apiPaginated(recipes, { total, limit, offset });
 }

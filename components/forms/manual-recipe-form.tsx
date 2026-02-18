@@ -86,9 +86,7 @@ function parseIngredientLine(line: string): IngredientInput | null {
   let unit = "";
   let name = mainPart;
 
-  const quantityMatch = mainPart.match(
-    /^([\d¼½¾⅓⅔⅛⅜⅝⅞\/.\-]+)\s+(.+)$/,
-  );
+  const quantityMatch = mainPart.match(/^([\d¼½¾⅓⅔⅛⅜⅝⅞\/.\-]+)\s+(.+)$/);
 
   if (quantityMatch) {
     quantity = quantityMatch[1] ?? "";
@@ -234,7 +232,9 @@ export function ManualRecipeForm({
       });
     });
     setBulkIngredients("");
-    toast.success(`Added ${parsed.length} ingredient${parsed.length === 1 ? "" : "s"}`);
+    toast.success(
+      `Added ${parsed.length} ingredient${parsed.length === 1 ? "" : "s"}`,
+    );
   };
 
   const handleBulkInstructionAdd = () => {
@@ -251,7 +251,9 @@ export function ManualRecipeForm({
       appendInstruction({ text, group: "" });
     });
     setBulkInstructions("");
-    toast.success(`Added ${parsed.length} step${parsed.length === 1 ? "" : "s"}`);
+    toast.success(
+      `Added ${parsed.length} step${parsed.length === 1 ? "" : "s"}`,
+    );
   };
 
   const onSubmit = async (data: RecipeInputSchema) => {
@@ -309,9 +311,7 @@ export function ManualRecipeForm({
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="rounded-lg border border-border/45 bg-background/65 px-3 py-2 text-sm text-muted-foreground">
-              {isDirty
-                ? "Unsaved changes in this form"
-                : "No unsaved changes"}
+              {isDirty ? "Unsaved changes in this form" : "No unsaved changes"}
             </div>
 
             {/* Basic Info */}
@@ -504,7 +504,12 @@ export function ManualRecipeForm({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSectionOpen((current) => ({ ...current, ingredients: false }))}
+                      onClick={() =>
+                        setSectionOpen((current) => ({
+                          ...current,
+                          ingredients: false,
+                        }))
+                      }
                     >
                       Collapse Section
                     </Button>
@@ -517,7 +522,9 @@ export function ManualRecipeForm({
                     <Textarea
                       id="bulkIngredients"
                       value={bulkIngredients}
-                      onChange={(event) => setBulkIngredients(event.target.value)}
+                      onChange={(event) =>
+                        setBulkIngredients(event.target.value)
+                      }
                       placeholder="1 cup sugar\n2 tbsp olive oil | optional\n1 lb chicken thighs | trim fat | Marinade"
                       className="mt-2 min-h-[96px] border-border bg-background"
                     />
@@ -562,11 +569,12 @@ export function ManualRecipeForm({
                                 placeholder="Ingredient name"
                                 className="border-border bg-background"
                               />
-                              {form.formState.errors.ingredients?.[index]?.name && (
+                              {form.formState.errors.ingredients?.[index]
+                                ?.name && (
                                 <p className="text-xs text-destructive">
                                   {
-                                    form.formState.errors.ingredients[index].name
-                                      .message
+                                    form.formState.errors.ingredients[index]
+                                      .name.message
                                   }
                                 </p>
                               )}
@@ -636,7 +644,12 @@ export function ManualRecipeForm({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSectionOpen((current) => ({ ...current, instructions: false }))}
+                      onClick={() =>
+                        setSectionOpen((current) => ({
+                          ...current,
+                          instructions: false,
+                        }))
+                      }
                     >
                       Collapse Section
                     </Button>
@@ -649,7 +662,9 @@ export function ManualRecipeForm({
                     <Textarea
                       id="bulkInstructions"
                       value={bulkInstructions}
-                      onChange={(event) => setBulkInstructions(event.target.value)}
+                      onChange={(event) =>
+                        setBulkInstructions(event.target.value)
+                      }
                       placeholder="Preheat oven to 375°F\nMix dry ingredients\nBake for 25 minutes"
                       className="mt-2 min-h-[96px] border-border bg-background"
                     />
@@ -700,7 +715,10 @@ export function ManualRecipeForm({
                         />
                         {form.formState.errors.instructions?.[index]?.text && (
                           <p className="text-xs text-destructive">
-                            {form.formState.errors.instructions[index].text.message}
+                            {
+                              form.formState.errors.instructions[index].text
+                                .message
+                            }
                           </p>
                         )}
                       </div>
