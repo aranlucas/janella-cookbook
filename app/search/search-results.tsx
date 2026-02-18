@@ -13,12 +13,12 @@ export async function SearchResults({ query }: SearchResultsProps) {
   let results: SearchResult[] = [];
   let total = 0;
 
-  try {
-    const searchResult = await hybridSearch(query, {}, 20, 0);
-    results = searchResult.results;
-    total = searchResult.total;
-  } catch (error) {
-    console.error("Search error:", error);
+  const searchResult = await hybridSearch(query, {}, 20, 0);
+  if (searchResult.isOk()) {
+    results = searchResult.value.results;
+    total = searchResult.value.total;
+  } else {
+    console.error("Search error:", searchResult.error);
   }
 
   if (results.length === 0) {

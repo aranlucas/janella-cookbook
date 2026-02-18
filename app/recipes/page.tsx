@@ -109,18 +109,22 @@ async function getAllRecipes(
     if (query || category) {
       const searchQuery = query || category || "";
       const offset = (page - 1) * ITEMS_PER_PAGE;
-      const { results, total } = await hybridSearch(
+      const searchResult = await hybridSearch(
         searchQuery,
         {},
         ITEMS_PER_PAGE,
         offset,
       );
+      if (searchResult.isErr()) {
+        console.error("Search error:", searchResult.error);
+        return { recipes: [], total: 0 };
+      }
       return {
         recipes: sortRecipesInMemory(
-          results.map((r) => r.recipe),
+          searchResult.value.results.map((r) => r.recipe),
           sort,
         ),
-        total,
+        total: searchResult.value.total,
       };
     }
 

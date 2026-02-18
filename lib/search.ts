@@ -1,6 +1,12 @@
+import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
-import { ExternalApiError, DatabaseError } from "./errors";
+import {
+  ExternalApiError,
+  DatabaseError,
+  toAppError,
+  type AppError,
+} from "./errors";
 import type {
   SearchFilters,
   SearchResult,
@@ -13,6 +19,8 @@ import type {
   RecipeImage,
 } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
+
+type SearchOutput = { results: SearchResult[]; total: number };
 
 /**
  * Batch fetch related data for multiple recipes in a single query per relation
@@ -150,28 +158,49 @@ function buildFilterConditions(filters: SearchFilters): {
 }
 
 /**
- * Perform semantic search using vector similarity
+ * Perform semantic search using vector similarity.
+ * Returns ResultAsync instead of throwing.
  */
-export async function semanticSearch(
+export function semanticSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
   offset = 0,
-): Promise<{ results: SearchResult[]; total: number }> {
-  // Enhance and generate embedding for the query with retry logic
+): ResultAsync<SearchOutput, AppError> {
   const enhancedQuery = enhanceSearchQuery(query);
 
-  let queryEmbedding: number[];
-  try {
-    queryEmbedding = await generateEmbedding(enhancedQuery);
-  } catch (error) {
-    throw new ExternalApiError(
-      "Hugging Face",
-      "Failed to generate embedding for search query",
-      error,
+  return generateEmbedding(enhancedQuery)
+    .mapErr(
+      (error) =>
+        new ExternalApiError(
+          "Hugging Face",
+          "Failed to generate embedding for search query",
+          error,
+        ) as AppError,
+    )
+    .andThen((queryEmbedding) =>
+      ResultAsync.fromPromise(
+        semanticSearchWithEmbedding(
+          queryEmbedding,
+          query,
+          filters,
+          limit,
+          offset,
+        ),
+        (error) =>
+          error instanceof DatabaseError ? error : toAppError(error),
+      ),
     );
-  }
+}
 
+/** Internal implementation for semantic search after embedding is generated */
+async function semanticSearchWithEmbedding(
+  queryEmbedding: number[],
+  query: string,
+  filters: SearchFilters,
+  limit: number,
+  offset: number,
+): Promise<SearchOutput> {
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
   // Build safe filter conditions
@@ -304,14 +333,29 @@ export async function semanticSearch(
 }
 
 /**
- * Perform keyword-based search
+ * Perform keyword-based search.
+ * Returns ResultAsync instead of throwing.
  */
-export async function keywordSearch(
+export function keywordSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
   offset = 0,
-): Promise<{ results: SearchResult[]; total: number }> {
+): ResultAsync<SearchOutput, AppError> {
+  return ResultAsync.fromPromise(
+    keywordSearchImpl(query, filters, limit, offset),
+    (error) =>
+      error instanceof DatabaseError ? error : toAppError(error),
+  );
+}
+
+/** Internal throwing implementation for keyword search */
+async function keywordSearchImpl(
+  query: string,
+  filters: SearchFilters,
+  limit: number,
+  offset: number,
+): Promise<SearchOutput> {
   const searchTerms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
   // Build filter conditions (shared between empty and non-empty query paths)
@@ -393,14 +437,15 @@ export async function keywordSearch(
 }
 
 /**
- * Hybrid search combining semantic and keyword search
+ * Hybrid search combining semantic and keyword search.
+ * Returns ResultAsync instead of throwing.
  */
-export async function hybridSearch(
+export function hybridSearch(
   query: string,
   filters: SearchFilters = {},
   limit = 20,
   offset = 0,
-): Promise<{ results: SearchResult[]; total: number }> {
+): ResultAsync<SearchOutput, AppError> {
   // If query is empty or whitespace-only, fall back to keyword search
   // which handles empty queries by returning all recipes with filters
   if (!query || query.trim().length === 0) {
@@ -408,68 +453,96 @@ export async function hybridSearch(
   }
 
   // Check if we have embeddings capability
-  const hasEmbeddings = process.env.HUGGINGFACE_API_KEY;
-
-  if (!hasEmbeddings) {
+  if (!process.env.HUGGINGFACE_API_KEY) {
     return keywordSearch(query, filters, limit, offset);
   }
 
-  try {
-    // Try semantic search first
-    const semanticResults = await semanticSearch(query, filters, limit * 2, 0);
-    const keywordResults = await keywordSearch(query, filters, limit * 2, 0);
+  // Try hybrid (semantic + keyword), fall back to keyword-only on error
+  return ResultAsync.fromPromise(
+    hybridSearchImpl(query, filters, limit, offset),
+    (error) => toAppError(error),
+  ).orElse(() => {
+    // Fall back to keyword search if hybrid fails
+    return keywordSearch(query, filters, limit, offset);
+  });
+}
 
-    // Reciprocal Rank Fusion
-    const scores = new Map<
-      string,
-      { recipe: RecipeWithRelations; score: number; highlights?: string[] }
-    >();
+/** Internal implementation for hybrid search */
+async function hybridSearchImpl(
+  query: string,
+  filters: SearchFilters,
+  limit: number,
+  offset: number,
+): Promise<SearchOutput> {
+  // Run both searches, awaiting their ResultAsync values
+  const [semanticResult, keywordResult] = await Promise.all([
+    semanticSearch(query, filters, limit * 2, 0),
+    keywordSearch(query, filters, limit * 2, 0),
+  ]);
 
-    // Add semantic results with RRF scores
-    semanticResults.results.forEach((result, index) => {
-      const rrf = 1 / (60 + index); // k=60 is a common constant
+  // If keyword search failed, propagate the error
+  if (keywordResult.isErr()) {
+    throw keywordResult.error;
+  }
+
+  // If semantic failed, just use keyword results
+  if (semanticResult.isErr()) {
+    console.error(
+      "Semantic search failed, using keyword only:",
+      semanticResult.error,
+    );
+    return keywordResult.value;
+  }
+
+  const semanticResults = semanticResult.value;
+  const keywordResults = keywordResult.value;
+
+  // Reciprocal Rank Fusion
+  const scores = new Map<
+    string,
+    { recipe: RecipeWithRelations; score: number; highlights?: string[] }
+  >();
+
+  // Add semantic results with RRF scores
+  semanticResults.results.forEach((result, index) => {
+    const rrf = 1 / (60 + index); // k=60 is a common constant
+    scores.set(result.recipe.id, {
+      recipe: result.recipe,
+      score: rrf,
+      highlights: result.highlights,
+    });
+  });
+
+  // Add keyword results with RRF scores
+  keywordResults.results.forEach((result, index) => {
+    const rrf = 1 / (60 + index);
+    const existing = scores.get(result.recipe.id);
+    if (existing) {
+      existing.score += rrf;
+      if (result.highlights) {
+        existing.highlights = [
+          ...(existing.highlights || []),
+          ...result.highlights,
+        ];
+      }
+    } else {
       scores.set(result.recipe.id, {
         recipe: result.recipe,
         score: rrf,
         highlights: result.highlights,
       });
-    });
+    }
+  });
 
-    // Add keyword results with RRF scores
-    keywordResults.results.forEach((result, index) => {
-      const rrf = 1 / (60 + index);
-      const existing = scores.get(result.recipe.id);
-      if (existing) {
-        existing.score += rrf;
-        if (result.highlights) {
-          existing.highlights = [
-            ...(existing.highlights || []),
-            ...result.highlights,
-          ];
-        }
-      } else {
-        scores.set(result.recipe.id, {
-          recipe: result.recipe,
-          score: rrf,
-          highlights: result.highlights,
-        });
-      }
-    });
+  // Sort by combined score and return top results
+  const combined = Array.from(scores.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(offset, offset + limit);
 
-    // Sort by combined score and return top results
-    const combined = Array.from(scores.values())
-      .sort((a, b) => b.score - a.score)
-      .slice(offset, offset + limit);
-
-    return {
-      results: combined,
-      total: scores.size,
-    };
-  } catch (error) {
-    // Fall back to keyword search if semantic fails
-    console.error("Hybrid search failed, falling back to keyword:", error);
-    return keywordSearch(query, filters, limit, offset);
-  }
+  return {
+    results: combined,
+    total: scores.size,
+  };
 }
 
 /**
@@ -509,9 +582,26 @@ function generateHighlights(
 }
 
 /**
- * Get filter options from the database
+ * Get filter options from the database.
+ * Returns ResultAsync instead of throwing.
  */
-export async function getFilterOptions() {
+export function getFilterOptions(): ResultAsync<
+  {
+    cuisines: { value: string; count: number }[];
+    courses: { value: Course; count: number }[];
+    difficulties: { value: Difficulty; count: number }[];
+    tags: { value: string; slug: string; count: number }[];
+    maxTotalTime: number;
+  },
+  AppError
+> {
+  return ResultAsync.fromPromise(getFilterOptionsImpl(), (error) =>
+    error instanceof DatabaseError ? error : toAppError(error),
+  );
+}
+
+/** Internal throwing implementation for getFilterOptions */
+async function getFilterOptionsImpl() {
   try {
     const [cuisines, courses, difficulties, tags, maxTime] = await Promise.all([
       prisma.recipe.groupBy({
