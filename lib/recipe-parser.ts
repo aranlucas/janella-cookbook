@@ -2,7 +2,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
-import { errAsync, ResultAsync } from "neverthrow";
+import { ResultAsync } from "neverthrow";
 import {
   RecipeParseError,
   ExternalApiError,
@@ -542,25 +542,21 @@ Be accurate and organized. Extract all ingredients and instructions even if form
 export function parseRecipeFromYouTube(
   url: string,
 ): ResultAsync<ParsedRecipe, AppError> {
-  // Extract video ID (sync Result)
-  const videoIdResult = extractYouTubeVideoId(url);
-  if (videoIdResult.isErr()) {
-    return errAsync(videoIdResult.error);
-  }
-  const videoId = videoIdResult.value;
-
-  // Get video metadata (pure, cannot fail)
-  const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
-
-  // Fetch transcript, then parse it into a recipe
-  return getYouTubeTranscript(videoId).andThen((transcript) =>
-    ResultAsync.fromPromise(
-      parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl),
-      (error) =>
-        error instanceof RecipeParseError || error instanceof ExternalApiError
-          ? error
-          : toAppError(error),
-    ),
+  // Chain: extract video ID (sync) → fetch transcript (async) → parse (async)
+  return new ResultAsync(Promise.resolve(extractYouTubeVideoId(url))).andThen(
+    (videoId) => {
+      const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
+      return getYouTubeTranscript(videoId).andThen((transcript) =>
+        ResultAsync.fromPromise(
+          parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl),
+          (error) =>
+            error instanceof RecipeParseError ||
+            error instanceof ExternalApiError
+              ? error
+              : toAppError(error),
+        ),
+      );
+    },
   );
 }
 

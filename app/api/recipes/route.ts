@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
     where.totalTime = { lte: maxTime };
   }
 
-  const dbResult = await ResultAsync.fromPromise(
+  return ResultAsync.fromPromise(
     Promise.all([
       prisma.recipe.findMany({
         where,
@@ -136,13 +136,8 @@ export async function GET(request: NextRequest) {
       prisma.recipe.count({ where }),
     ]),
     (error) => toAppError(error),
+  ).match(
+    ([recipes, total]) => apiPaginated(recipes, { total, limit, offset }),
+    (error) => apiError(error),
   );
-
-  if (dbResult.isErr()) {
-    return apiError(dbResult.error);
-  }
-
-  const [recipes, total] = dbResult.value;
-
-  return apiPaginated(recipes, { total, limit, offset });
 }

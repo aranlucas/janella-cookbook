@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { ok, err, ResultAsync } from "neverthrow";
+import { ok, err, safeTry, ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
@@ -55,24 +55,23 @@ function deferEmbeddingGeneration(
   if (!process.env.HUGGINGFACE_API_KEY) return;
 
   after(async () => {
-    const result = await generateRecipeEmbedding(recipeData);
-    if (result.isErr()) {
-      console.error("Background embedding generation failed:", result.error);
-      return;
-    }
-
-    const { searchText, embedding } = result.value;
-    const embeddingString = `[${embedding.join(",")}]`;
-
-    try {
-      await prisma.$executeRaw`
-        UPDATE "Recipe"
-        SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
-        WHERE id = ${recipeId}
-      `;
-    } catch (e) {
-      console.error("Background embedding SQL update failed:", e);
-    }
+    await generateRecipeEmbedding(recipeData)
+      .andThen(({ searchText, embedding }) => {
+        const embeddingString = `[${embedding.join(",")}]`;
+        return ResultAsync.fromPromise(
+          prisma.$executeRaw`
+            UPDATE "Recipe"
+            SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
+            WHERE id = ${recipeId}
+          `,
+          toAppError,
+        );
+      })
+      .match(
+        () => {},
+        (error) =>
+          console.error("Background embedding generation failed:", error),
+      );
   });
 }
 
@@ -562,159 +561,150 @@ export async function updateRecipe(
     lastCooked?: string;
   },
 ): Promise<ActionResult> {
-  // Find existing recipe
-  const existingResult = await ResultAsync.fromPromise(
-    prisma.recipe.findUnique({ where: { id }, include: { tags: true } }),
-    toAppError,
-  ).andThen((existing) =>
-    existing
-      ? ok(existing)
-      : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
-  );
-
-  if (existingResult.isErr()) {
-    return { success: false, error: existingResult.error.message };
-  }
-
-  const existing = existingResult.value;
-
-  // Generate new slug if title changed
-  let slug = existing.slug;
-  if (input.title && input.title !== existing.title) {
-    const slugResult = await generateUniqueSlug(input.title, id);
-    if (slugResult.isErr()) {
-      return { success: false, error: slugResult.error.message };
-    }
-    slug = slugResult.value;
-  }
-
-  // Calculate total time
-  const totalTime =
-    input.totalTime ||
-    (input.prepTime ?? existing.prepTime ?? 0) +
-      (input.cookTime ?? existing.cookTime ?? 0) ||
-    undefined;
-
-  // Resolve tag connections
-  const tagsResult = input.tags
-    ? await ResultAsync.fromPromise(
-        Promise.all(
-          input.tags.map(async (tagName) => {
-            const tagSlug = generateTagSlug(tagName);
-            const tag = await prisma.tag.upsert({
-              where: { slug: tagSlug },
-              create: { name: tagName, slug: tagSlug },
-              update: {},
-            });
-            return { id: tag.id };
-          }),
-        ),
-        toAppError,
+  return safeTry(async function* () {
+    // Find existing recipe
+    const existing = yield* ResultAsync.fromPromise(
+      prisma.recipe.findUnique({ where: { id }, include: { tags: true } }),
+      toAppError,
+    )
+      .andThen((found) =>
+        found
+          ? ok(found)
+          : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
       )
-    : ok([] as { id: string }[]);
+      .safeUnwrap();
 
-  if (tagsResult.isErr()) {
-    return { success: false, error: tagsResult.error.message };
-  }
+    // Generate new slug if title changed
+    let slug = existing.slug;
+    if (input.title && input.title !== existing.title) {
+      slug = yield* generateUniqueSlug(input.title, id).safeUnwrap();
+    }
 
-  const tagConnections = tagsResult.value;
+    // Calculate total time
+    const totalTime =
+      input.totalTime ||
+      (input.prepTime ?? existing.prepTime ?? 0) +
+        (input.cookTime ?? existing.cookTime ?? 0) ||
+      undefined;
 
-  // Prepare update data, stripping undefined fields
-  const updateData: Record<string, unknown> = Object.fromEntries(
-    Object.entries({
-      title: input.title,
-      slug,
-      description: input.description,
-      prepTime: input.prepTime,
-      cookTime: input.cookTime,
-      totalTime,
-      servings: input.servings,
-      difficulty: input.difficulty,
-      cuisine: input.cuisine,
-      course: input.course,
-      sourceUrl: input.sourceUrl,
-      imageUrl: input.imageUrl,
-      notes: input.notes,
-      rating: input.rating,
-      isFavorite: input.isFavorite,
-      cookCount: input.cookCount,
-      lastCooked: input.lastCooked ? new Date(input.lastCooked) : undefined,
-    }).filter(([, v]) => v !== undefined),
-  );
+    // Resolve tag connections
+    const tagConnections = input.tags
+      ? yield* ResultAsync.fromPromise(
+          Promise.all(
+            input.tags.map(async (tagName) => {
+              const tagSlug = generateTagSlug(tagName);
+              const tag = await prisma.tag.upsert({
+                where: { slug: tagSlug },
+                create: { name: tagName, slug: tagSlug },
+                update: {},
+              });
+              return { id: tag.id };
+            }),
+          ),
+          toAppError,
+        ).safeUnwrap()
+      : ([] as { id: string }[]);
 
-  return ResultAsync.fromPromise(
-    (async () => {
-      if (input.ingredients) {
-        await prisma.ingredient.deleteMany({ where: { recipeId: id } });
-      }
-      if (input.instructions) {
-        await prisma.instruction.deleteMany({ where: { recipeId: id } });
-      }
-      return prisma.recipe.update({
-        where: { id },
-        data: {
-          ...updateData,
-          ...(input.ingredients && {
-            ingredients: {
-              create: input.ingredients.map((ing, index) => ({
-                quantity: ing.quantity,
-                unit: ing.unit,
-                name: ing.name,
-                notes: ing.notes,
-                group: ing.group,
-                sortOrder: ing.sortOrder ?? index,
-              })),
-            },
-          }),
-          ...(input.instructions && {
-            instructions: {
-              create: input.instructions.map((inst, index) => ({
-                text: inst.text,
-                group: inst.group,
-                sortOrder: inst.sortOrder ?? index,
-                duration: inst.duration,
-                imageUrl: inst.imageUrl,
-              })),
-            },
-          }),
-          ...(input.tags && {
-            tags: {
-              set: tagConnections,
-            },
-          }),
-        },
-        include: {
-          ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { sortOrder: "asc" } },
-          tags: true,
-          images: true,
-        },
-      });
-    })(),
-    toAppError,
-  ).match(
-    (recipe) => {
-      if (
-        input.title ||
-        input.description ||
-        input.ingredients ||
-        input.instructions
-      ) {
-        deferEmbeddingGeneration(id, {
-          title: recipe.title,
-          description: recipe.description,
-          cuisine: recipe.cuisine,
-          course: recipe.course,
-          tags: recipe.tags,
-          ingredients: recipe.ingredients,
-          instructions: recipe.instructions,
-          totalTime: recipe.totalTime,
-          difficulty: recipe.difficulty,
+    // Prepare update data, stripping undefined fields
+    const updateData: Record<string, unknown> = Object.fromEntries(
+      Object.entries({
+        title: input.title,
+        slug,
+        description: input.description,
+        prepTime: input.prepTime,
+        cookTime: input.cookTime,
+        totalTime,
+        servings: input.servings,
+        difficulty: input.difficulty,
+        cuisine: input.cuisine,
+        course: input.course,
+        sourceUrl: input.sourceUrl,
+        imageUrl: input.imageUrl,
+        notes: input.notes,
+        rating: input.rating,
+        isFavorite: input.isFavorite,
+        cookCount: input.cookCount,
+        lastCooked: input.lastCooked ? new Date(input.lastCooked) : undefined,
+      }).filter(([, v]) => v !== undefined),
+    );
+
+    // Perform the update
+    const recipe = yield* ResultAsync.fromPromise(
+      (async () => {
+        if (input.ingredients) {
+          await prisma.ingredient.deleteMany({ where: { recipeId: id } });
+        }
+        if (input.instructions) {
+          await prisma.instruction.deleteMany({ where: { recipeId: id } });
+        }
+        return prisma.recipe.update({
+          where: { id },
+          data: {
+            ...updateData,
+            ...(input.ingredients && {
+              ingredients: {
+                create: input.ingredients.map((ing, index) => ({
+                  quantity: ing.quantity,
+                  unit: ing.unit,
+                  name: ing.name,
+                  notes: ing.notes,
+                  group: ing.group,
+                  sortOrder: ing.sortOrder ?? index,
+                })),
+              },
+            }),
+            ...(input.instructions && {
+              instructions: {
+                create: input.instructions.map((inst, index) => ({
+                  text: inst.text,
+                  group: inst.group,
+                  sortOrder: inst.sortOrder ?? index,
+                  duration: inst.duration,
+                  imageUrl: inst.imageUrl,
+                })),
+              },
+            }),
+            ...(input.tags && {
+              tags: {
+                set: tagConnections,
+              },
+            }),
+          },
+          include: {
+            ingredients: { orderBy: { sortOrder: "asc" } },
+            instructions: { orderBy: { sortOrder: "asc" } },
+            tags: true,
+            images: true,
+          },
         });
-      }
-      revalidateRecipes(slug);
-      return { success: true as const, data: recipe, slug };
-    },
+      })(),
+      toAppError,
+    ).safeUnwrap();
+
+    // Side effects
+    if (
+      input.title ||
+      input.description ||
+      input.ingredients ||
+      input.instructions
+    ) {
+      deferEmbeddingGeneration(id, {
+        title: recipe.title,
+        description: recipe.description,
+        cuisine: recipe.cuisine,
+        course: recipe.course,
+        tags: recipe.tags,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        totalTime: recipe.totalTime,
+        difficulty: recipe.difficulty,
+      });
+    }
+    revalidateRecipes(slug);
+
+    return ok({ success: true as const, data: recipe, slug } as ActionResult);
+  }).match(
+    (result) => result,
     (error) => {
       console.error("Error updating recipe:", error);
       return { success: false as const, error: error.message };
@@ -818,41 +808,36 @@ export async function deleteRecipe(id: string): Promise<ActionResult<null>> {
 
 // Regenerate recipe from its source URL
 export async function regenerateFromSource(id: string): Promise<ActionResult> {
-  const fetchResult = await ResultAsync.fromPromise(
+  const result = await ResultAsync.fromPromise(
     prisma.recipe.findUnique({
       where: { id },
       select: { sourceUrl: true, slug: true },
     }),
     toAppError,
-  ).andThen((existing) => {
-    if (!existing) {
-      return err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404));
-    }
-    if (!existing.sourceUrl) {
-      return err(
-        new AppError(
-          "Recipe does not have a source URL to regenerate from",
-          "NO_SOURCE_URL",
-          400,
-        ),
-      );
-    }
-    return ok(existing.sourceUrl);
-  });
+  )
+    .andThen((existing) => {
+      if (!existing) {
+        return err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404));
+      }
+      if (!existing.sourceUrl) {
+        return err(
+          new AppError(
+            "Recipe does not have a source URL to regenerate from",
+            "NO_SOURCE_URL",
+            400,
+          ),
+        );
+      }
+      return ok(existing.sourceUrl);
+    })
+    .andThen((sourceUrl) => parseRecipeFromUrl(sourceUrl));
 
-  if (fetchResult.isErr()) {
-    return { success: false, error: fetchResult.error.message };
+  if (result.isErr()) {
+    console.error("Error regenerating recipe from source:", result.error);
+    return { success: false, error: result.error.message };
   }
 
-  const sourceUrl = fetchResult.value;
-
-  const parsedResult = await parseRecipeFromUrl(sourceUrl);
-  if (parsedResult.isErr()) {
-    console.error("Error regenerating recipe from source:", parsedResult.error);
-    return { success: false, error: parsedResult.error.message };
-  }
-
-  const parsed = parsedResult.value;
+  const parsed = result.value;
   return updateRecipe(id, {
     title: parsed.title,
     description: parsed.description,

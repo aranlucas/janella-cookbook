@@ -187,8 +187,7 @@ export function semanticSearch(
           limit,
           offset,
         ),
-        (error) =>
-          error instanceof DatabaseError ? error : toAppError(error),
+        (error) => (error instanceof DatabaseError ? error : toAppError(error)),
       ),
     );
 }
@@ -344,8 +343,7 @@ export function keywordSearch(
 ): ResultAsync<SearchOutput, AppError> {
   return ResultAsync.fromPromise(
     keywordSearchImpl(query, filters, limit, offset),
-    (error) =>
-      error instanceof DatabaseError ? error : toAppError(error),
+    (error) => (error instanceof DatabaseError ? error : toAppError(error)),
   );
 }
 
