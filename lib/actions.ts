@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { ok, err, safeTry, ResultAsync } from "neverthrow";
+import { ok, err, safeTry, ResultAsync, type Result } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { generateRecipeEmbedding } from "@/lib/embeddings";
@@ -11,8 +11,21 @@ import {
   parseRecipeFromText,
   parseRecipeFromYouTube,
 } from "@/lib/recipe-parser";
-import { AppError, toAppError } from "@/lib/errors";
+import { AppError, ValidationError, toAppError } from "@/lib/errors";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
+
+/**
+ * Safely parse a URL string into a URL object, returning a Result
+ * instead of throwing on invalid input. Used by importFromUrl and
+ * importFromYouTube to avoid duplicate try/catch blocks.
+ */
+function safeParseUrl(url: string): Result<URL, ValidationError> {
+  try {
+    return ok(new URL(url));
+  } catch {
+    return err(new ValidationError("Invalid URL"));
+  }
+}
 
 export type ActionResult<T = RecipeWithRelations> =
   | { success: true; data: T; slug?: string }
@@ -173,32 +186,30 @@ async function createRecipeInDb(data: {
 // If the same URL is imported again, it updates the existing recipe instead of creating a duplicate.
 // This ensures each URL always maps to the same recipe/slug.
 export async function importFromUrl(url: string): Promise<ActionResult> {
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    return { success: false, error: "Invalid URL" };
-  }
-
-  const urlStr = parsedUrl.toString();
-
-  // Chain: find existing recipe + parse URL in sequence
-  const baseResult = await ResultAsync.fromPromise(
-    prisma.recipe.findFirst({
-      where: { sourceUrl: urlStr },
-      select: { id: true, slug: true },
-    }),
-    toAppError,
-  ).andThen((existingRecipe) =>
-    parseRecipeFromUrl(urlStr).map((parsed) => ({ parsed, existingRecipe })),
-  );
+  // Chain: validate URL → find existing recipe → parse URL
+  const baseResult = await safeParseUrl(url).asyncAndThen((parsedUrl) => {
+    const urlStr = parsedUrl.toString();
+    return ResultAsync.fromPromise(
+      prisma.recipe.findFirst({
+        where: { sourceUrl: urlStr },
+        select: { id: true, slug: true },
+      }),
+      toAppError,
+    ).andThen((existingRecipe) =>
+      parseRecipeFromUrl(urlStr).map((parsed) => ({
+        parsed,
+        existingRecipe,
+        urlStr,
+      })),
+    );
+  });
 
   if (baseResult.isErr()) {
     console.error("Error importing recipe from URL:", baseResult.error);
     return { success: false, error: baseResult.error.message };
   }
 
-  const { parsed, existingRecipe } = baseResult.value;
+  const { parsed, existingRecipe, urlStr } = baseResult.value;
 
   // If recipe exists, update it and return immediately
   if (existingRecipe) {
@@ -349,35 +360,30 @@ export async function importFromText(text: string): Promise<ActionResult> {
 
 // Import recipe from YouTube video
 export async function importFromYouTube(url: string): Promise<ActionResult> {
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    return { success: false, error: "Invalid URL" };
-  }
-
-  const urlStr = parsedUrl.toString();
-
-  // Chain: find existing recipe + parse YouTube URL in sequence
-  const baseResult = await ResultAsync.fromPromise(
-    prisma.recipe.findFirst({
-      where: { sourceUrl: urlStr },
-      select: { id: true, slug: true },
-    }),
-    toAppError,
-  ).andThen((existingRecipe) =>
-    parseRecipeFromYouTube(urlStr).map((parsed) => ({
-      parsed,
-      existingRecipe,
-    })),
-  );
+  // Chain: validate URL → find existing recipe → parse YouTube URL
+  const baseResult = await safeParseUrl(url).asyncAndThen((parsedUrl) => {
+    const urlStr = parsedUrl.toString();
+    return ResultAsync.fromPromise(
+      prisma.recipe.findFirst({
+        where: { sourceUrl: urlStr },
+        select: { id: true, slug: true },
+      }),
+      toAppError,
+    ).andThen((existingRecipe) =>
+      parseRecipeFromYouTube(urlStr).map((parsed) => ({
+        parsed,
+        existingRecipe,
+        urlStr,
+      })),
+    );
+  });
 
   if (baseResult.isErr()) {
     console.error("Error importing recipe from YouTube:", baseResult.error);
     return { success: false, error: baseResult.error.message };
   }
 
-  const { parsed, existingRecipe } = baseResult.value;
+  const { parsed, existingRecipe, urlStr } = baseResult.value;
 
   // If recipe exists, update it and return immediately
   if (existingRecipe) {
@@ -832,24 +838,25 @@ export async function regenerateFromSource(id: string): Promise<ActionResult> {
     })
     .andThen((sourceUrl) => parseRecipeFromUrl(sourceUrl));
 
-  if (result.isErr()) {
-    console.error("Error regenerating recipe from source:", result.error);
-    return { success: false, error: result.error.message };
-  }
-
-  const parsed = result.value;
-  return updateRecipe(id, {
-    title: parsed.title,
-    description: parsed.description,
-    prepTime: parsed.prepTime,
-    cookTime: parsed.cookTime,
-    totalTime: parsed.totalTime,
-    servings: parsed.servings,
-    difficulty: parsed.difficulty,
-    cuisine: parsed.cuisine,
-    course: parsed.course,
-    imageUrl: parsed.imageUrl,
-    ingredients: parsed.ingredients,
-    instructions: parsed.instructions,
-  });
+  return result.match(
+    (parsed) =>
+      updateRecipe(id, {
+        title: parsed.title,
+        description: parsed.description,
+        prepTime: parsed.prepTime,
+        cookTime: parsed.cookTime,
+        totalTime: parsed.totalTime,
+        servings: parsed.servings,
+        difficulty: parsed.difficulty,
+        cuisine: parsed.cuisine,
+        course: parsed.course,
+        imageUrl: parsed.imageUrl,
+        ingredients: parsed.ingredients,
+        instructions: parsed.instructions,
+      }),
+    (error) => {
+      console.error("Error regenerating recipe from source:", error);
+      return { success: false as const, error: error.message };
+    },
+  );
 }
