@@ -125,10 +125,7 @@ export function generateRecipeEmbedding(recipe: {
   instructions?: { text: string }[];
   totalTime?: number | null;
   difficulty?: string | null;
-}): ResultAsync<
-  { searchText: string; embedding: number[] },
-  ExternalApiError
-> {
+}): ResultAsync<{ searchText: string; embedding: number[] }, ExternalApiError> {
   const searchText = generateSearchText(recipe);
   return generateEmbedding(searchText).map((embedding) => ({
     searchText,

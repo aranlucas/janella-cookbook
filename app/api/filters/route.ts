@@ -31,7 +31,7 @@ import { toAppError } from "@/lib/errors";
 import type { Course, Difficulty } from "@prisma/client";
 
 export async function GET() {
-  const filtersResult = await ResultAsync.fromPromise(
+  return ResultAsync.fromPromise(
     Promise.all([
       // Get distinct cuisines
       prisma.recipe
@@ -104,61 +104,60 @@ export async function GET() {
       }),
     ]),
     (error) => toAppError(error),
-  );
+  )
+    .map(
+      ([
+        cuisines,
+        courses,
+        difficulties,
+        tags,
+        timeRange,
+        totalCount,
+        favoriteCount,
+        courseCounts,
+        difficultyCounts,
+      ]) => {
+        // Transform course counts to record
+        const byCourse: Partial<Record<Course, number>> = {};
+        for (const item of courseCounts) {
+          if (item.course) {
+            byCourse[item.course] = item._count.course;
+          }
+        }
 
-  if (filtersResult.isErr()) {
-    return apiError(filtersResult.error);
-  }
+        // Transform difficulty counts to record
+        const byDifficulty: Partial<Record<Difficulty, number>> = {};
+        for (const item of difficultyCounts) {
+          if (item.difficulty) {
+            byDifficulty[item.difficulty] = item._count.difficulty;
+          }
+        }
 
-  const [
-    cuisines,
-    courses,
-    difficulties,
-    tags,
-    timeRange,
-    totalCount,
-    favoriteCount,
-    courseCounts,
-    difficultyCounts,
-  ] = filtersResult.value;
-
-  // Transform course counts to record
-  const byCourse: Partial<Record<Course, number>> = {};
-  for (const item of courseCounts) {
-    if (item.course) {
-      byCourse[item.course] = item._count.course;
-    }
-  }
-
-  // Transform difficulty counts to record
-  const byDifficulty: Partial<Record<Difficulty, number>> = {};
-  for (const item of difficultyCounts) {
-    if (item.difficulty) {
-      byDifficulty[item.difficulty] = item._count.difficulty;
-    }
-  }
-
-  const tagsWithCount = tags.map((tag) => ({
-    id: tag.id,
-    name: tag.name,
-    slug: tag.slug,
-    recipeCount: tag._count.recipes,
-  }));
-
-  return apiSuccess({
-    cuisines,
-    courses,
-    difficulties,
-    tags: tagsWithCount,
-    timeRange: {
-      min: timeRange._min.totalTime ?? 0,
-      max: timeRange._max.totalTime ?? 0,
-    },
-    counts: {
-      total: totalCount,
-      favorites: favoriteCount,
-      byCourse,
-      byDifficulty,
-    },
-  });
+        return {
+          cuisines,
+          courses,
+          difficulties,
+          tags: tags.map((tag) => ({
+            id: tag.id,
+            name: tag.name,
+            slug: tag.slug,
+            recipeCount: tag._count.recipes,
+          })),
+          timeRange: {
+            min: timeRange._min.totalTime ?? 0,
+            max: timeRange._max.totalTime ?? 0,
+          },
+          counts: {
+            total: totalCount,
+            favorites: favoriteCount,
+            byCourse,
+            byDifficulty,
+          },
+        };
+      },
+    )
+    .match(
+      (data) => apiSuccess(data),
+      (error) => apiError(error),
+    );
 }

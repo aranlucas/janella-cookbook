@@ -1,11 +1,7 @@
 import { YoutubeTranscript } from "youtube-transcript";
 import { Innertube } from "youtubei.js/web";
 import { ok, err, ResultAsync, type Result } from "neverthrow";
-import {
-  RecipeParseError,
-  ExternalApiError,
-  type AppError,
-} from "./errors";
+import { RecipeParseError, ExternalApiError, type AppError } from "./errors";
 
 export type TranscriptResult = {
   text: string;
@@ -75,18 +71,14 @@ export function extractYouTubeVideoId(
 export function getYouTubeTranscript(
   videoId: string,
 ): ResultAsync<TranscriptResult, AppError> {
-  return ResultAsync.fromPromise(
-    getYouTubeTranscriptImpl(videoId),
-    (error) =>
-      error instanceof ExternalApiError || error instanceof RecipeParseError
-        ? error
-        : new ExternalApiError(
-            "YouTube",
-            error instanceof Error
-              ? error.message
-              : "Unknown transcript error",
-            error,
-          ),
+  return ResultAsync.fromPromise(getYouTubeTranscriptImpl(videoId), (error) =>
+    error instanceof ExternalApiError || error instanceof RecipeParseError
+      ? error
+      : new ExternalApiError(
+          "YouTube",
+          error instanceof Error ? error.message : "Unknown transcript error",
+          error,
+        ),
   );
 }
 
