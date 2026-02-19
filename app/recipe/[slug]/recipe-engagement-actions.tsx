@@ -77,7 +77,7 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleToggleFavorite}
           disabled={isFavoriting}
-          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
         >
           <Heart
             className={`mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-125 sm:mr-2 sm:h-5 sm:w-5 ${
@@ -96,7 +96,7 @@ export function RecipeEngagementActions({
           size="default"
           onClick={handleMarkCooked}
           disabled={isCooking}
-          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:size-auto sm:flex-initial"
+          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
         >
           <ChefHat className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
           <span className="text-sm font-medium sm:text-base">I Made This</span>
