@@ -5,6 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
+  prismaBeforeExitHookRegistered: boolean | undefined;
 };
 
 function createPrismaClient() {
@@ -45,6 +46,9 @@ export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 // Graceful shutdown: drain the pool when the process exits
-process.on("beforeExit", async () => {
-  await globalForPrisma.pool?.end();
-});
+if (!globalForPrisma.prismaBeforeExitHookRegistered) {
+  process.once("beforeExit", async () => {
+    await globalForPrisma.pool?.end();
+  });
+  globalForPrisma.prismaBeforeExitHookRegistered = true;
+}
