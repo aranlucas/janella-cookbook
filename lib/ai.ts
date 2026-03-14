@@ -7,13 +7,13 @@ const openrouter = createOpenAI({
 });
 
 /**
- * Chat model using OpenRouter's arcee-ai/trinity-large-preview:free.
+ * Chat model using OpenRouter's healer-alpha (frontier omni-modal, 262K context).
  *
  * Note: We use .chat() for OpenRouter to force the Chat Completions API
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
  * doesn't fully support the Responses API format.
  */
-export const chatModel = openrouter.chat("arcee-ai/trinity-large-preview:free");
+export const chatModel = openrouter.chat("openrouter/healer-alpha");
 
 /**
  * Standard model for structured output tasks (recipe parsing, nutrition analysis)
@@ -22,4 +22,4 @@ export const chatModel = openrouter.chat("arcee-ai/trinity-large-preview:free");
  * instead of the Responses API (default in AI SDK 5+), as OpenRouter
  * doesn't fully support the Responses API format.
  */
-export const model = openrouter.chat("arcee-ai/trinity-large-preview:free");
+export const model = openrouter.chat("openrouter/healer-alpha");
