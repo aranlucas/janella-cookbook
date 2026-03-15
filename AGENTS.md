@@ -278,7 +278,7 @@ type ActionResult<T> =
 | `search.ts`        | Hybrid semantic + keyword search with RRF                             |
 | `embeddings.ts`    | HuggingFace embedding generation and query enhancement                |
 | `recipe-parser.ts` | AI-powered recipe parsing (URL, YouTube, text)                        |
-| `ai.ts`            | OpenRouter model configuration (openrouter/healer-alpha)       |
+| `ai.ts`            | OpenRouter model configuration (openrouter/healer-alpha)              |
 | `youtube.ts`       | YouTube URL parsing, transcript extraction, metadata                  |
 | `validations.ts`   | Zod schemas for all input validation                                  |
 | `slug.ts`          | Unique slug generation with collision detection                       |

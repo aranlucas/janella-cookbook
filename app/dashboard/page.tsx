@@ -186,7 +186,8 @@ async function getDashboardStats(): Promise<DashboardStats> {
           : null,
       fastestCount,
       momentumScore:
-        (momentumScore._sum.cookCount ?? 0) + statsBonus(recentlyUpdated, favorites),
+        (momentumScore._sum.cookCount ?? 0) +
+        statsBonus(recentlyUpdated, favorites),
     };
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
@@ -283,7 +284,7 @@ export default async function DashboardPage() {
         <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm">
           <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
                 Weekly Pulse
               </p>
               <h2 className="mt-2 font-serif text-3xl font-semibold tracking-tight">
@@ -323,7 +324,9 @@ export default async function DashboardPage() {
                   <p className="font-serif text-3xl font-bold transition-transform duration-200 group-hover:scale-105">
                     {card.value}
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground">{card.trend}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {card.trend}
+                  </p>
                   <p className="mt-3 text-sm">{card.emoji}</p>
                 </CardContent>
               </Card>
@@ -334,7 +337,9 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
           <Card className="border-border/60 bg-card shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-serif text-xl">Recently Updated</CardTitle>
+              <CardTitle className="font-serif text-xl">
+                Recently Updated
+              </CardTitle>
               <ButtonLink href="/recipes" variant="outline" size="sm">
                 View all
               </ButtonLink>
@@ -393,12 +398,14 @@ export default async function DashboardPage() {
             <CardContent className="space-y-4">
               <div className="space-y-3 rounded-lg border border-border/70 bg-muted/25 p-4">
                 <div className="flex items-start justify-between">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs tracking-wide text-muted-foreground uppercase">
                     Momentum score
                   </p>
                   <Badge variant="outline">{momentumLevel}</Badge>
                 </div>
-                <p className="font-serif text-4xl font-bold">{stats.momentumScore}</p>
+                <p className="font-serif text-4xl font-bold">
+                  {stats.momentumScore}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Weighted from cook counts, favorites, and weekly updates.
                 </p>
@@ -413,7 +420,9 @@ export default async function DashboardPage() {
                 </div>
                 <div className="rounded-lg border border-border/70 p-3">
                   <p className="text-xs text-muted-foreground">Quick wins</p>
-                  <p className="mt-1 text-sm font-semibold">{stats.fastestCount} recipes</p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {stats.fastestCount} recipes
+                  </p>
                 </div>
               </div>
 
@@ -422,7 +431,7 @@ export default async function DashboardPage() {
                   href={`/recipe/${stats.challengeRecipe.slug}`}
                   className="group block rounded-lg border border-dashed border-primary/50 bg-primary/5 px-4 py-3 transition hover:bg-primary/10"
                 >
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs tracking-wide text-muted-foreground uppercase">
                     Today&apos;s adventure pick
                   </p>
                   <p className="mt-1 font-medium group-hover:text-primary">
@@ -440,8 +449,8 @@ export default async function DashboardPage() {
                 </Link>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  You&apos;ve cooked everything recently. Add a new recipe to unlock
-                  your next challenge.
+                  You&apos;ve cooked everything recently. Add a new recipe to
+                  unlock your next challenge.
                 </p>
               )}
             </CardContent>
