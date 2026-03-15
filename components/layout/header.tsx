@@ -8,6 +8,7 @@ import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
 import { MobileNav } from "./mobile-nav";
+import { ShoppingListDrawer } from "@/components/shopping/shopping-list-drawer";
 
 const navItems = [
   { href: "/recipes", label: "Recipes" },
@@ -30,6 +31,9 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {/* Shopping list drawer */}
+          <ShoppingListDrawer />
+
           {/* Chat icon button visible on mobile only */}
           <Link
             href="/chat"

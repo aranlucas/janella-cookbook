@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
+import { SessionProvider } from "@/components/providers/session-provider";
 import { createPageMetadata } from "@/lib/metadata";
 import "./globals.css";
 
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <SessionProvider>{children}</SessionProvider>
         <Toaster />
       </body>
     </html>
