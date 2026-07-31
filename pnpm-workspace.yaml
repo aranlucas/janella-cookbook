@@ -1,5 +1,10 @@
-onlyBuiltDependencies:
-  - "@prisma/engines"
-  - prisma
-  - sharp
-  - unrs-resolver
+allowBuilds:
+  "@prisma/engines": true
+  prisma: true
+  sharp: true
+  unrs-resolver: true
+minimumReleaseAge: 1440
+overrides:
+  "ansi-to-react>linkify-it": "5.0.2"
+  "next>postcss": "8.5.25"
+  "next>sharp": "0.35.0"

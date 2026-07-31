@@ -14,8 +14,19 @@ const eslintConfig = defineConfig([
       "react-hooks/exhaustive-deps": "off",
       "react-hooks/immutability": "off",
       "react-hooks/purity": "off",
+      "react-hooks/refs": "off",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/static-components": "off",
+    },
+  },
+  {
+    files: [
+      "components/chatbot/chat-interface.tsx",
+      "components/ui/carousel.tsx",
+      "hooks/use-mobile.ts",
+    ],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
     },
   },
   // Override default ignores of eslint-config-next.

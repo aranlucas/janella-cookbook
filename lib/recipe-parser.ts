@@ -385,7 +385,7 @@ async function extractRecipeFromMarkdown(
     const { output: parsed } = await generateText({
       model: model,
       output: Output.object({ schema: recipeSchema }),
-      system: `You are a recipe extraction expert. Extract recipe data from the provided webpage content in Markdown format.
+      instructions: `You are a recipe extraction expert. Extract recipe data from the provided webpage content in Markdown format.
 
 CRITICAL INSTRUCTIONS:
 - The content has been pre-converted to Markdown, so most irrelevant page elements have been removed
@@ -434,7 +434,7 @@ async function extractRecipeWithAI(
     const { output: parsed } = await generateText({
       model: model,
       output: Output.object({ schema: recipeSchema }),
-      system: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
+      instructions: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
 
 CRITICAL INSTRUCTIONS:
 - You will receive the FULL HTML of a webpage - ignore all irrelevant content like navigation menus, advertisements, footers, sidebars, social media widgets, and promotional content
@@ -492,7 +492,7 @@ async function parseRecipeFromTextImpl(text: string): Promise<ParsedRecipe> {
     const { output: parsed } = await generateText({
       model: model,
       output: Output.object({ schema: recipeSchema }),
-      system: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
+      instructions: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
       prompt: validatedText,
     });
@@ -623,7 +623,7 @@ CRITICAL INSTRUCTIONS:
     const { output: parsed } = await generateText({
       model: model,
       output: Output.object({ schema: recipeSchema }),
-      system: systemPrompt,
+      instructions: systemPrompt,
       prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
     });
 

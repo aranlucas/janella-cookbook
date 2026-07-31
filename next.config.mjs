@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ["127.0.0.1"],
   transpilePackages: [],
-  experimental: {
-    turbopackUseSystemTlsCerts: true,
-  },
   images: {
     remotePatterns: [
       {
