@@ -6,7 +6,7 @@ Janella cookbook
 
 ### AI Provider Configuration
 
-This project uses **AI SDK V6** with the following providers:
+This project uses **AI SDK V7** with the following providers:
 
 1. **OpenRouter** (for recipe parsing) - Uses the free `xiaomi/mimo-v2-flash:free` model
    - Sign up at [openrouter.ai](https://openrouter.ai/)

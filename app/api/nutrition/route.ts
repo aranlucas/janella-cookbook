@@ -1,4 +1,8 @@
-import { streamText } from "ai";
+import {
+  createUIMessageStreamResponse,
+  streamText,
+  toUIMessageStream,
+} from "ai";
 import { z } from "zod";
 import { ResultAsync } from "neverthrow";
 import { model } from "@/lib/ai";
@@ -75,5 +79,7 @@ Format your response in a clear, easy-to-read way. Be realistic with estimates a
     temperature: 0.7,
   });
 
-  return result.toUIMessageStreamResponse();
+  return createUIMessageStreamResponse({
+    stream: toUIMessageStream({ stream: result.stream }),
+  });
 }
