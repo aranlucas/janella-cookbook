@@ -6,6 +6,7 @@ import { Heart, ChefHat, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { toggleFavorite, markAsCooked } from "@/lib/actions";
+import { AddToShoppingListButton } from "@/components/shopping/add-to-shopping-list-button";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { cn } from "@/lib/utils";
 
@@ -107,6 +108,13 @@ export function RecipeEngagementActions({
           )}
         </Button>
       </div>
+
+      <AddToShoppingListButton
+        ingredients={recipe.ingredients}
+        recipeTitle={recipe.title}
+        recipeSlug={recipe.slug}
+        className="w-full sm:w-auto"
+      />
 
       <Button
         variant="default"
