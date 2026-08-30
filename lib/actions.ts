@@ -593,24 +593,6 @@ export async function updateRecipe(
         (input.cookTime ?? existing.cookTime ?? 0) ||
       undefined;
 
-    // Resolve tag connections
-    const tagConnections = input.tags
-      ? yield* ResultAsync.fromPromise(
-          Promise.all(
-            input.tags.map(async (tagName) => {
-              const tagSlug = generateTagSlug(tagName);
-              const tag = await prisma.tag.upsert({
-                where: { slug: tagSlug },
-                create: { name: tagName, slug: tagSlug },
-                update: {},
-              });
-              return { id: tag.id };
-            }),
-          ),
-          toAppError,
-        ).safeUnwrap()
-      : ([] as { id: string }[]);
-
     // Prepare update data, stripping undefined fields
     const updateData: Record<string, unknown> = Object.fromEntries(
       Object.entries({
@@ -634,16 +616,31 @@ export async function updateRecipe(
       }).filter(([, v]) => v !== undefined),
     );
 
-    // Perform the update
+    // Perform the update atomically so a failed nested write cannot leave
+    // the recipe without its previous ingredients or instructions.
     const recipe = yield* ResultAsync.fromPromise(
-      (async () => {
+      prisma.$transaction(async (tx) => {
+        const tagConnections = input.tags
+          ? await Promise.all(
+              input.tags.map(async (tagName) => {
+                const tagSlug = generateTagSlug(tagName);
+                const tag = await tx.tag.upsert({
+                  where: { slug: tagSlug },
+                  create: { name: tagName, slug: tagSlug },
+                  update: {},
+                });
+                return { id: tag.id };
+              }),
+            )
+          : ([] as { id: string }[]);
+
         if (input.ingredients) {
-          await prisma.ingredient.deleteMany({ where: { recipeId: id } });
+          await tx.ingredient.deleteMany({ where: { recipeId: id } });
         }
         if (input.instructions) {
-          await prisma.instruction.deleteMany({ where: { recipeId: id } });
+          await tx.instruction.deleteMany({ where: { recipeId: id } });
         }
-        return prisma.recipe.update({
+        return tx.recipe.update({
           where: { id },
           data: {
             ...updateData,
@@ -683,7 +680,7 @@ export async function updateRecipe(
             images: true,
           },
         });
-      })(),
+      }),
       toAppError,
     ).safeUnwrap();
 
