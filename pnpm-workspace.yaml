@@ -8,3 +8,4 @@ overrides:
   "ansi-to-react>linkify-it": "5.0.2"
   "next>postcss": "8.5.25"
   "next>sharp": "0.35.0"
+pmOnFail: ignore
