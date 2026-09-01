@@ -8,3 +8,11 @@ overrides:
   "ansi-to-react>linkify-it": "5.0.2"
   "next>postcss": "8.5.25"
   "next>sharp": "0.35.0"
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@4.0.70'
+  - '@ai-sdk/google@4.0.59'
+  - '@ai-sdk/openai@4.0.53'
+  - '@ai-sdk/react@4.0.90'
+  - ai@7.0.87
+  - lucide-react@1.38.0
+  - next@16.3.4

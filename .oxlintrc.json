@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["import", "jsx-a11y", "nextjs", "react", "typescript", "unicorn"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2026": true
+  },
+  "ignorePatterns": [".next/**", "out/**", "build/**", "next-env.d.ts"],
+  "overrides": [
+    {
+      "files": ["components/ai-elements/**/*.{js,jsx,ts,tsx}"],
+      "rules": {
+        "nextjs/no-img-element": "off",
+        "eslint/no-unused-vars": "off",
+        "jsx-a11y/role-has-required-aria-props": "off",
+        "react-hooks/exhaustive-deps": "off",
+        "react/immutability": "off",
+        "react/purity": "off",
+        "react/set-state-in-effect": "off",
+        "react/static-components": "off"
+      }
+    }
+  ]
+}
