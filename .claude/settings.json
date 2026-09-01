@@ -17,7 +17,7 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm list:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm exec prettier:*)",
+      "Bash(pnpm exec oxfmt:*)",
       "Bash(pnpm exec tsc:*)",
       "Bash(railway env:*)",
       "Bash(ls:*)",
@@ -31,8 +31,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm exec prettier --write .",
-            "statusMessage": "Formatting with Prettier..."
+            "command": "pnpm exec oxfmt --write .",
+            "statusMessage": "Formatting with Oxfmt..."
           }
         ]
       }
