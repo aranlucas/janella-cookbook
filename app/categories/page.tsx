@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDatabaseRetry } from "@/lib/prisma";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentEmptyState } from "@/components/ui/content-state";
 import type { Metadata } from "next";
@@ -46,18 +46,20 @@ export const metadata: Metadata = createPageMetadata({
 
 async function getCategories() {
   try {
-    const [courses, cuisines] = await Promise.all([
-      prisma.recipe.groupBy({
-        by: ["course"],
-        _count: true,
-        where: { course: { not: null } },
-      }),
-      prisma.recipe.groupBy({
-        by: ["cuisine"],
-        _count: true,
-        where: { cuisine: { not: null } },
-      }),
-    ]);
+    const [courses, cuisines] = await withDatabaseRetry(() =>
+      Promise.all([
+        prisma.recipe.groupBy({
+          by: ["course"],
+          _count: true,
+          where: { course: { not: null } },
+        }),
+        prisma.recipe.groupBy({
+          by: ["cuisine"],
+          _count: true,
+          where: { cuisine: { not: null } },
+        }),
+      ]),
+    );
 
     return [
       ...courses.map((c) => ({

@@ -6,7 +6,12 @@
  */
 
 import { NextResponse } from "next/server";
-import { formatErrorResponse, isAppError, toAppError } from "./errors";
+import {
+  formatErrorResponse,
+  isAppError,
+  isTransientDatabaseError,
+  toAppError,
+} from "./errors";
 
 /**
  * Standard API response envelope.
@@ -93,13 +98,18 @@ export function apiPaginated<T>(
 
 /**
  * Create an error API response
+ * Transient "database starting up" errors are mapped to 503 with Retry-After
+ * so clients (and Next.js fetch) can retry instead of seeing a scary 500.
  */
 export function apiError(
   error: unknown,
   status?: number,
 ): NextResponse<ApiErrorResponse> {
-  const appError = toAppError(error);
-  const formatted = formatErrorResponse(error);
+  // Normalize transient PG errors (57P03 etc.) to 503 DATABASE_UNAVAILABLE
+  const normalized = isTransientDatabaseError(error) ? toAppError(error) : null;
+  const effectiveError = normalized ?? error;
+  const appError = toAppError(effectiveError);
+  const formatted = formatErrorResponse(effectiveError);
 
   const response: ApiErrorResponse = {
     success: false,
@@ -110,8 +120,15 @@ export function apiError(
     },
   };
 
+  const isRetryable =
+    appError.code === "DATABASE_UNAVAILABLE" ||
+    isTransientDatabaseError(error);
+
   return NextResponse.json(response, {
-    status: status ?? (isAppError(error) ? appError.statusCode : 500),
+    status:
+      status ??
+      (isRetryable ? 503 : isAppError(error) ? appError.statusCode : 500),
+    headers: isRetryable ? { "Retry-After": "3" } : undefined,
   });
 }
 
