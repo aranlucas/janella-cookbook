@@ -3,7 +3,7 @@
     "playwright": {
       "type": "stdio",
       "command": "cmd",
-      "args": ["/c", "npx", "playwriter@latest"],
+      "args": ["/c", "pnpm", "dlx", "playwriter@latest"],
       "env": {}
     }
   }
