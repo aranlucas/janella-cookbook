@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, CSSProperties } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -132,8 +132,10 @@ export const PlanFooter = (props: PlanFooterProps) => (
 
 export type PlanTriggerProps = Omit<
   ComponentProps<typeof CollapsibleTrigger>,
-  "children" | "render"
->;
+  "children" | "render" | "style"
+> & {
+  style?: CSSProperties;
+};
 
 export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
   <CollapsibleTrigger
