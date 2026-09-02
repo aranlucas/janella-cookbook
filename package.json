@@ -50,7 +50,7 @@
     "ansi-to-react": "^6.2.6",
     "cheerio": "^1.2.0",
     "class-variance-authority": "^0.7.1",
-    "cn": "^0.2.4",
+    "cn": "^0.2.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
     "embla-carousel-react": "^8.6.0",
