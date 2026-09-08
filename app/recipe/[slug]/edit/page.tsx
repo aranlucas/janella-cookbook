@@ -6,7 +6,8 @@ import { createPageMetadata } from "@/lib/metadata";
 import type { RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 
-export const revalidate = 86400;
+// Recipe edits must be visible immediately after saving.
+export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -30,9 +31,7 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
   }
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const recipe = await getRecipe(slug);
 

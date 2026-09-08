@@ -20,7 +20,7 @@ export type Tag = PrismaTag;
 export type RecipeImage = PrismaRecipeImage;
 
 // Extended recipe with relations
-export interface RecipeWithRelations extends Omit<Recipe, "embedding"> {
+export interface RecipeWithRelations extends Omit<Recipe, "embedding" | "saveKey"> {
   ingredients: Ingredient[];
   instructions: Instruction[];
   tags: Tag[];

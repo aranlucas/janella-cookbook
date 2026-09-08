@@ -18,6 +18,8 @@ model Recipe {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  saveKey String? @unique
+
   // Core fields
   title       String
   slug        String  @unique

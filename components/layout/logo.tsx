@@ -21,6 +21,7 @@ export function Logo({ className }: LogoProps) {
         <Image
           src="/logo-bg.png"
           alt="Janella's Cookbook"
+          sizes="40px"
           fill
           className="object-contain object-left"
           priority

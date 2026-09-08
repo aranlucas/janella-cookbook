@@ -1,25 +1,17 @@
 import { createOpenAI } from "@ai-sdk/openai";
 
-// OpenRouter client configured for AI SDK
+// Stay on free endpoints even if an older deployment still specifies a paid model.
+function freeModel(value: string | undefined, fallback = "openrouter/free"): string {
+  return value === "openrouter/free" || value?.endsWith(":free") ? value : fallback;
+}
+
+// Chat Completions is required for OpenRouter; do not use the Responses API.
 const openrouter = createOpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
 });
 
-/**
- * Chat model using OpenRouter's healer-alpha (frontier omni-modal, 262K context).
- *
- * Note: We use .chat() for OpenRouter to force the Chat Completions API
- * instead of the Responses API (default in AI SDK 5+), as OpenRouter
- * doesn't fully support the Responses API format.
- */
-export const chatModel = openrouter.chat("openrouter/healer-alpha");
-
-/**
- * Standard model for structured output tasks (recipe parsing, nutrition analysis)
- *
- * Note: We use .chat() for OpenRouter to force the Chat Completions API
- * instead of the Responses API (default in AI SDK 5+), as OpenRouter
- * doesn't fully support the Responses API format.
- */
-export const model = openrouter.chat("openrouter/healer-alpha");
+export const chatModel = openrouter.chat(freeModel(process.env.OPENROUTER_MODEL));
+export const model = openrouter.chat(
+  freeModel(process.env.OPENROUTER_RECIPE_MODEL, "dots-studio/dots-3-note-preview:free"),
+);

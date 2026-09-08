@@ -7,60 +7,51 @@ const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
 /**
  * Generate an embedding vector for the given text using Hugging Face's embedding model
  * Model: google/embeddinggemma-300m (768 dimensions)
- * Free tier: 30,000 requests/month
+ * Hosted inference is opt-in because provider billing is separate from OpenRouter.
  *
  * Returns Result instead of throwing.
  */
-export function generateEmbedding(
-  text: string,
-): ResultAsync<number[], ExternalApiError> {
-  if (!process.env.HUGGINGFACE_API_KEY) {
+export function generateEmbedding(text: string): ResultAsync<number[], ExternalApiError> {
+  if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) {
     return errAsync(
-      new ExternalApiError(
-        "Hugging Face",
-        "HUGGINGFACE_API_KEY environment variable is not set",
-      ),
+      new ExternalApiError("Hugging Face", "HUGGINGFACE_API_KEY environment variable is not set"),
     );
   }
 
   if (!text || text.trim().length === 0) {
     return errAsync(
-      new ExternalApiError(
-        "Hugging Face",
-        "Cannot generate embedding for empty text",
-      ),
+      new ExternalApiError("Hugging Face", "Cannot generate embedding for empty text"),
     );
   }
 
   return ResultAsync.fromPromise(
-    hf.featureExtraction({
-      model: "google/embeddinggemma-300m",
-      inputs: text.slice(0, 8000), // Limit input length to avoid token limits
-    }),
+    hf.featureExtraction(
+      {
+        model: "google/embeddinggemma-300m",
+        inputs: text.slice(0, 8000), // Limit input length to avoid token limits
+      },
+      { signal: AbortSignal.timeout(5000) },
+    ),
     (error) => {
-      const message =
-        error instanceof Error ? error.message : "Unknown embedding error";
+      const message = error instanceof Error ? error.message : "Unknown embedding error";
       return new ExternalApiError("Hugging Face", message, error);
     },
   ).andThen((result) => {
     if (!Array.isArray(result)) {
       return err(
-        new ExternalApiError(
-          "Hugging Face",
-          `Expected array response, got ${typeof result}`,
-        ),
+        new ExternalApiError("Hugging Face", `Expected array response, got ${typeof result}`),
       );
     }
 
     if (result.length > 0 && Array.isArray(result[0])) {
-      return err(
-        new ExternalApiError(
-          "Hugging Face",
-          "Expected 1D array response, got 2D array",
-        ),
-      );
+      return err(new ExternalApiError("Hugging Face", "Expected 1D array response, got 2D array"));
     }
 
+    if (
+      result.length !== 768 ||
+      !result.every((value) => typeof value === "number" && Number.isFinite(value))
+    )
+      return err(new ExternalApiError("Hugging Face", "Invalid embedding dimensions or values"));
     return ok(result as number[]);
   });
 }
