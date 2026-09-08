@@ -1,14 +1,11 @@
+import { fetchRecipeSource } from "@/lib/imports/fetch-source";
+import { extractStructuredRecipe } from "@/lib/imports/structured-recipe";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
 import { ResultAsync } from "neverthrow";
-import {
-  RecipeParseError,
-  ExternalApiError,
-  toAppError,
-  type AppError,
-} from "./errors";
+import { RecipeParseError, ExternalApiError, toAppError, type AppError } from "./errors";
 import { model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
 import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
@@ -33,10 +30,7 @@ const MAX_INPUT_TOKENS =
  * @param maxTokens - Maximum allowed tokens (defaults to MAX_INPUT_TOKENS)
  * @returns Validated content truncated to fit within token limits
  */
-function validateAndTruncateContent(
-  content: string,
-  maxTokens: number = MAX_INPUT_TOKENS,
-): string {
+function validateAndTruncateContent(content: string, maxTokens: number = MAX_INPUT_TOKENS): string {
   const tokens = encode(content);
 
   if (tokens.length <= maxTokens) {
@@ -102,19 +96,14 @@ const recipeSchema = z.object({
  * Extract the most important image from HTML content
  * Priority: JSON-LD schema > Open Graph > Twitter Card > Common selectors
  */
-function extractImageFromHtml(
-  html: string,
-  baseUrl: string,
-): string | undefined {
+function extractImageFromHtml(html: string, baseUrl: string): string | undefined {
   const $ = load(html);
 
   // Helper to resolve relative URLs
   const resolveUrl = (imgUrl: string | undefined): string | undefined => {
     if (!imgUrl) return undefined;
     try {
-      return (
-        normalizeRecipeImageUrl(new URL(imgUrl, baseUrl).href) ?? undefined
-      );
+      return normalizeRecipeImageUrl(new URL(imgUrl, baseUrl).href) ?? undefined;
     } catch {
       return normalizeRecipeImageUrl(imgUrl) ?? undefined;
     }
@@ -133,9 +122,7 @@ function extractImageFromHtml(
       for (const recipe of recipes) {
         if (recipe.image) {
           // image can be string, array of strings, or ImageObject(s)
-          const img = Array.isArray(recipe.image)
-            ? recipe.image[0]
-            : recipe.image;
+          const img = Array.isArray(recipe.image) ? recipe.image[0] : recipe.image;
           if (typeof img === "string") {
             return resolveUrl(img);
           } else if (img?.url) {
@@ -176,8 +163,7 @@ function extractImageFromHtml(
 
   for (const selector of selectors) {
     const img = $(selector).first();
-    const src =
-      img.attr("src") || img.attr("data-src") || img.attr("data-lazy-src");
+    const src = img.attr("src") || img.attr("data-src") || img.attr("data-lazy-src");
     if (src && !src.includes("placeholder") && !src.includes("avatar")) {
       return resolveUrl(src);
     }
@@ -236,57 +222,12 @@ function validateUrl(url: string): URL {
  * Fetch markdown content for a URL via markdown.new
  * Returns null if the service is unavailable or returns an error
  */
-async function fetchMarkdown(url: string): Promise<string | null> {
-  try {
-    const response = await fetch(`https://markdown.new/${url}`, {
-      headers: {
-        Accept: "text/markdown",
-      },
-      signal: AbortSignal.timeout(20000), // 20 second timeout (external service)
-    });
-
-    if (!response.ok) return null;
-
-    const text = await response.text();
-    // Sanity check: ensure we got meaningful content
-    if (!text || text.trim().length < 50) return null;
-
-    return text;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Fetch raw HTML for a URL (used for image extraction and as fallback)
- */
-async function fetchHtml(url: string): Promise<string> {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; CookbookBot/1.0)",
-      Accept: "text/html,application/xhtml+xml",
-    },
-    signal: AbortSignal.timeout(15000), // 15 second timeout
-  });
-
-  if (!response.ok) {
-    throw new RecipeParseError(
-      `Failed to fetch URL: ${response.status} ${response.statusText}`,
-      url,
-    );
-  }
-
-  return response.text();
-}
-
 /**
  * Parse a recipe from a URL.
  * Uses markdown.new for cleaner content extraction, with HTML fallback.
  * Returns ResultAsync instead of throwing.
  */
-export function parseRecipeFromUrl(
-  url: string,
-): ResultAsync<ParsedRecipe, AppError> {
+export function parseRecipeFromUrl(url: string): ResultAsync<ParsedRecipe, AppError> {
   return ResultAsync.fromPromise(parseRecipeFromUrlImpl(url), (error) =>
     error instanceof RecipeParseError || error instanceof ExternalApiError
       ? error
@@ -300,21 +241,14 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
   const href = validatedUrl.href;
 
   try {
-    // Fetch markdown (for AI extraction) and HTML (for image extraction) in parallel
-    const [markdown, html] = await Promise.all([
-      fetchMarkdown(href),
-      fetchHtml(href),
-    ]);
-
-    // Extract image from HTML (needs structured data like JSON-LD, OG tags)
+    const html = await fetchRecipeSource(href);
     const imageUrl = extractImageFromHtml(html, href);
-
-    if (markdown) {
-      // Use markdown for AI extraction (cleaner, fewer tokens)
-      return extractRecipeFromMarkdown(markdown, href, imageUrl);
-    }
-
-    // Fall back to HTML-based extraction
+    const structured = extractStructuredRecipe(html);
+    if (structured) return { ...structured, imageUrl };
+    if (!process.env.OPENROUTER_API_KEY)
+      throw new RecipeParseError(
+        "This website needs AI extraction, which is not configured. Paste the text or enter the recipe manually.",
+      );
     return extractRecipeWithAI(html, href, imageUrl);
   } catch (error) {
     if (error instanceof RecipeParseError) throw error;
@@ -334,17 +268,11 @@ function buildParsedRecipe(
   imageUrl: string | undefined,
 ): ParsedRecipe {
   if (!parsed.title || parsed.title === "Untitled Recipe") {
-    throw new RecipeParseError(
-      "Could not extract recipe title from the page",
-      sourceUrl,
-    );
+    throw new RecipeParseError("Could not extract recipe title from the page", sourceUrl);
   }
 
   if (!parsed.ingredients || parsed.ingredients.length === 0) {
-    throw new RecipeParseError(
-      "Could not extract any ingredients from the page",
-      sourceUrl,
-    );
+    throw new RecipeParseError("Could not extract any ingredients from the page", sourceUrl);
   }
 
   return {
@@ -373,52 +301,6 @@ function buildParsedRecipe(
 /**
  * Extract recipe using AI from markdown content (preferred path via markdown.new)
  */
-async function extractRecipeFromMarkdown(
-  markdown: string,
-  sourceUrl: string,
-  imageUrl: string | undefined,
-): Promise<ParsedRecipe> {
-  // Validate and truncate to fit within model's context window
-  const validatedContent = validateAndTruncateContent(markdown.trim());
-
-  try {
-    const { output: parsed } = await generateText({
-      model: model,
-      output: Output.object({ schema: recipeSchema }),
-      instructions: `You are a recipe extraction expert. Extract recipe data from the provided webpage content in Markdown format.
-
-CRITICAL INSTRUCTIONS:
-- The content has been pre-converted to Markdown, so most irrelevant page elements have been removed
-- Focus ONLY on the actual recipe content (ingredients, instructions, title, description, etc.)
-- Be accurate and only include information that is part of the recipe itself
-- Extract ALL ingredients with their exact quantities, units, and any preparation notes
-- Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
-- If ingredients are grouped (e.g., "For the avocado topping"), preserve that group information
-- Include prep time, cook time, and total time if mentioned
-- Extract servings/yield information
-- Identify the cuisine type and meal course if evident
-- Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
-- For instructions, maintain the original step numbering and any substeps
-- Look for recipe variations, notes, or tips that are part of the recipe
-- Ignore any user comments, related recipes, or other non-recipe content
-- Output in structured JSON format`,
-      prompt: `Extract the complete recipe from this webpage content:\n\n${validatedContent}`,
-    });
-
-    return buildParsedRecipe(parsed, sourceUrl, imageUrl);
-  } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
-    throw new ExternalApiError(
-      "OpenRouter",
-      `Failed to parse recipe with AI: ${error instanceof Error ? error.message : "Unknown error"}`,
-      error,
-    );
-  }
-}
-
-/**
- * Extract recipe using AI from HTML content (fallback when markdown.new is unavailable)
- */
 async function extractRecipeWithAI(
   html: string,
   sourceUrl: string,
@@ -433,6 +315,7 @@ async function extractRecipeWithAI(
   try {
     const { output: parsed } = await generateText({
       model: model,
+      abortSignal: AbortSignal.timeout(60000),
       output: Output.object({ schema: recipeSchema }),
       instructions: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
 
@@ -469,9 +352,7 @@ CRITICAL INSTRUCTIONS:
  * Parse a recipe from natural language text.
  * Returns ResultAsync instead of throwing.
  */
-export function parseRecipeFromText(
-  text: string,
-): ResultAsync<ParsedRecipe, AppError> {
+export function parseRecipeFromText(text: string): ResultAsync<ParsedRecipe, AppError> {
   return ResultAsync.fromPromise(parseRecipeFromTextImpl(text), (error) =>
     error instanceof RecipeParseError || error instanceof ExternalApiError
       ? error
@@ -491,6 +372,7 @@ async function parseRecipeFromTextImpl(text: string): Promise<ParsedRecipe> {
   try {
     const { output: parsed } = await generateText({
       model: model,
+      abortSignal: AbortSignal.timeout(60000),
       output: Output.object({ schema: recipeSchema }),
       instructions: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
 Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
@@ -499,9 +381,7 @@ Be accurate and organized. Extract all ingredients and instructions even if form
 
     // Validate we got a proper recipe
     if (!parsed.ingredients || parsed.ingredients.length === 0) {
-      throw new RecipeParseError(
-        "Could not extract any ingredients from the text",
-      );
+      throw new RecipeParseError("Could not extract any ingredients from the text");
     }
 
     return {
@@ -539,25 +419,18 @@ Be accurate and organized. Extract all ingredients and instructions even if form
  * Extracts the transcript and parses it into structured recipe data.
  * Returns ResultAsync instead of throwing.
  */
-export function parseRecipeFromYouTube(
-  url: string,
-): ResultAsync<ParsedRecipe, AppError> {
+export function parseRecipeFromYouTube(url: string): ResultAsync<ParsedRecipe, AppError> {
   // Chain: extract video ID (sync) → fetch transcript (async) → parse (async)
-  return new ResultAsync(Promise.resolve(extractYouTubeVideoId(url))).andThen(
-    (videoId) => {
-      const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
-      return getYouTubeTranscript(videoId).andThen((transcript) =>
-        ResultAsync.fromPromise(
-          parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl),
-          (error) =>
-            error instanceof RecipeParseError ||
-            error instanceof ExternalApiError
-              ? error
-              : toAppError(error),
-        ),
-      );
-    },
-  );
+  return new ResultAsync(Promise.resolve(extractYouTubeVideoId(url))).andThen((videoId) => {
+    const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
+    return getYouTubeTranscript(videoId).andThen((transcript) =>
+      ResultAsync.fromPromise(parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl), (error) =>
+        error instanceof RecipeParseError || error instanceof ExternalApiError
+          ? error
+          : toAppError(error),
+      ),
+    );
+  });
 }
 
 /** Internal throwing implementation for YouTube transcript parsing */
@@ -581,9 +454,7 @@ async function parseYouTubeTranscriptImpl(
   const validatedContent = validateAndTruncateContent(content.trim());
 
   try {
-    const videoContext = videoTitle
-      ? `\n\nVideo Title: "${videoTitle}"\n\n`
-      : "\n\n";
+    const videoContext = videoTitle ? `\n\nVideo Title: "${videoTitle}"\n\n` : "\n\n";
 
     // Different system prompts for transcript vs description
     const systemPrompt =
@@ -617,11 +488,11 @@ CRITICAL INSTRUCTIONS:
 - Extract all ingredients and instructions even if the transcript is messy or has typos
 - If the video title clearly indicates the recipe name, you can use it as the recipe title`;
 
-    const contentLabel =
-      source === "description" ? "Description" : "Transcript";
+    const contentLabel = source === "description" ? "Description" : "Transcript";
 
     const { output: parsed } = await generateText({
       model: model,
+      abortSignal: AbortSignal.timeout(60000),
       output: Output.object({ schema: recipeSchema }),
       instructions: systemPrompt,
       prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
@@ -673,4 +544,34 @@ CRITICAL INSTRUCTIONS:
       error,
     );
   }
+}
+
+/** Read recipe text visible in an image; never infer a recipe from a dish photo. */
+export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecipe, AppError> {
+  return ResultAsync.fromPromise(
+    (async () => {
+      if (!process.env.OPENROUTER_API_KEY)
+        throw new RecipeParseError(
+          "Photo import is not configured. Paste the recipe text or enter it manually.",
+        );
+      const { output } = await generateText({
+        model,
+        output: Output.object({ schema: recipeSchema }),
+        abortSignal: AbortSignal.timeout(60000),
+        instructions:
+          "Transcribe the recipe visible in this image. Never invent ingredients, amounts or steps. A photo of food without written recipe text is not a recipe: return empty ingredients and instructions. Preserve uncertainty by leaving missing amounts blank.",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "Extract this written recipe for review." },
+              { type: "image", image, mediaType: "image/jpeg" },
+            ],
+          },
+        ],
+      });
+      return buildParsedRecipe(output, "", undefined);
+    })(),
+    toAppError,
+  );
 }

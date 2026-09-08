@@ -2,6 +2,8 @@
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   transpilePackages: [],
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
+  agentRules: false,
   images: {
     remotePatterns: [
       {

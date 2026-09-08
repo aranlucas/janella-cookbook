@@ -1,16 +1,12 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Recipes page", () => {
-  test("renders the all recipes page with title and search", async ({
-    page,
-  }) => {
+  test("renders the all recipes page with title and search", async ({ page }) => {
     await page.goto("/recipes");
 
+    await expect(page.getByRole("heading", { name: "All Recipes" })).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "All Recipes" }),
-    ).toBeVisible();
-    await expect(
-      page.getByPlaceholder("Search within collection..."),
+      page.getByRole("searchbox", { name: "Search within collection..." }),
     ).toBeVisible();
   });
 
@@ -30,7 +26,7 @@ test.describe("Recipes page", () => {
   test("search within recipes redirects with query param", async ({ page }) => {
     await page.goto("/recipes");
 
-    const searchInput = page.getByPlaceholder("Search within collection...");
+    const searchInput = page.getByRole("searchbox", { name: "Search within collection..." });
     await searchInput.fill("chicken");
     await searchInput.press("Enter");
 
@@ -40,9 +36,7 @@ test.describe("Recipes page", () => {
 });
 
 test.describe("Recipe detail page", () => {
-  test("navigating to a recipe from the grid shows detail", async ({
-    page,
-  }) => {
+  test("navigating to a recipe from the grid shows detail", async ({ page }) => {
     await page.goto("/recipes");
 
     const firstRecipeLink = page.locator('a[href^="/recipe/"]').first();
@@ -59,11 +53,7 @@ test.describe("Recipe detail page", () => {
 
     // Recipe detail page elements
     await expect(page.locator("h1")).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Ingredients" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Instructions" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ingredients" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Instructions" })).toBeVisible();
   });
 });

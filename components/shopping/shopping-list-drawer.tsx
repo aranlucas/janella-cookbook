@@ -17,8 +17,7 @@ import { cn } from "@/lib/utils";
 import { useShoppingList } from "@/components/providers/session-provider";
 
 export function ShoppingListDrawer() {
-  const { items, toggle, remove, clear, clearChecked, count } =
-    useShoppingList();
+  const { items, toggle, remove, clear, clearChecked, count } = useShoppingList();
 
   const checkedCount = items.filter((i) => i.checked).length;
 
@@ -57,9 +56,7 @@ export function ShoppingListDrawer() {
               </Badge>
             )}
           </SheetTitle>
-          <SheetDescription>
-            Session-scoped — clears when you close this tab.
-          </SheetDescription>
+          <SheetDescription>Session-scoped — clears when you close this tab.</SheetDescription>
         </SheetHeader>
 
         {items.length === 0 ? (
@@ -81,38 +78,29 @@ export function ShoppingListDrawer() {
                       key={item.id}
                       className={cn(
                         "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                        item.checked
-                          ? "bg-muted/40 text-muted-foreground"
-                          : "hover:bg-muted/30",
+                        item.checked ? "bg-muted/40 text-muted-foreground" : "hover:bg-muted/30",
                       )}
                     >
                       <Checkbox
+                        aria-label={`Check ${item.name}`}
                         checked={item.checked}
                         onCheckedChange={() => toggle(item.id)}
                       />
-                      <span
+                      <button
+                        type="button"
                         className={cn(
-                          "flex-1 cursor-pointer select-none",
+                          "flex-1 cursor-pointer text-left select-none",
                           item.checked && "line-through opacity-60",
                         )}
                         onClick={() => toggle(item.id)}
                       >
-                        {item.quantity && (
-                          <span className="font-medium">{item.quantity} </span>
-                        )}
-                        {item.unit && (
-                          <span className="text-muted-foreground">
-                            {item.unit}{" "}
-                          </span>
-                        )}
+                        {item.quantity && <span className="font-medium">{item.quantity} </span>}
+                        {item.unit && <span className="text-muted-foreground">{item.unit} </span>}
                         {item.name}
                         {item.notes && (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            ({item.notes})
-                          </span>
+                          <span className="text-muted-foreground"> ({item.notes})</span>
                         )}
-                      </span>
+                      </button>
                       <button
                         onClick={() => remove(item.id)}
                         className="shrink-0 rounded p-0.5 text-muted-foreground/60 hover:text-destructive"
@@ -132,22 +120,12 @@ export function ShoppingListDrawer() {
           <SheetFooter className="border-t">
             <div className="flex w-full gap-2">
               {checkedCount > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearChecked}
-                  className="flex-1"
-                >
+                <Button variant="outline" size="sm" onClick={clearChecked} className="flex-1">
                   <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                   Clear checked ({checkedCount})
                 </Button>
               )}
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={clear}
-                className="flex-1"
-              >
+              <Button variant="destructive" size="sm" onClick={clear} className="flex-1">
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                 Clear all
               </Button>

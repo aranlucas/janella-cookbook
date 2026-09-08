@@ -1,12 +1,7 @@
 import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
-import {
-  ExternalApiError,
-  DatabaseError,
-  toAppError,
-  type AppError,
-} from "./errors";
+import { ExternalApiError, DatabaseError, toAppError, type AppError } from "./errors";
 import type {
   SearchFilters,
   SearchResult,
@@ -42,27 +37,26 @@ async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
   }
 
   // Fetch all related data in parallel with batch queries
-  const [allIngredients, allInstructions, recipeTags, allImages] =
-    await Promise.all([
-      prisma.ingredient.findMany({
-        where: { recipeId: { in: recipeIds } },
-        orderBy: { sortOrder: "asc" },
-      }),
-      prisma.instruction.findMany({
-        where: { recipeId: { in: recipeIds } },
-        orderBy: { sortOrder: "asc" },
-      }),
-      prisma.recipe.findMany({
-        where: { id: { in: recipeIds } },
-        select: {
-          id: true,
-          tags: true,
-        },
-      }),
-      prisma.recipeImage.findMany({
-        where: { recipeId: { in: recipeIds } },
-      }),
-    ]);
+  const [allIngredients, allInstructions, recipeTags, allImages] = await Promise.all([
+    prisma.ingredient.findMany({
+      where: { recipeId: { in: recipeIds } },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.instruction.findMany({
+      where: { recipeId: { in: recipeIds } },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.recipe.findMany({
+      where: { id: { in: recipeIds } },
+      select: {
+        id: true,
+        tags: true,
+      },
+    }),
+    prisma.recipeImage.findMany({
+      where: { recipeId: { in: recipeIds } },
+    }),
+  ]);
 
   // Group by recipe ID
   const ingredients = new Map<string, Ingredient[]>();
@@ -122,9 +116,7 @@ function buildFilterConditions(filters: SearchFilters): {
     // Validate that cuisines are safe strings (alphanumeric + spaces)
     const safeCuisines = filters.cuisine.filter((c) => /^[\w\s-]+$/i.test(c));
     if (safeCuisines.length > 0) {
-      const placeholders = safeCuisines
-        .map((_, i) => `$cuisine${i}`)
-        .join(", ");
+      const placeholders = safeCuisines.map((_, i) => `$cuisine${i}`).join(", ");
       conditions.push(`r.cuisine IN (${placeholders})`);
       safeCuisines.forEach((c, i) => {
         params[`cuisine${i}`] = c;
@@ -180,13 +172,7 @@ export function semanticSearch(
     )
     .andThen((queryEmbedding) =>
       ResultAsync.fromPromise(
-        semanticSearchWithEmbedding(
-          queryEmbedding,
-          query,
-          filters,
-          limit,
-          offset,
-        ),
+        semanticSearchWithEmbedding(queryEmbedding, query, filters, limit, offset),
         (error) => (error instanceof DatabaseError ? error : toAppError(error)),
       ),
     );
@@ -341,9 +327,8 @@ export function keywordSearch(
   limit = 20,
   offset = 0,
 ): ResultAsync<SearchOutput, AppError> {
-  return ResultAsync.fromPromise(
-    keywordSearchImpl(query, filters, limit, offset),
-    (error) => (error instanceof DatabaseError ? error : toAppError(error)),
+  return ResultAsync.fromPromise(keywordSearchImpl(query, filters, limit, offset), (error) =>
+    error instanceof DatabaseError ? error : toAppError(error),
   );
 }
 
@@ -360,13 +345,9 @@ async function keywordSearchImpl(
   const filterConditions: Prisma.RecipeWhereInput[] = [
     ...(filters.cuisine?.length ? [{ cuisine: { in: filters.cuisine } }] : []),
     ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
-    ...(filters.difficulty?.length
-      ? [{ difficulty: { in: filters.difficulty } }]
-      : []),
+    ...(filters.difficulty?.length ? [{ difficulty: { in: filters.difficulty } }] : []),
     ...(filters.maxTime ? [{ totalTime: { lte: filters.maxTime } }] : []),
-    ...(filters.isFavorite !== undefined
-      ? [{ isFavorite: filters.isFavorite }]
-      : []),
+    ...(filters.isFavorite !== undefined ? [{ isFavorite: filters.isFavorite }] : []),
   ];
 
   // When query is empty or whitespace-only, return all recipes matching filters
@@ -422,10 +403,7 @@ async function keywordSearchImpl(
     const results: SearchResult[] = recipes.map((recipe) => ({
       recipe: recipe as unknown as RecipeWithRelations,
       score: 0.5, // Default score for keyword matches
-      highlights: generateHighlights(
-        recipe as unknown as RecipeWithRelations,
-        query,
-      ),
+      highlights: generateHighlights(recipe as unknown as RecipeWithRelations, query),
     }));
 
     return { results, total };
@@ -451,14 +429,13 @@ export function hybridSearch(
   }
 
   // Check if we have embeddings capability
-  if (!process.env.HUGGINGFACE_API_KEY) {
+  if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) {
     return keywordSearch(query, filters, limit, offset);
   }
 
   // Try hybrid (semantic + keyword), fall back to keyword-only on error
-  return ResultAsync.fromPromise(
-    hybridSearchImpl(query, filters, limit, offset),
-    (error) => toAppError(error),
+  return ResultAsync.fromPromise(hybridSearchImpl(query, filters, limit, offset), (error) =>
+    toAppError(error),
   ).orElse(() => {
     // Fall back to keyword search if hybrid fails
     return keywordSearch(query, filters, limit, offset);
@@ -485,10 +462,7 @@ async function hybridSearchImpl(
 
   // If semantic failed, just use keyword results
   if (semanticResult.isErr()) {
-    console.error(
-      "Semantic search failed, using keyword only:",
-      semanticResult.error,
-    );
+    console.error("Semantic search failed, using keyword only:", semanticResult.error);
     return keywordResult.value;
   }
 
@@ -518,10 +492,7 @@ async function hybridSearchImpl(
     if (existing) {
       existing.score += rrf;
       if (result.highlights) {
-        existing.highlights = [
-          ...(existing.highlights || []),
-          ...result.highlights,
-        ];
+        existing.highlights = [...(existing.highlights || []), ...result.highlights];
       }
     } else {
       scores.set(result.recipe.id, {
@@ -546,10 +517,7 @@ async function hybridSearchImpl(
 /**
  * Generate highlight snippets for search results
  */
-function generateHighlights(
-  recipe: RecipeWithRelations,
-  query: string,
-): string[] {
+function generateHighlights(recipe: RecipeWithRelations, query: string): string[] {
   const highlights: string[] = [];
   const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
 
@@ -564,8 +532,7 @@ function generateHighlights(
     terms.some((term) => recipe.description!.toLowerCase().includes(term))
   ) {
     highlights.push(
-      recipe.description.slice(0, 150) +
-        (recipe.description.length > 150 ? "..." : ""),
+      recipe.description.slice(0, 150) + (recipe.description.length > 150 ? "..." : ""),
     );
   }
 

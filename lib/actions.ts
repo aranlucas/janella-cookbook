@@ -2,30 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { ok, err, safeTry, ResultAsync, type Result } from "neverthrow";
+import { ok, err, safeTry, ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
-import { generateRecipeEmbedding } from "@/lib/embeddings";
-import {
-  parseRecipeFromUrl,
-  parseRecipeFromText,
-  parseRecipeFromYouTube,
-} from "@/lib/recipe-parser";
+import { recipeInputSchema } from "@/lib/validations";
+import { z } from "zod";
+import { generateSearchText, generateRecipeEmbedding } from "@/lib/embeddings";
 import { AppError, ValidationError, toAppError } from "@/lib/errors";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
-
-/**
- * Safely parse a URL string into a URL object, returning a Result
- * instead of throwing on invalid input. Used by importFromUrl and
- * importFromYouTube to avoid duplicate try/catch blocks.
- */
-function safeParseUrl(url: string): Result<URL, ValidationError> {
-  try {
-    return ok(new URL(url));
-  } catch {
-    return err(new ValidationError("Invalid URL"));
-  }
-}
 
 export type ActionResult<T = RecipeWithRelations> =
   | { success: true; data: T; slug?: string }
@@ -37,7 +21,8 @@ export type ActionResult<T = RecipeWithRelations> =
  */
 function revalidateRecipes(slug?: string) {
   // Revalidate home page (recipe list)
-  revalidatePath("/");
+  for (const path of ["/", "/recipes", "/favorites", "/categories", "/dashboard", "/search"])
+    revalidatePath(path);
 
   // Revalidate specific recipe pages if slug provided
   if (slug) {
@@ -65,7 +50,7 @@ function deferEmbeddingGeneration(
     difficulty?: string | null;
   },
 ) {
-  if (!process.env.HUGGINGFACE_API_KEY) return;
+  if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) return;
 
   after(async () => {
     await generateRecipeEmbedding(recipeData)
@@ -74,16 +59,15 @@ function deferEmbeddingGeneration(
         return ResultAsync.fromPromise(
           prisma.$executeRaw`
             UPDATE "Recipe"
-            SET "searchText" = ${searchText}, embedding = ${embeddingString}::vector
-            WHERE id = ${recipeId}
+            SET embedding = ${embeddingString}::vector
+            WHERE id = ${recipeId} AND "searchText" = ${searchText}
           `,
           toAppError,
         );
       })
       .match(
         () => {},
-        (error) =>
-          console.error("Background embedding generation failed:", error),
+        (error) => console.error("Background embedding generation failed:", error),
       );
   });
 }
@@ -92,6 +76,7 @@ function deferEmbeddingGeneration(
 async function createRecipeInDb(data: {
   title: string;
   slug: string;
+  saveKey?: string;
   description?: string | null;
   prepTime?: number | null;
   cookTime?: number | null;
@@ -121,20 +106,20 @@ async function createRecipeInDb(data: {
     duration?: number;
     imageUrl?: string;
   }[];
-  tagIds?: { id: string }[];
+  tagNames?: string[];
 }) {
   const recipe = await prisma.recipe.create({
     data: {
+      saveKey: data.saveKey,
       title: data.title,
       slug: data.slug,
-      description: data.description,
+      description: data.description?.trim() || null,
       prepTime: data.prepTime,
       cookTime: data.cookTime,
       totalTime: data.totalTime,
-      servings: data.servings,
-      difficulty:
-        (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
-      cuisine: data.cuisine,
+      servings: data.servings?.trim() || null,
+      difficulty: (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
+      cuisine: data.cuisine?.trim() || null,
       course: data.course as
         | "BREAKFAST"
         | "LUNCH"
@@ -147,28 +132,24 @@ async function createRecipeInDb(data: {
         | "SAUCE"
         | "BREAD"
         | undefined,
-      sourceUrl: data.sourceUrl,
-      sourceType: data.sourceType as
-        | "URL_IMPORT"
-        | "MANUAL"
-        | "NATURAL_LANGUAGE"
-        | "PHOTO"
-        | "API",
-      imageUrl: data.imageUrl,
-      notes: data.notes,
+      sourceUrl: data.sourceUrl?.trim() || null,
+      sourceType: data.sourceType as "URL_IMPORT" | "MANUAL" | "NATURAL_LANGUAGE" | "PHOTO" | "API",
+      imageUrl: data.imageUrl?.trim() || null,
+      notes: data.notes?.trim() || null,
       rating: data.rating,
-      searchText: data.searchText,
+      searchText: generateSearchText({ ...data, tags: data.tagNames?.map((name) => ({ name })) }),
       ingredients: {
         create: data.ingredients,
       },
       instructions: {
         create: data.instructions,
       },
-      ...(data.tagIds && {
-        tags: {
-          connect: data.tagIds,
-        },
-      }),
+      tags: {
+        connectOrCreate: (data.tagNames ?? []).map((name) => ({
+          where: { slug: generateTagSlug(name) },
+          create: { name, slug: generateTagSlug(name) },
+        })),
+      },
     },
     include: {
       ingredients: { orderBy: { sortOrder: "asc" } },
@@ -181,381 +162,58 @@ async function createRecipeInDb(data: {
   return recipe;
 }
 
-// Import recipe from URL
-// NOTE: This function checks if the URL has been imported before.
-// If the same URL is imported again, it updates the existing recipe instead of creating a duplicate.
-// This ensures each URL always maps to the same recipe/slug.
-export async function importFromUrl(url: string): Promise<ActionResult> {
-  // Chain: validate URL → find existing recipe → parse URL
-  const baseResult = await safeParseUrl(url).asyncAndThen((parsedUrl) => {
-    const urlStr = parsedUrl.toString();
-    return ResultAsync.fromPromise(
-      prisma.recipe.findFirst({
-        where: { sourceUrl: urlStr },
-        select: { id: true, slug: true },
-      }),
-      toAppError,
-    ).andThen((existingRecipe) =>
-      parseRecipeFromUrl(urlStr).map((parsed) => ({
-        parsed,
-        existingRecipe,
-        urlStr,
+// Persist a reviewed recipe. A retry with the same key returns the same record.
+export async function createRecipe(input: RecipeInput, saveKey?: string): Promise<ActionResult> {
+  const validated = recipeInputSchema.safeParse(input);
+  if (!validated.success)
+    return { success: false, error: validated.error.issues[0]?.message || "Invalid recipe" };
+  if (saveKey && !z.string().uuid().safeParse(saveKey).success)
+    return { success: false, error: "Invalid save key" };
+  const data = validated.data;
+  const include = {
+    ingredients: { orderBy: { sortOrder: "asc" as const } },
+    instructions: { orderBy: { sortOrder: "asc" as const } },
+    tags: true,
+    images: true,
+  };
+  try {
+    if (saveKey) {
+      const existing = await prisma.recipe.findUnique({ where: { saveKey }, include });
+      if (existing) return { success: true, data: existing, slug: existing.slug };
+    }
+    const slugResult = await generateUniqueSlug(data.title);
+    if (slugResult.isErr()) return { success: false, error: slugResult.error.message };
+    const totalTime = data.totalTime ?? ((data.prepTime ?? 0) + (data.cookTime ?? 0) || undefined);
+    const recipe = await createRecipeInDb({
+      ...data,
+      slug: slugResult.value,
+      saveKey,
+      totalTime,
+      tagNames: [...new Set(data.tags?.map((tag) => tag.trim()).filter(Boolean))],
+      ingredients: data.ingredients.map((ingredient, sortOrder) => ({ ...ingredient, sortOrder })),
+      instructions: data.instructions.map((instruction, sortOrder) => ({
+        ...instruction,
+        sortOrder,
       })),
-    );
-  });
-
-  if (baseResult.isErr()) {
-    console.error("Error importing recipe from URL:", baseResult.error);
-    return { success: false, error: baseResult.error.message };
-  }
-
-  const { parsed, existingRecipe, urlStr } = baseResult.value;
-
-  // If recipe exists, update it and return immediately
-  if (existingRecipe) {
-    return updateRecipe(existingRecipe.id, {
-      title: parsed.title,
-      description: parsed.description,
-      prepTime: parsed.prepTime,
-      cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime,
-      servings: parsed.servings,
-      difficulty: parsed.difficulty,
-      cuisine: parsed.cuisine,
-      course: parsed.course,
-      imageUrl: parsed.imageUrl,
-      ingredients: parsed.ingredients,
-      instructions: parsed.instructions,
     });
+    deferEmbeddingGeneration(recipe.id, { ...recipe, tags: recipe.tags });
+    revalidateRecipes(recipe.slug);
+    return { success: true, data: recipe, slug: recipe.slug };
+  } catch (error) {
+    if (saveKey) {
+      try {
+        const existing = await prisma.recipe.findUnique({ where: { saveKey }, include });
+        if (existing) return { success: true, data: existing, slug: existing.slug };
+      } catch {
+        /* Keep the original failure. */
+      }
+    }
+    console.error("Recipe save failed:", error);
+    return {
+      success: false,
+      error: "Could not save the recipe. Your draft is still here; please retry.",
+    };
   }
-
-  // New recipe: chain slug generation + DB creation
-  return generateUniqueSlug(parsed.title)
-    .andThen((slug) =>
-      ResultAsync.fromPromise(
-        createRecipeInDb({
-          title: parsed.title,
-          slug,
-          description: parsed.description,
-          prepTime: parsed.prepTime,
-          cookTime: parsed.cookTime,
-          totalTime:
-            parsed.totalTime ||
-            (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
-            undefined,
-          servings: parsed.servings,
-          difficulty: parsed.difficulty || "MEDIUM",
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          sourceUrl: urlStr,
-          sourceType: "URL_IMPORT",
-          imageUrl: parsed.imageUrl,
-          ingredients: parsed.ingredients.map((ing, index) => ({
-            quantity: ing.quantity,
-            unit: ing.unit,
-            name: ing.name,
-            notes: ing.notes,
-            group: ing.group,
-            sortOrder: ing.sortOrder ?? index,
-          })),
-          instructions: parsed.instructions.map((inst, index) => ({
-            text: inst.text,
-            group: inst.group,
-            sortOrder: inst.sortOrder ?? index,
-            duration: inst.duration,
-          })),
-        }),
-        toAppError,
-      ).map((recipe) => ({ recipe, slug })),
-    )
-    .match(
-      ({ recipe, slug }) => {
-        deferEmbeddingGeneration(recipe.id, {
-          title: parsed.title,
-          description: parsed.description,
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          ingredients: parsed.ingredients,
-          instructions: parsed.instructions,
-          totalTime: parsed.totalTime,
-          difficulty: parsed.difficulty,
-        });
-        revalidateRecipes(slug);
-        return { success: true as const, data: recipe, slug };
-      },
-      (error) => {
-        console.error("Error importing recipe from URL:", error);
-        return { success: false as const, error: error.message };
-      },
-    );
-}
-
-// Import recipe from text
-export async function importFromText(text: string): Promise<ActionResult> {
-  if (!text.trim()) {
-    return { success: false, error: "Text is required" };
-  }
-
-  return parseRecipeFromText(text)
-    .andThen((parsed) =>
-      generateUniqueSlug(parsed.title).map((slug) => ({ parsed, slug })),
-    )
-    .andThen(({ parsed, slug }) =>
-      ResultAsync.fromPromise(
-        createRecipeInDb({
-          title: parsed.title,
-          slug,
-          description: parsed.description,
-          prepTime: parsed.prepTime,
-          cookTime: parsed.cookTime,
-          totalTime:
-            parsed.totalTime ||
-            (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
-            undefined,
-          servings: parsed.servings,
-          difficulty: parsed.difficulty || "MEDIUM",
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          sourceType: "NATURAL_LANGUAGE",
-          imageUrl: parsed.imageUrl,
-          ingredients: parsed.ingredients.map((ing, index) => ({
-            quantity: ing.quantity,
-            unit: ing.unit,
-            name: ing.name,
-            notes: ing.notes,
-            group: ing.group,
-            sortOrder: ing.sortOrder ?? index,
-          })),
-          instructions: parsed.instructions.map((inst, index) => ({
-            text: inst.text,
-            group: inst.group,
-            sortOrder: inst.sortOrder ?? index,
-            duration: inst.duration,
-          })),
-        }),
-        toAppError,
-      ).map((recipe) => ({ recipe, parsed, slug })),
-    )
-    .match(
-      ({ recipe, parsed, slug }) => {
-        deferEmbeddingGeneration(recipe.id, {
-          title: parsed.title,
-          description: parsed.description,
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          ingredients: parsed.ingredients,
-          instructions: parsed.instructions,
-          totalTime: parsed.totalTime,
-          difficulty: parsed.difficulty,
-        });
-        revalidateRecipes(slug);
-        return { success: true as const, data: recipe, slug };
-      },
-      (error) => {
-        console.error("Error importing recipe from text:", error);
-        return { success: false as const, error: error.message };
-      },
-    );
-}
-
-// Import recipe from YouTube video
-export async function importFromYouTube(url: string): Promise<ActionResult> {
-  // Chain: validate URL → find existing recipe → parse YouTube URL
-  const baseResult = await safeParseUrl(url).asyncAndThen((parsedUrl) => {
-    const urlStr = parsedUrl.toString();
-    return ResultAsync.fromPromise(
-      prisma.recipe.findFirst({
-        where: { sourceUrl: urlStr },
-        select: { id: true, slug: true },
-      }),
-      toAppError,
-    ).andThen((existingRecipe) =>
-      parseRecipeFromYouTube(urlStr).map((parsed) => ({
-        parsed,
-        existingRecipe,
-        urlStr,
-      })),
-    );
-  });
-
-  if (baseResult.isErr()) {
-    console.error("Error importing recipe from YouTube:", baseResult.error);
-    return { success: false, error: baseResult.error.message };
-  }
-
-  const { parsed, existingRecipe, urlStr } = baseResult.value;
-
-  // If recipe exists, update it and return immediately
-  if (existingRecipe) {
-    return updateRecipe(existingRecipe.id, {
-      title: parsed.title,
-      description: parsed.description,
-      prepTime: parsed.prepTime,
-      cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime,
-      servings: parsed.servings,
-      difficulty: parsed.difficulty,
-      cuisine: parsed.cuisine,
-      course: parsed.course,
-      imageUrl: parsed.imageUrl,
-      ingredients: parsed.ingredients,
-      instructions: parsed.instructions,
-    });
-  }
-
-  // New recipe: chain slug generation + DB creation
-  return generateUniqueSlug(parsed.title)
-    .andThen((slug) =>
-      ResultAsync.fromPromise(
-        createRecipeInDb({
-          title: parsed.title,
-          slug,
-          description: parsed.description,
-          prepTime: parsed.prepTime,
-          cookTime: parsed.cookTime,
-          totalTime:
-            parsed.totalTime ||
-            (parsed.prepTime || 0) + (parsed.cookTime || 0) ||
-            undefined,
-          servings: parsed.servings,
-          difficulty: parsed.difficulty || "MEDIUM",
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          sourceUrl: urlStr,
-          sourceType: "URL_IMPORT",
-          imageUrl: parsed.imageUrl,
-          ingredients: parsed.ingredients.map((ing, index) => ({
-            quantity: ing.quantity,
-            unit: ing.unit,
-            name: ing.name,
-            notes: ing.notes,
-            group: ing.group,
-            sortOrder: ing.sortOrder ?? index,
-          })),
-          instructions: parsed.instructions.map((inst, index) => ({
-            text: inst.text,
-            group: inst.group,
-            sortOrder: inst.sortOrder ?? index,
-            duration: inst.duration,
-          })),
-        }),
-        toAppError,
-      ).map((recipe) => ({ recipe, slug })),
-    )
-    .match(
-      ({ recipe, slug }) => {
-        deferEmbeddingGeneration(recipe.id, {
-          title: parsed.title,
-          description: parsed.description,
-          cuisine: parsed.cuisine,
-          course: parsed.course,
-          ingredients: parsed.ingredients,
-          instructions: parsed.instructions,
-          totalTime: parsed.totalTime,
-          difficulty: parsed.difficulty,
-        });
-        revalidateRecipes(slug);
-        return { success: true as const, data: recipe, slug };
-      },
-      (error) => {
-        console.error("Error importing recipe from YouTube:", error);
-        return { success: false as const, error: error.message };
-      },
-    );
-}
-
-// Create a new recipe manually
-export async function createRecipe(input: RecipeInput): Promise<ActionResult> {
-  if (!input.title) {
-    return { success: false, error: "Title is required" };
-  }
-
-  const totalTime =
-    input.totalTime ||
-    (input.prepTime || 0) + (input.cookTime || 0) ||
-    undefined;
-
-  return generateUniqueSlug(input.title)
-    .andThen((slug) =>
-      ResultAsync.fromPromise(
-        (async () => {
-          const tagConnections = input.tags
-            ? await Promise.all(
-                input.tags.map(async (tagName) => {
-                  const tagSlug = generateTagSlug(tagName);
-                  const tag = await prisma.tag.upsert({
-                    where: { slug: tagSlug },
-                    create: { name: tagName, slug: tagSlug },
-                    update: {},
-                  });
-                  return { id: tag.id };
-                }),
-              )
-            : [];
-          return { slug, tagConnections };
-        })(),
-        toAppError,
-      ),
-    )
-    .andThen(({ slug, tagConnections }) =>
-      ResultAsync.fromPromise(
-        createRecipeInDb({
-          title: input.title,
-          slug,
-          description: input.description,
-          prepTime: input.prepTime,
-          cookTime: input.cookTime,
-          totalTime,
-          servings: input.servings,
-          difficulty: input.difficulty || "MEDIUM",
-          cuisine: input.cuisine,
-          course: input.course,
-          sourceUrl: input.sourceUrl,
-          sourceType: input.sourceType,
-          imageUrl: input.imageUrl,
-          notes: input.notes,
-          rating: input.rating,
-          ingredients: input.ingredients.map((ing, index) => ({
-            quantity: ing.quantity,
-            unit: ing.unit,
-            name: ing.name,
-            notes: ing.notes,
-            group: ing.group,
-            sortOrder: ing.sortOrder ?? index,
-          })),
-          instructions: input.instructions.map((inst, index) => ({
-            text: inst.text,
-            group: inst.group,
-            sortOrder: inst.sortOrder ?? index,
-            duration: inst.duration,
-            imageUrl: inst.imageUrl,
-          })),
-          tagIds: tagConnections,
-        }),
-        toAppError,
-      ).map((recipe) => ({ recipe, slug })),
-    )
-    .match(
-      ({ recipe, slug }) => {
-        deferEmbeddingGeneration(recipe.id, {
-          title: input.title,
-          description: input.description,
-          cuisine: input.cuisine,
-          course: input.course,
-          tags: input.tags?.map((t) => ({ name: t })),
-          ingredients: input.ingredients,
-          instructions: input.instructions,
-          totalTime,
-          difficulty: input.difficulty,
-        });
-        revalidateRecipes(slug);
-        return { success: true as const, data: recipe, slug };
-      },
-      (error) => {
-        console.error("Error creating recipe:", error);
-        return { success: false as const, error: error.message };
-      },
-    );
 }
 
 // Update an existing recipe
@@ -566,7 +224,19 @@ export async function updateRecipe(
     cookCount?: number;
     lastCooked?: string;
   },
+  expectedUpdatedAt?: string,
 ): Promise<ActionResult> {
+  const validated = recipeInputSchema
+    .partial()
+    .extend({
+      isFavorite: z.boolean().optional(),
+      cookCount: z.number().int().nonnegative().optional(),
+      lastCooked: z.string().datetime().optional(),
+    })
+    .safeParse(input);
+  if (!validated.success)
+    return { success: false, error: validated.error.issues[0]?.message || "Invalid recipe" };
+  input = validated.data as typeof input;
   return safeTry(async function* () {
     // Find existing recipe
     const existing = yield* ResultAsync.fromPromise(
@@ -574,9 +244,7 @@ export async function updateRecipe(
       toAppError,
     )
       .andThen((found) =>
-        found
-          ? ok(found)
-          : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
+        found ? ok(found) : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
       )
       .safeUnwrap();
 
@@ -589,8 +257,7 @@ export async function updateRecipe(
     // Calculate total time
     const totalTime =
       input.totalTime ||
-      (input.prepTime ?? existing.prepTime ?? 0) +
-        (input.cookTime ?? existing.cookTime ?? 0) ||
+      (input.prepTime ?? existing.prepTime ?? 0) + (input.cookTime ?? existing.cookTime ?? 0) ||
       undefined;
 
     // Prepare update data, stripping undefined fields
@@ -620,6 +287,16 @@ export async function updateRecipe(
     // the recipe without its previous ingredients or instructions.
     const recipe = yield* ResultAsync.fromPromise(
       prisma.$transaction(async (tx) => {
+        if (expectedUpdatedAt) {
+          const locked = await tx.recipe.updateMany({
+            where: { id, updatedAt: new Date(expectedUpdatedAt) },
+            data: { updatedAt: new Date() },
+          });
+          if (!locked.count)
+            throw new ValidationError(
+              "This recipe changed while you were editing. Reload it before saving.",
+            );
+        }
         const tagConnections = input.tags
           ? await Promise.all(
               input.tags.map(async (tagName) => {
@@ -644,6 +321,15 @@ export async function updateRecipe(
           where: { id },
           data: {
             ...updateData,
+            searchText: generateSearchText({
+              ...existing,
+              ...input,
+              ingredients:
+                input.ingredients ?? (await tx.ingredient.findMany({ where: { recipeId: id } })),
+              instructions:
+                input.instructions ?? (await tx.instruction.findMany({ where: { recipeId: id } })),
+              tags: input.tags?.map((name) => ({ name })) ?? existing.tags,
+            }),
             ...(input.ingredients && {
               ingredients: {
                 create: input.ingredients.map((ing, index) => ({
@@ -685,12 +371,7 @@ export async function updateRecipe(
     ).safeUnwrap();
 
     // Side effects
-    if (
-      input.title ||
-      input.description ||
-      input.ingredients ||
-      input.instructions
-    ) {
+    if (input.title || input.description || input.ingredients || input.instructions) {
       deferEmbeddingGeneration(id, {
         title: recipe.title,
         description: recipe.description,
@@ -703,6 +384,7 @@ export async function updateRecipe(
         difficulty: recipe.difficulty,
       });
     }
+    revalidateRecipes(existing.slug);
     revalidateRecipes(slug);
 
     return ok({ success: true as const, data: recipe, slug } as ActionResult);
@@ -716,10 +398,7 @@ export async function updateRecipe(
 }
 
 // Toggle favorite status
-export async function toggleFavorite(
-  id: string,
-  isFavorite: boolean,
-): Promise<ActionResult> {
+export async function toggleFavorite(id: string, isFavorite: boolean): Promise<ActionResult> {
   return ResultAsync.fromPromise(
     prisma.recipe.update({
       where: { id },
@@ -747,15 +426,12 @@ export async function toggleFavorite(
 }
 
 // Mark recipe as cooked
-export async function markAsCooked(
-  id: string,
-  currentCount: number,
-): Promise<ActionResult> {
+export async function markAsCooked(id: string, _currentCount: number): Promise<ActionResult> {
   return ResultAsync.fromPromise(
     prisma.recipe.update({
       where: { id },
       data: {
-        cookCount: currentCount + 1,
+        cookCount: { increment: 1 },
         lastCooked: new Date(),
       },
       include: {
@@ -782,21 +458,11 @@ export async function markAsCooked(
 
 // Delete a recipe
 export async function deleteRecipe(id: string): Promise<ActionResult<null>> {
-  return ResultAsync.fromPromise(
-    prisma.recipe.findUnique({ where: { id } }),
-    toAppError,
-  )
+  return ResultAsync.fromPromise(prisma.recipe.findUnique({ where: { id } }), toAppError)
     .andThen((existing) =>
-      existing
-        ? ok(existing)
-        : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
+      existing ? ok(existing) : err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404)),
     )
-    .andThen(() =>
-      ResultAsync.fromPromise(
-        prisma.recipe.delete({ where: { id } }),
-        toAppError,
-      ),
-    )
+    .andThen(() => ResultAsync.fromPromise(prisma.recipe.delete({ where: { id } }), toAppError))
     .match(
       () => {
         revalidateRecipes();
@@ -810,50 +476,3 @@ export async function deleteRecipe(id: string): Promise<ActionResult<null>> {
 }
 
 // Regenerate recipe from its source URL
-export async function regenerateFromSource(id: string): Promise<ActionResult> {
-  const result = await ResultAsync.fromPromise(
-    prisma.recipe.findUnique({
-      where: { id },
-      select: { sourceUrl: true, slug: true },
-    }),
-    toAppError,
-  )
-    .andThen((existing) => {
-      if (!existing) {
-        return err(new AppError("Recipe not found", "RECIPE_NOT_FOUND", 404));
-      }
-      if (!existing.sourceUrl) {
-        return err(
-          new AppError(
-            "Recipe does not have a source URL to regenerate from",
-            "NO_SOURCE_URL",
-            400,
-          ),
-        );
-      }
-      return ok(existing.sourceUrl);
-    })
-    .andThen((sourceUrl) => parseRecipeFromUrl(sourceUrl));
-
-  return result.match(
-    (parsed) =>
-      updateRecipe(id, {
-        title: parsed.title,
-        description: parsed.description,
-        prepTime: parsed.prepTime,
-        cookTime: parsed.cookTime,
-        totalTime: parsed.totalTime,
-        servings: parsed.servings,
-        difficulty: parsed.difficulty,
-        cuisine: parsed.cuisine,
-        course: parsed.course,
-        imageUrl: parsed.imageUrl,
-        ingredients: parsed.ingredients,
-        instructions: parsed.instructions,
-      }),
-    (error) => {
-      console.error("Error regenerating recipe from source:", error);
-      return { success: false as const, error: error.message };
-    },
-  );
-}

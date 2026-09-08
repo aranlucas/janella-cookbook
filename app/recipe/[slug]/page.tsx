@@ -21,24 +21,12 @@ import { createPageMetadata } from "@/lib/metadata";
 import type { RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 
-export const revalidate = 86400;
+// Recipe edits must be visible immediately after saving.
+export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-}
-
-export async function generateStaticParams() {
-  try {
-    const recipes = await prisma.recipe.findMany({
-      select: { slug: true },
-      orderBy: { updatedAt: "desc" },
-      take: 50,
-    });
-    return recipes.map((recipe) => ({ slug: recipe.slug }));
-  } catch {
-    return [];
-  }
 }
 
 async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
@@ -59,9 +47,7 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
   }
 }
 
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const recipe = await getRecipe(slug);
 

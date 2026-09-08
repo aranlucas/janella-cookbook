@@ -27,14 +27,29 @@ const DEFAULT_STATE: SessionState = {
   shoppingList: [],
 };
 
+let cachedRaw: string | null = null;
+let cachedState = DEFAULT_STATE;
+let memoryOnly = false;
+
 function read(): SessionState {
   if (typeof window === "undefined") return DEFAULT_STATE;
+  if (memoryOnly) return cachedState;
   try {
     const raw = sessionStorage.getItem(STORE_KEY);
-    if (!raw) return DEFAULT_STATE;
-    return JSON.parse(raw) as SessionState;
+    if (raw === cachedRaw) return cachedState;
+    const parsed: unknown = raw ? JSON.parse(raw) : DEFAULT_STATE;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      !("shoppingList" in parsed) ||
+      !Array.isArray(parsed.shoppingList)
+    )
+      return DEFAULT_STATE;
+    cachedRaw = raw;
+    cachedState = parsed as SessionState;
+    return cachedState;
   } catch {
-    return DEFAULT_STATE;
+    return cachedState;
   }
 }
 
@@ -43,7 +58,7 @@ function write(state: SessionState): void {
   try {
     sessionStorage.setItem(STORE_KEY, JSON.stringify(state));
   } catch {
-    // sessionStorage full or unavailable — silently degrade
+    memoryOnly = true; // Keep working in memory if storage is unavailable.
   }
 }
 
@@ -52,6 +67,8 @@ export function getSessionState(): SessionState {
 }
 
 export function setSessionState(state: SessionState): void {
+  cachedState = state;
+  cachedRaw = JSON.stringify(state);
   write(state);
 }
 
