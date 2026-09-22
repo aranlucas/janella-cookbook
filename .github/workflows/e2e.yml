@@ -90,11 +90,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      # Deployment events can refer to contributor code. Run the trusted suite
-      # from main with credentials, against the exact URL reported by Vercel.
+      # Only same-repository branch tips may supply test code with credentials.
+      # Fork deployments and superseded commits use the trusted main suite.
+      - name: Select trusted test source
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.deployment.sha || github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          ref="$SOURCE_SHA"
+          if [[ "$EVENT_NAME" == "deployment_status" ]]; then
+            count="$(gh api "repos/$GITHUB_REPOSITORY/commits/$SOURCE_SHA/branches-where-head" --jq length)"
+            if [[ "$count" == "0" ]]; then
+              ref="main"
+            fi
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v7.0.1
         with:
-          ref: ${{ github.event_name == 'deployment_status' && 'main' || github.sha }}
+          ref: ${{ steps.source.outputs.ref }}
           persist-credentials: false
 
       - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0

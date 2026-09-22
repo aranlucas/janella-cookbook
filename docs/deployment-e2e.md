@@ -1,6 +1,6 @@
 # Deployment E2E checks
 
-`E2E Tests` runs the full suite against a production build and an isolated database on pull requests and pushes to main. A separate `deployment-e2e` job runs after Vercel reports a successful deployment, using the exact deployment URL. This job uses the trusted test code from main.
+`E2E Tests` runs the full suite against a production build and an isolated database on pull requests and pushes to main. A separate `deployment-e2e` job runs after Vercel reports a successful deployment, using the exact deployment URL. This job uses test code from the deployed commit only when it is a branch tip in this repository; fork deployments and superseded commits use the trusted suite from main.
 
 The deployment job needs the repository Actions secret `VERCEL_AUTOMATION_BYPASS_SECRET`, backed by a dedicated Janella Cookbook Vercel automation bypass credential. Deployment protection stays enabled. See [Vercel's automation authentication documentation](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation).
 
