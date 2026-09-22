@@ -4,10 +4,16 @@ on:
   pull_request:
   push:
     branches: [main]
+  deployment_status:
   workflow_dispatch:
+    inputs:
+      deployment_url:
+        description: "Optional Janella Vercel URL to test instead of the isolated app"
+        type: string
+        required: false
 
 concurrency:
-  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  group: e2e-${{ github.event_name }}-${{ github.event.deployment.id || github.ref }}-${{ github.event.deployment_status.state || 'tests' }}
   cancel-in-progress: true
 
 permissions:
@@ -15,6 +21,7 @@ permissions:
 
 jobs:
   e2e:
+    if: github.event_name != 'deployment_status' && !inputs.deployment_url
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -49,6 +56,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test deployment authentication
+        run: pnpm test:deployment-auth
+
       - name: Initialize isolated test database
         run: pnpm run db:push
 
@@ -68,5 +78,56 @@ jobs:
           name: playwright-results
           path: |
             playwright-report/
+            test-results/
+          retention-days: 14
+
+  deployment-e2e:
+    if: >-
+      (github.event_name == 'deployment_status' &&
+       github.event.deployment_status.state == 'success' &&
+       github.event.deployment.creator.login == 'vercel[bot]') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deployment_url != '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Deployment events can refer to contributor code. Run the trusted suite
+      # from main with credentials, against the exact URL reported by Vercel.
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ github.event_name == 'deployment_status' && 'main' || github.sha }}
+          persist-credentials: false
+
+      - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
+        with:
+          install: false
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Test deployed app
+        run: pnpm test:e2e:deployment
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ inputs.deployment_url || github.event.deployment_status.environment_url }}
+          VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      - name: Remove deployment session
+        if: always()
+        run: rm -f playwright/.cache/deployment.json
+
+      - name: Upload deployment results
+        uses: actions/upload-artifact@v7.0.1
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-deployment-results
+          path: |
+            playwright-deployment-report/
             test-results/
           retention-days: 14

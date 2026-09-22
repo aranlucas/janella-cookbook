@@ -17,7 +17,7 @@ test.describe("Recipe intake", () => {
     await page.getByRole("button", { name: /Manual Write/ }).click();
     await expect(page.getByLabel("Recipe Title")).toHaveValue("My saved draft");
   });
-  test("saves a manual recipe without optional times and reopens persisted content", async ({
+  test("saves a manual recipe without optional times and reopens persisted content @isolated", async ({
     page,
   }) => {
     const title = `QA Recipe ${Date.now()}`;
