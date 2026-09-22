@@ -1,43 +1,41 @@
 name: E2E Tests
 
 on:
-  # Fired by Vercel via repository_dispatch after deployment status changes
-  repository_dispatch:
-    types:
-      - "vercel.deployment.success"
-
-  # Fired by GitHub when Vercel updates a deployment status
-  deployment_status:
-
-  # Allow manual trigger with a custom URL
+  pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      deployment_url:
-        description: "Deployment URL to test against"
-        required: true
-        type: string
 
 concurrency:
-  group: e2e-${{ github.event.client_payload.git.sha || github.event.deployment.sha || github.sha }}
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   e2e:
-    # Only run when:
-    # - repository_dispatch: always (already filtered to success)
-    # - deployment_status: only on success
-    # - workflow_dispatch: always
-    if: >-
-      github.event_name == 'repository_dispatch' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg18
+        env:
+          POSTGRES_DB: janella_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d janella_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/janella_e2e?schema=public
 
     steps:
       - uses: actions/checkout@v7.0.1
-        with:
-          ref: ${{ github.event.client_payload.git.sha || github.event.deployment.sha || github.sha }}
 
       - uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2.1.0
         with:
@@ -51,74 +49,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Initialize isolated test database
+        run: pnpm run db:push
+
+      - name: Build app
+        run: pnpm run build
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Determine base URL
-        id: url
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            URL="${{ inputs.deployment_url }}"
-          elif [ "${{ github.event_name }}" = "deployment_status" ]; then
-            URL="${{ github.event.deployment_status.environment_url }}"
-            if [ -z "$URL" ]; then
-              URL="${{ github.event.deployment_status.target_url }}"
-            fi
-          else
-            URL="${{ github.event.client_payload.url }}"
-          fi
-
-          echo "Event: ${{ github.event_name }}"
-          echo "URL:   $URL"
-
-          if [ -z "$URL" ]; then
-            echo "::error::No deployment URL found"
-            exit 1
-          fi
-
-          echo "base_url=$URL" >> "$GITHUB_OUTPUT"
-
-      - name: Wait for deployment to be ready
-        run: |
-          BASE_URL="${{ steps.url.outputs.base_url }}"
-          BASE_URL="${BASE_URL%/}"
-
-          echo "Waiting for deployment at: $BASE_URL"
-
-          ATTEMPTS=60
-          SLEEP_SECONDS=5
-          READY=0
-
-          for i in $(seq 1 "$ATTEMPTS"); do
-            HTTP_CODE="$(curl -L -s -o /tmp/deploy-body.txt -w "%{http_code}" "$BASE_URL" || true)"
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              if grep -qiE "janella|cookbook|recipes" /tmp/deploy-body.txt && \
-                 ! grep -qiE "authentication required|vercel security checkpoint|404|not found" /tmp/deploy-body.txt; then
-                READY=1
-                echo "Deployment is ready (attempt $i/$ATTEMPTS)."
-                break
-              fi
-            fi
-
-            echo "Attempt $i/$ATTEMPTS: not ready (status: ${HTTP_CODE:-unknown}), retrying in ${SLEEP_SECONDS}s..."
-            sleep "$SLEEP_SECONDS"
-          done
-
-          if [ "$READY" -ne 1 ]; then
-            echo "::error::Deployment did not become ready in time."
-            exit 1
-          fi
-
       - name: Run Playwright tests
         run: pnpm exec playwright test
-        env:
-          PLAYWRIGHT_BASE_URL: ${{ steps.url.outputs.base_url }}
 
       - name: Upload test results
         uses: actions/upload-artifact@v7.0.1
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
           retention-days: 14

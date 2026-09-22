@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -17,6 +17,17 @@ export default defineConfig({
     screenshot: "only-on-failure",
     navigationTimeout: process.env.CI ? 45_000 : 15_000,
   },
+
+  // CI tests the app built from this commit against its isolated database.
+  // An explicit URL remains available for deployment-specific test runs.
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: "pnpm start",
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 
   projects: [
     {
