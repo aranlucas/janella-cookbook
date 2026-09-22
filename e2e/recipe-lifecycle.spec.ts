@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("a saved recipe survives retries and supports search, favorites, cooking and shopping", async ({
+test("a saved recipe survives retries and supports search, favorites, cooking and shopping @isolated", async ({
   page,
 }) => {
   test.setTimeout(90000);

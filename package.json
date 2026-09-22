@@ -22,6 +22,8 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "test:e2e": "playwright test",
+    "test:deployment-auth": "node --test tests/deployment-auth.test.mjs",
+    "test:e2e:deployment": "playwright test --config playwright.deployment.config.ts",
     "test:e2e:headed": "playwright test --headed",
     "typecheck": "tsc --noEmit"
   },
