@@ -30,7 +30,7 @@
   "dependencies": {
     "@ai-sdk/google": "^4.0.59",
     "@ai-sdk/mcp": "^2.0.41",
-    "@ai-sdk/openai": "^4.0.53",
+    "@ai-sdk/openai": "^4.0.71",
     "@ai-sdk/react": "^4.0.90",
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^5.9.1",
