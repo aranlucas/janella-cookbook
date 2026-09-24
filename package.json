@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.59",
-    "@ai-sdk/mcp": "^2.0.41",
+    "@ai-sdk/mcp": "^2.0.54",
     "@ai-sdk/openai": "^4.0.53",
     "@ai-sdk/react": "^4.0.90",
     "@base-ui/react": "^1.7.0",
