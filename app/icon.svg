@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Janella's Cookbook</title>
+  <rect width="64" height="64" rx="16" fill="#e04e39"/>
+  <path d="M16 20h21.5A8.5 8.5 0 0 1 46 28.5V49H24.5A8.5 8.5 0 0 0 16 57Z" fill="#faf5ed"/>
+  <path d="M24 20v29M30 30h10M30 37h7" fill="none" stroke="#4a5d43" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M42 16c2.7-5.3 8.8-6.2 10.8-5.8-.2 4.6-2.7 8.8-8.4 9.3" fill="#4a5d43"/>
+</svg>
