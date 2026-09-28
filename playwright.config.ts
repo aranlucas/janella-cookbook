@@ -23,7 +23,8 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: "pnpm start",
+        // Keep Next in Playwright's process group so teardown stops the server.
+        command: "node node_modules/next/dist/bin/next start",
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
