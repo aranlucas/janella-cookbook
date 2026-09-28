@@ -1,40 +1,68 @@
-# janella-cookbook
+# Janella Cookbook
 
-Janella cookbook
+[![CI](https://github.com/aranlucas/janella-cookbook/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aranlucas/janella-cookbook/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/github/license/aranlucas/janella-cookbook)](LICENSE)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)
 
-## Setup
+![Janella Cookbook logo, an open recipe book with a whisk](public/logo-bg.png)
 
-### AI Provider Configuration
+**The recipe you loved last month deserves better than another lost browser tab.**
 
-This project uses **AI SDK V7** with the following providers:
+Janella Cookbook is a home for recipes worth keeping. Save what you cook, pull recipes in from a webpage or video, and search your collection when the familiar question returns: “What should we make tonight?”
 
-1. **OpenRouter** (for recipe parsing) - Uses the free `xiaomi/mimo-v2-flash:free` model
-   - Sign up at [openrouter.ai](https://openrouter.ai/)
-   - Get your API key from the dashboard
-   - Add `OPENROUTER_API_KEY` to your `.env` file
+> “Find something quick and vegetarian with the ingredients I already have.”
 
-2. **OpenAI** (for embeddings)
-   - Requires `OPENAI_API_KEY` in your `.env` file
-   - Uses `text-embedding-3-small` model
+Use cookbook filters and search, or ask the recipe assistant to help explore the collection.
 
-### Installation
+## From discovery to dinner
 
-1. Install dependencies:
+- Add a recipe by hand or import it from a URL, YouTube transcript, text, or photo.
+- Keep ingredients, instructions, servings, images, notes, ratings, and cooking history together.
+- Filter by cuisine, course, difficulty, time, and favorites.
+- Use keyword search without hosted embeddings; turn on semantic search with optional Hugging Face embeddings.
+- Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-   ```bash
-   pnpm install
-   ```
+AI recipe parsing and chat use OpenRouter. Hosted embeddings are optional and disabled by default.
 
-2. Set up your environment variables:
+## Start cooking locally
 
-   ```bash
-   cp .env.example .env
-   # Edit .env and add:
-   # - OPENROUTER_API_KEY for recipe parsing (free tier available)
-   # - OPENAI_API_KEY for embeddings
-   ```
+Requirements: Node.js 24, pnpm 12.6, and PostgreSQL with the pgvector extension enabled.
 
-3. Run the development server:
-   ```bash
-   pnpm run dev
-   ```
+~~~sh
+pnpm install
+cp .env.example .env
+~~~
+
+Set DATABASE_URL to your PostgreSQL database. Add OPENROUTER_API_KEY for AI imports and chat. For semantic search, set ENABLE_HOSTED_EMBEDDINGS=true and provide HUGGINGFACE_API_KEY. Optional Cloudflare R2 credentials enable managed recipe-image storage.
+
+Create or update the database schema, then launch Next.js:
+
+~~~sh
+pnpm db:push
+pnpm dev
+~~~
+
+Open [http://localhost:3000](http://localhost:3000). In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
+
+## Where the ingredients live
+
+- app/ contains the Next.js pages and API routes for recipes, search, chat, and nutrition.
+- components/forms/ contains manual entry and recipe-intake flows.
+- components/recipe/, components/search/, and components/chatbot/ contain the product UI.
+- lib/actions.ts handles recipe changes and import workflows.
+- lib/recipe-parser.ts and lib/youtube.ts parse recipe sources.
+- lib/search.ts combines keyword and optional semantic search.
+- lib/embeddings.ts handles hosted embedding generation.
+- prisma/ contains the PostgreSQL schema and migrations.
+
+## Checks
+
+~~~sh
+pnpm lint
+pnpm format:check
+pnpm typecheck
+pnpm test:e2e
+~~~
+
+For current follow-up work, see [IMPROVEMENTS.md](IMPROVEMENTS.md).
