@@ -31,7 +31,7 @@
     "@ai-sdk/google": "^4.0.80",
     "@ai-sdk/mcp": "^2.0.58",
     "@ai-sdk/openai": "^4.0.75",
-    "@ai-sdk/react": "^4.0.117",
+    "@ai-sdk/react": "^4.0.121",
     "@base-ui/react": "^1.8.0",
     "@hookform/resolvers": "^5.9.1",
     "@huggingface/inference": "^4.13.30",
