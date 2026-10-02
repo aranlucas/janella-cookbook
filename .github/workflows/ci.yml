@@ -49,6 +49,9 @@ jobs:
       - name: Sync database schema
         run: pnpm run db:push
 
+      - name: Test recipe search projection
+        run: pnpm test:search-projection
+
       - name: Lint
         run: pnpm lint
 
