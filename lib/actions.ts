@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { recipeInputSchema } from "@/lib/validations";
 import { z } from "zod";
-import { generateSearchText, generateRecipeEmbedding } from "@/lib/embeddings";
+import { generateSearchText, generateEmbedding } from "@/lib/embeddings";
+import type { Prisma } from "@prisma/client";
 import { AppError, ValidationError, toAppError } from "@/lib/errors";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
 
@@ -36,25 +37,12 @@ function revalidateRecipes(slug?: string) {
  * Uses Next.js after() so the user gets their recipe immediately
  * while the embedding is generated in the background for search.
  */
-function deferEmbeddingGeneration(
-  recipeId: string,
-  recipeData: {
-    title: string;
-    description?: string | null;
-    cuisine?: string | null;
-    course?: string | null;
-    tags?: { name: string }[];
-    ingredients?: { name: string }[];
-    instructions?: { text: string }[];
-    totalTime?: number | null;
-    difficulty?: string | null;
-  },
-) {
+function deferEmbeddingGeneration(recipeId: string, searchText: string) {
   if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) return;
 
   after(async () => {
-    await generateRecipeEmbedding(recipeData)
-      .andThen(({ searchText, embedding }) => {
+    await generateEmbedding(searchText)
+      .andThen((embedding) => {
         const embeddingString = `[${embedding.join(",")}]`;
         return ResultAsync.fromPromise(
           prisma.$executeRaw`
@@ -70,6 +58,22 @@ function deferEmbeddingGeneration(
         (error) => console.error("Background embedding generation failed:", error),
       );
   });
+}
+
+// Derive the projection from the persisted, ordered recipe graph. The caller's
+// transaction holds the recipe write lock, so text and vector invalidation
+// commit together, including when hosted embeddings are disabled or fail.
+async function updateSearchProjection(tx: Prisma.TransactionClient, recipe: RecipeWithRelations) {
+  const searchText = generateSearchText(recipe);
+  const searchTextChanged = searchText !== recipe.searchText;
+  if (searchTextChanged) {
+    await tx.$executeRaw`
+      UPDATE "Recipe"
+      SET "searchText" = ${searchText}, embedding = NULL
+      WHERE id = ${recipe.id}
+    `;
+  }
+  return { recipe: { ...recipe, searchText }, searchTextChanged };
 }
 
 // Helper to create recipe in DB with embedding
@@ -90,7 +94,6 @@ async function createRecipeInDb(data: {
   imageUrl?: string | null;
   notes?: string | null;
   rating?: number | null;
-  searchText?: string;
   ingredients: {
     quantity?: string;
     unit?: string;
@@ -108,58 +111,64 @@ async function createRecipeInDb(data: {
   }[];
   tagNames?: string[];
 }) {
-  const recipe = await prisma.recipe.create({
-    data: {
-      saveKey: data.saveKey,
-      title: data.title,
-      slug: data.slug,
-      description: data.description?.trim() || null,
-      prepTime: data.prepTime,
-      cookTime: data.cookTime,
-      totalTime: data.totalTime,
-      servings: data.servings?.trim() || null,
-      difficulty: (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
-      cuisine: data.cuisine?.trim() || null,
-      course: data.course as
-        | "BREAKFAST"
-        | "LUNCH"
-        | "DINNER"
-        | "APPETIZER"
-        | "SIDE"
-        | "DESSERT"
-        | "SNACK"
-        | "DRINK"
-        | "SAUCE"
-        | "BREAD"
-        | undefined,
-      sourceUrl: data.sourceUrl?.trim() || null,
-      sourceType: data.sourceType as "URL_IMPORT" | "MANUAL" | "NATURAL_LANGUAGE" | "PHOTO" | "API",
-      imageUrl: data.imageUrl?.trim() || null,
-      notes: data.notes?.trim() || null,
-      rating: data.rating,
-      searchText: generateSearchText({ ...data, tags: data.tagNames?.map((name) => ({ name })) }),
-      ingredients: {
-        create: data.ingredients,
+  return prisma.$transaction(async (tx) => {
+    const recipe = await tx.recipe.create({
+      data: {
+        saveKey: data.saveKey,
+        title: data.title,
+        slug: data.slug,
+        description: data.description?.trim() || null,
+        prepTime: data.prepTime,
+        cookTime: data.cookTime,
+        totalTime: data.totalTime,
+        servings: data.servings?.trim() || null,
+        difficulty: (data.difficulty as "EASY" | "MEDIUM" | "HARD" | "EXPERT") || "MEDIUM",
+        cuisine: data.cuisine?.trim() || null,
+        course: data.course as
+          | "BREAKFAST"
+          | "LUNCH"
+          | "DINNER"
+          | "APPETIZER"
+          | "SIDE"
+          | "DESSERT"
+          | "SNACK"
+          | "DRINK"
+          | "SAUCE"
+          | "BREAD"
+          | undefined,
+        sourceUrl: data.sourceUrl?.trim() || null,
+        sourceType: data.sourceType as
+          | "URL_IMPORT"
+          | "MANUAL"
+          | "NATURAL_LANGUAGE"
+          | "PHOTO"
+          | "API",
+        imageUrl: data.imageUrl?.trim() || null,
+        notes: data.notes?.trim() || null,
+        rating: data.rating,
+        ingredients: {
+          create: data.ingredients,
+        },
+        instructions: {
+          create: data.instructions,
+        },
+        tags: {
+          connectOrCreate: (data.tagNames ?? []).map((name) => ({
+            where: { slug: generateTagSlug(name) },
+            create: { name, slug: generateTagSlug(name) },
+          })),
+        },
       },
-      instructions: {
-        create: data.instructions,
+      include: {
+        ingredients: { orderBy: { sortOrder: "asc" } },
+        instructions: { orderBy: { sortOrder: "asc" } },
+        tags: true,
+        images: true,
       },
-      tags: {
-        connectOrCreate: (data.tagNames ?? []).map((name) => ({
-          where: { slug: generateTagSlug(name) },
-          create: { name, slug: generateTagSlug(name) },
-        })),
-      },
-    },
-    include: {
-      ingredients: { orderBy: { sortOrder: "asc" } },
-      instructions: { orderBy: { sortOrder: "asc" } },
-      tags: true,
-      images: true,
-    },
-  });
+    });
 
-  return recipe;
+    return (await updateSearchProjection(tx, recipe)).recipe;
+  });
 }
 
 // Persist a reviewed recipe. A retry with the same key returns the same record.
@@ -196,7 +205,7 @@ export async function createRecipe(input: RecipeInput, saveKey?: string): Promis
         sortOrder,
       })),
     });
-    deferEmbeddingGeneration(recipe.id, { ...recipe, tags: recipe.tags });
+    deferEmbeddingGeneration(recipe.id, recipe.searchText);
     revalidateRecipes(recipe.slug);
     return { success: true, data: recipe, slug: recipe.slug };
   } catch (error) {
@@ -240,7 +249,7 @@ export async function updateRecipe(
   return safeTry(async function* () {
     // Find existing recipe
     const existing = yield* ResultAsync.fromPromise(
-      prisma.recipe.findUnique({ where: { id }, include: { tags: true } }),
+      prisma.recipe.findUnique({ where: { id } }),
       toAppError,
     )
       .andThen((found) =>
@@ -254,11 +263,15 @@ export async function updateRecipe(
       slug = yield* generateUniqueSlug(input.title, id).safeUnwrap();
     }
 
-    // Calculate total time
+    // Preserve an explicit total when timing fields are untouched. A derived
+    // total is persisted before generating the canonical search projection.
     const totalTime =
-      input.totalTime ||
-      (input.prepTime ?? existing.prepTime ?? 0) + (input.cookTime ?? existing.cookTime ?? 0) ||
-      undefined;
+      input.totalTime !== undefined
+        ? input.totalTime
+        : input.prepTime !== undefined || input.cookTime !== undefined
+          ? (input.prepTime ?? existing.prepTime ?? 0) +
+              (input.cookTime ?? existing.cookTime ?? 0) || null
+          : undefined;
 
     // Prepare update data, stripping undefined fields
     const updateData: Record<string, unknown> = Object.fromEntries(
@@ -285,7 +298,7 @@ export async function updateRecipe(
 
     // Perform the update atomically so a failed nested write cannot leave
     // the recipe without its previous ingredients or instructions.
-    const recipe = yield* ResultAsync.fromPromise(
+    const { recipe, searchTextChanged } = yield* ResultAsync.fromPromise(
       prisma.$transaction(async (tx) => {
         if (expectedUpdatedAt) {
           const locked = await tx.recipe.updateMany({
@@ -317,19 +330,10 @@ export async function updateRecipe(
         if (input.instructions) {
           await tx.instruction.deleteMany({ where: { recipeId: id } });
         }
-        return tx.recipe.update({
+        const updated = await tx.recipe.update({
           where: { id },
           data: {
             ...updateData,
-            searchText: generateSearchText({
-              ...existing,
-              ...input,
-              ingredients:
-                input.ingredients ?? (await tx.ingredient.findMany({ where: { recipeId: id } })),
-              instructions:
-                input.instructions ?? (await tx.instruction.findMany({ where: { recipeId: id } })),
-              tags: input.tags?.map((name) => ({ name })) ?? existing.tags,
-            }),
             ...(input.ingredients && {
               ingredients: {
                 create: input.ingredients.map((ing, index) => ({
@@ -366,24 +370,13 @@ export async function updateRecipe(
             images: true,
           },
         });
+        return updateSearchProjection(tx, updated);
       }),
       toAppError,
     ).safeUnwrap();
 
     // Side effects
-    if (input.title || input.description || input.ingredients || input.instructions) {
-      deferEmbeddingGeneration(id, {
-        title: recipe.title,
-        description: recipe.description,
-        cuisine: recipe.cuisine,
-        course: recipe.course,
-        tags: recipe.tags,
-        ingredients: recipe.ingredients,
-        instructions: recipe.instructions,
-        totalTime: recipe.totalTime,
-        difficulty: recipe.difficulty,
-      });
-    }
+    if (searchTextChanged) deferEmbeddingGeneration(id, recipe.searchText);
     revalidateRecipes(existing.slug);
     revalidateRecipes(slug);
 
