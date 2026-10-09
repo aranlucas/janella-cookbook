@@ -56,8 +56,8 @@ jobs:
           - name: Typecheck
             run: pnpm run typecheck
 
-          - name: Test Vitest and Node suites
-            run: pnpm run test:all
+          - name: Test Vitest suites
+            run: pnpm run test
 
           - name: Build
             run: pnpm run build
