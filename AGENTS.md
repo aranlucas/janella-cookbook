@@ -76,7 +76,14 @@ pnpm run db:seed                # Seed database
 ```bash
 pnpm run test:e2e               # Run Playwright tests headless
 pnpm run test:e2e:headed        # Run Playwright tests with browser UI
+pnpm run test                   # Run Vitest component tests
+pnpm run test:watch             # Run Vitest in watch mode
+pnpm run test:node              # Run the Node.js unit tests
+pnpm run test:all               # Run Vitest and Node.js unit tests
 ```
+
+Use Vitest for synchronous server and client components. Keep async Server
+Component behavior in the Playwright E2E suite.
 
 **Railway-specific Database Access:**
 
