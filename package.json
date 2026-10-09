@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "portless",
+    "dev": "portless run --name janella-cookbook next dev",
     "build": "next build",
     "railway-build": "railway run pnpm run build",
     "start": "next start",
@@ -26,8 +26,7 @@
     "test:e2e:deployment": "playwright test --config playwright.deployment.config.ts",
     "test:e2e:headed": "playwright test --headed",
     "typecheck": "tsc --noEmit",
-    "test:search-projection": "node --experimental-transform-types --experimental-test-module-mocks --test tests/recipe-search-projection.test.mjs",
-    "dev:direct": "next dev"
+    "test:search-projection": "node --experimental-transform-types --experimental-test-module-mocks --test tests/recipe-search-projection.test.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.90",
@@ -104,9 +103,5 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "pnpm@12.10.1",
-  "portless": {
-    "name": "janella-cookbook",
-    "script": "dev:direct"
-  }
+  "packageManager": "pnpm@12.10.1"
 }

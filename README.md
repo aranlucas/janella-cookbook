@@ -29,20 +29,20 @@ AI recipe parsing and chat use OpenRouter. Hosted embeddings are optional and di
 
 Requirements: Node.js 24, pnpm 12.6, and PostgreSQL with the pgvector extension enabled.
 
-~~~sh
+```sh
 pnpm install
 cp .env.example .env
-~~~
+```
 
 Set DATABASE_URL to your PostgreSQL database. Add OPENROUTER_API_KEY for AI imports and chat. For semantic search, set ENABLE_HOSTED_EMBEDDINGS=true and provide HUGGINGFACE_API_KEY. Optional Cloudflare R2 credentials enable managed recipe-image storage.
 
 Create or update the database schema, then launch Next.js:
 
-~~~sh
+```sh
 pnpm db:push
 npm install -g portless@0.15.7
 pnpm dev
-~~~
+```
 
 Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
 
@@ -58,8 +58,8 @@ pnpm dev
 ```
 
 With default proxy settings, the primary checkout is available at
-[https://janella-cookbook.localhost](https://janella-cookbook.localhost). Portless runs the
-existing `dev` script with an available `PORT`. Linked Git worktrees get a branch
+[https://janella-cookbook.localhost](https://janella-cookbook.localhost). Portless starts
+Next.js on an available `PORT`. Linked Git worktrees get a branch
 prefix; use the exact URL printed at startup. The proxy reuses its most recent
 settings, so a custom port or domain can change that URL.
 
@@ -72,8 +72,6 @@ Use the same local database and optional AI credentials described above. If you
 configure authentication with `NEXTAUTH_URL`, set it to the exact Portless origin
 for this session and register that origin's callback with the relevant provider.
 Provider callbacks and MCP authorization still require their own configuration.
-
-Use `pnpm dev:direct` for the localhost workflow.
 
 ## Where the ingredients live
 
@@ -88,11 +86,11 @@ Use `pnpm dev:direct` for the localhost workflow.
 
 ## Checks
 
-~~~sh
+```sh
 pnpm lint
 pnpm format:check
 pnpm typecheck
 pnpm test:e2e
-~~~
+```
 
 For current follow-up work, see [IMPROVEMENTS.md](IMPROVEMENTS.md).
