@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:portless": "portless",
     "dev": "next dev",
     "build": "next build",
     "railway-build": "railway run pnpm run build",
@@ -103,5 +104,9 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "pnpm@12.10.1"
+  "packageManager": "pnpm@12.10.1",
+  "portless": {
+    "name": "janella-cookbook",
+    "script": "dev"
+  }
 }
