@@ -56,8 +56,8 @@ jobs:
           - name: Typecheck
             run: pnpm run typecheck
 
-          - name: Test recipe search projection
-            run: pnpm test:search-projection
+          - name: Test Vitest and Node suites
+            run: pnpm run test:all
 
           - name: Build
             run: pnpm run build
