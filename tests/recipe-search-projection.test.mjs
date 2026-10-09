@@ -1,6 +1,7 @@
+// @vitest-environment node
+
 import assert from "node:assert/strict";
-import { beforeEach, mock, test } from "node:test";
-import "./support/typescript-loader.mjs";
+import { afterEach, beforeEach, test, vi } from "vitest";
 
 let row;
 let tags;
@@ -147,47 +148,41 @@ prisma.$transaction = async (callback) => {
     throw error;
   }
 };
-mock.module(new URL("../lib/prisma.ts", import.meta.url).href, { namedExports: { prisma } });
-mock.module("next/cache", { namedExports: { revalidatePath() {} } });
-mock.module("next/server", { namedExports: { after: (job) => jobs.push(job) } });
-mock.module("@huggingface/inference", {
-  namedExports: {
-    InferenceClient: class {
-      featureExtraction({ inputs }) {
-        return new Promise((resolve, reject) => requests.push({ inputs, resolve, reject }));
-      }
-    },
+vi.doMock("../lib/prisma.ts", () => ({ prisma }));
+vi.doMock("next/cache", () => ({ revalidatePath() {} }));
+vi.doMock("next/server", () => ({ after: (job) => jobs.push(job) }));
+vi.doMock("@huggingface/inference", () => ({
+  InferenceClient: class {
+    featureExtraction({ inputs }) {
+      return new Promise((resolve, reject) => requests.push({ inputs, resolve, reject }));
+    }
   },
-});
+}));
 // Search's Prisma import supplies SQL fragments only; no real client is loaded.
-mock.module("@prisma/client", { namedExports: { Prisma: { raw: (value) => value } } });
+vi.doMock("@prisma/client", () => ({ Prisma: { raw: (value) => value } }));
 
 const { createRecipe, updateRecipe } = await import("../lib/actions.ts");
 const { generateSearchText } = await import("../lib/embeddings.ts");
 const { keywordSearch } = await import("../lib/search.ts");
 
-beforeEach((t) => {
+let previousEnvironment;
+
+beforeEach(() => {
   jobs = [];
   requests = [];
   failProjection = false;
   failNestedWrite = false;
   beforeTransaction = undefined;
-  t.mock.method(console, "error", () => {});
-  t.mock.method(globalThis, "fetch", () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.spyOn(globalThis, "fetch").mockImplementation(() => {
     throw new Error("Unexpected network request in an offline test");
   });
-  const previous = {
+  previousEnvironment = {
     ENABLE_HOSTED_EMBEDDINGS: process.env.ENABLE_HOSTED_EMBEDDINGS,
     HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY,
   };
   process.env.ENABLE_HOSTED_EMBEDDINGS = "true";
   process.env.HUGGINGFACE_API_KEY = "synthetic-provider-key";
-  t.after(() => {
-    for (const [key, value] of Object.entries(previous)) {
-      if (value === undefined) delete process.env[key];
-      else process.env[key] = value;
-    }
-  });
   row = {
     id: "synthetic-recipe",
     title: "Synthetic soup",
@@ -209,6 +204,14 @@ beforeEach((t) => {
   };
   row.searchText = generateSearchText(row);
   tags = new Map(row.tags.map((tag) => [tag.id, clone(tag)]));
+});
+
+afterEach(() => {
+  for (const [key, value] of Object.entries(previousEnvironment)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  vi.restoreAllMocks();
 });
 
 for (const [name, input] of Object.entries({
