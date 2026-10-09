@@ -43,7 +43,7 @@ pnpm db:push
 pnpm dev
 ~~~
 
-Open [http://localhost:3000](http://localhost:3000). In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
+Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). `pnpm dev` runs through [Portless](https://github.com/vercel-labs/portless) (a dev dependency); its first run may ask for `sudo` to bind port 443 and trust a local certificate. In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
 
 ## Where the ingredients live
 

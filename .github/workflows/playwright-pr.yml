@@ -46,7 +46,7 @@ jobs:
         run: pnpm exec playwright install chromium --with-deps
 
       - name: Start app
-        run: pnpm run dev > /tmp/next-dev.log 2>&1 &
+        run: PORTLESS=0 pnpm run dev > /tmp/next-dev.log 2>&1 &
 
       - name: Wait for app to be ready
         run: |
