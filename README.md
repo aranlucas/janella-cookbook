@@ -40,12 +40,13 @@ Create or update the database schema, then launch Next.js:
 
 ~~~sh
 pnpm db:push
+npm install -g portless@0.15.7
 pnpm dev
 ~~~
 
-Open [http://localhost:3000](http://localhost:3000). In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
+Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
 
-### Named local URL with Portless (optional)
+### Named local URL with Portless
 
 After the normal project setup, use [Portless](https://github.com/vercel-labs/portless/tree/v0.15.7)
 to run this app alongside other repositories without choosing a port. Use Node.js
@@ -53,7 +54,7 @@ to run this app alongside other repositories without choosing a port. Use Node.j
 
 ```sh
 npm install -g portless@0.15.7
-pnpm dev:portless
+pnpm dev
 ```
 
 With default proxy settings, the primary checkout is available at
@@ -72,7 +73,7 @@ configure authentication with `NEXTAUTH_URL`, set it to the exact Portless origi
 for this session and register that origin's callback with the relevant provider.
 Provider callbacks and MCP authorization still require their own configuration.
 
-Use `pnpm dev` for the original localhost workflow.
+Use `pnpm dev:direct` for the localhost workflow.
 
 ## Where the ingredients live
 
