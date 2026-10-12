@@ -1,5 +1,6 @@
 import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
+import { recipeRelations } from "./recipe-queries";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
 import { ExternalApiError, DatabaseError, toAppError, type AppError } from "./errors";
 import type {
@@ -387,12 +388,7 @@ async function keywordSearchImpl(
     const [recipes, total] = await Promise.all([
       prisma.recipe.findMany({
         where,
-        include: {
-          ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { sortOrder: "asc" } },
-          tags: true,
-          images: true,
-        },
+        include: recipeRelations,
         take: limit,
         skip: offset,
         orderBy: { updatedAt: "desc" },

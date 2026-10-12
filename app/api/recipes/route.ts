@@ -33,11 +33,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { ResultAsync } from "neverthrow";
-import { prisma } from "@/lib/prisma";
+import { listRecipes } from "@/lib/recipe-queries";
 import { apiPaginated, apiError, apiValidationError } from "@/lib/api-response";
 import { toAppError } from "@/lib/errors";
-import { courseValues, difficultyValues } from "@/lib/validations";
-import type { Prisma } from "@prisma/client";
+import { recipeListSchema } from "@/lib/validations";
 
 const SORT_FIELDS = [
   "createdAt",
@@ -51,15 +50,11 @@ const SORT_FIELDS = [
   "lastCooked",
 ] as const;
 
-const recipesQuerySchema = z.object({
+const recipesQuerySchema = recipeListSchema.omit({ isFavorite: true }).extend({
   limit: z.coerce.number().min(1).max(100).default(20),
   offset: z.coerce.number().min(0).default(0),
   sort: z.enum(SORT_FIELDS).default("createdAt"),
   order: z.enum(["asc", "desc"] as const).default("desc"),
-  cuisine: z.string().optional(),
-  course: z.enum(courseValues).optional(),
-  difficulty: z.enum(difficultyValues).optional(),
-  tag: z.string().optional(),
   favorite: z
     .string()
     .optional()
@@ -79,65 +74,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const {
-    limit,
-    offset,
-    sort,
-    order,
-    cuisine,
-    course,
-    difficulty,
-    tag,
-    favorite,
-    maxTime,
-  } = parsed.data;
-
-  // Build where clause
-  const where: Prisma.RecipeWhereInput = {};
-
-  if (cuisine) {
-    where.cuisine = { equals: cuisine, mode: "insensitive" };
-  }
-
-  if (course) {
-    where.course = course;
-  }
-
-  if (difficulty) {
-    where.difficulty = difficulty;
-  }
-
-  if (tag) {
-    where.tags = { some: { slug: tag } };
-  }
-
-  if (favorite) {
-    where.isFavorite = true;
-  }
-
-  if (maxTime) {
-    where.totalTime = { lte: maxTime };
-  }
+  const { limit, offset, sort, order, cuisine, course, difficulty, tag, favorite, maxTime } =
+    parsed.data;
 
   return ResultAsync.fromPromise(
-    Promise.all([
-      prisma.recipe.findMany({
-        where,
-        include: {
-          ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { sortOrder: "asc" } },
-          tags: true,
-          images: true,
-        },
-        orderBy: { [sort]: order },
-        take: limit,
-        skip: offset,
-      }),
-      prisma.recipe.count({ where }),
-    ]),
+    listRecipes({
+      query: parsed.data.query,
+      cuisine,
+      course,
+      difficulty,
+      tag,
+      isFavorite: favorite ? true : undefined,
+      maxTime,
+      limit,
+      offset,
+      orderBy: { [sort]: order },
+    }),
     (error) => toAppError(error),
   ).match(
-    ([recipes, total]) => apiPaginated(recipes, { total, limit, offset }),
+    ({ recipes, total }) => apiPaginated(recipes, { total, limit, offset }),
     (error) => apiError(error),
   );
 }

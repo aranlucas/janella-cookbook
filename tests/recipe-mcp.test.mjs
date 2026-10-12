@@ -12,6 +12,8 @@ vi.doMock("../lib/actions.ts", () => ({ createRecipe }));
 // Run the real HTTP adapter and tool registration; replace only persistence.
 const { POST, GET } = await import("../app/api/mcp/route.ts");
 const { GET: metadata } = await import("../app/.well-known/oauth-protected-resource/route.ts");
+const { GET: restList } = await import("../app/api/recipes/route.ts");
+const { GET: restGet } = await import("../app/api/recipes/[slug]/route.ts");
 const token = "synthetic-mcp-token";
 const recipe = {
   id: "test-recipe",
@@ -262,6 +264,82 @@ test("save failures are reported as MCP tool errors", async () => {
   const result = await call("add_recipe", input);
   expect(result.result.isError).toBe(true);
   expect(data(result).error).toBe("Could not save the recipe.");
+});
+
+test("REST and MCP browse the same filtered collection and report the same pagination", async () => {
+  const filters = {
+    query: "carrot",
+    cuisine: "Italian",
+    course: "DINNER",
+    difficulty: "EASY",
+    tag: "vegetarian",
+    isFavorite: true,
+    maxTime: 25,
+    limit: 5,
+    offset: 10,
+  };
+  prisma.recipe.count.mockResolvedValue(40);
+  const mcp = await call("list_recipes", filters);
+  const mcpQuery = prisma.recipe.findMany.mock.calls[0][0];
+  const params = new URLSearchParams({
+    ...Object.fromEntries(
+      Object.entries(filters)
+        .filter(([key]) => key !== "isFavorite")
+        .map(([key, value]) => [key, String(value)]),
+    ),
+    favorite: "true",
+  });
+  const response = await restList(new Request(`https://cookbook.example/api/recipes?${params}`));
+  expect(response.status).toBe(200);
+  const rest = await response.json();
+  const restQuery = prisma.recipe.findMany.mock.calls[1][0];
+  expect(restQuery.where).toEqual(mcpQuery.where);
+  expect(restQuery.take).toBe(mcpQuery.take);
+  expect(restQuery.skip).toBe(mcpQuery.skip);
+  expect(rest.meta.pagination).toEqual(data(mcp).pagination);
+  expect(restQuery.include).toMatchObject({ ingredients: { orderBy: { sortOrder: "asc" } } });
+  expect(mcpQuery.select).toHaveProperty("title", true);
+  expect(mcpQuery).not.toHaveProperty("include");
+});
+
+test("REST preserves its default favorite behavior and accepts its existing sort options", async () => {
+  const response = await restList(
+    new Request("https://cookbook.example/api/recipes?sort=title&order=asc"),
+  );
+  expect(response.status).toBe(200);
+  const query = prisma.recipe.findMany.mock.calls[0][0];
+  expect(query.where).not.toHaveProperty("isFavorite");
+  expect(query.orderBy).toEqual({ title: "asc" });
+  expect((await response.json()).meta.pagination).toMatchObject({ limit: 20, offset: 0 });
+});
+
+test("REST and MCP view the same recipe with the same ordered relations", async () => {
+  const mcp = await call("get_recipe", { slug: recipe.slug });
+  const response = await restGet(
+    new Request(`https://cookbook.example/api/recipes/${recipe.slug}`),
+    {
+      params: Promise.resolve({ slug: recipe.slug }),
+    },
+  );
+  expect(response.status).toBe(200);
+  const rest = await response.json();
+  expect(rest.data.ingredients).toEqual(data(mcp).recipe.ingredients);
+  expect(rest.data.instructions).toEqual(data(mcp).recipe.instructions);
+  expect(prisma.recipe.findUnique.mock.calls[0][0]).toEqual(
+    prisma.recipe.findUnique.mock.calls[1][0],
+  );
+});
+
+test("the shared lookup preserves REST 404 responses and MCP tool errors", async () => {
+  prisma.recipe.findUnique.mockResolvedValue(null);
+  const response = await restGet(new Request("https://cookbook.example/api/recipes/missing"), {
+    params: Promise.resolve({ slug: "missing" }),
+  });
+  expect(response.status).toBe(404);
+  expect((await response.json()).error.code).toBe("RECIPE_NOT_FOUND");
+  const mcp = await call("get_recipe", { slug: "missing" });
+  expect(mcp.result.isError).toBe(true);
+  expect(data(mcp).code).toBe("RECIPE_NOT_FOUND");
 });
 
 for (const [name, args] of [

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { ok, err, safeTry, ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
+import { recipeRelations } from "@/lib/recipe-queries";
 import { generateUniqueSlug, generateTagSlug } from "@/lib/slug";
 import { recipeInputSchema } from "@/lib/validations";
 import { z } from "zod";
@@ -159,12 +160,7 @@ async function createRecipeInDb(data: {
           })),
         },
       },
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
+      include: recipeRelations,
     });
 
     return (await updateSearchProjection(tx, recipe)).recipe;
@@ -179,12 +175,7 @@ export async function createRecipe(input: RecipeInput, saveKey?: string): Promis
   if (saveKey && !z.string().uuid().safeParse(saveKey).success)
     return { success: false, error: "Invalid save key" };
   const data = validated.data;
-  const include = {
-    ingredients: { orderBy: { sortOrder: "asc" as const } },
-    instructions: { orderBy: { sortOrder: "asc" as const } },
-    tags: true,
-    images: true,
-  };
+  const include = recipeRelations;
   try {
     if (saveKey) {
       const existing = await prisma.recipe.findUnique({ where: { saveKey }, include });

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getRecipeBySlug } from "@/lib/recipe-queries";
 import { RecipeMeta } from "@/components/recipe/recipe-meta";
 import { IngredientList } from "@/components/recipe/ingredient-list";
 import { InstructionSteps } from "@/components/recipe/instruction-steps";
@@ -31,16 +31,7 @@ interface PageProps {
 
 async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
   try {
-    const recipe = await prisma.recipe.findUnique({
-      where: { slug },
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
-    });
-    return recipe as unknown as RecipeWithRelations | null;
+    return await getRecipeBySlug(slug);
   } catch (error) {
     console.error("Error fetching recipe:", error);
     return null;

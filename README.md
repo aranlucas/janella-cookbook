@@ -49,6 +49,8 @@ Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). `
 
 The cookbook exposes recipe tools at `/api/mcp`, using [Vercel's mcp-handler](https://github.com/vercel-labs/mcp-handler). It runs in the existing Next.js app on Railway. The handler uses stateless Streamable HTTP and does not need Redis or a separate server.
 
+MCP and the app share recipe queries in `lib/recipe-queries.ts`: listing, filters, pagination, and recipe lookup are reused by the tools, REST endpoints, and recipe browsing, detail, and edit pages. Saving uses the same `createRecipe` action as the app's recipe form. MCP keeps its own protocol response formatting and returns compact summaries when browsing.
+
 Set `MCP_API_TOKEN` to a random secret in your local environment or Railway's `surprising-growth` service. Generate one with:
 
 ```sh

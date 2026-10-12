@@ -109,7 +109,7 @@ export const mcpAddRecipeSchema = recipeInputSchema.omit({ sourceType: true }).e
     .describe("Optional UUID. Reuse the same key when retrying a save to avoid duplicate recipes."),
 });
 
-export const mcpListRecipesSchema = z.object({
+export const recipeListSchema = z.object({
   query: z.string().trim().min(1).max(500).optional().describe("Keyword search in recipe content"),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).max(1000000).default(0),
@@ -120,6 +120,9 @@ export const mcpListRecipesSchema = z.object({
   isFavorite: z.boolean().optional(),
   maxTime: z.number().int().min(0).max(10000).optional().describe("Maximum total time in minutes"),
 });
+
+export type RecipeListInput = z.infer<typeof recipeListSchema>;
+export const mcpListRecipesSchema = recipeListSchema;
 
 export const mcpGetRecipeSchema = z.object({
   slug: z

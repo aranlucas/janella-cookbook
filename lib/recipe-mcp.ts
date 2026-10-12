@@ -1,17 +1,9 @@
 import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
-import type { Prisma } from "@prisma/client";
 import { createRecipe } from "@/lib/actions";
 import { RecipeNotFoundError, toAppError } from "@/lib/errors";
-import { prisma } from "@/lib/prisma";
+import { getRecipeBySlug, listRecipes } from "@/lib/recipe-queries";
 import { mcpAddRecipeSchema, mcpGetRecipeSchema, mcpListRecipesSchema } from "@/lib/validations";
 import type { RecipeWithRelations } from "@/types/recipe";
-
-const recipeRelations = {
-  ingredients: { orderBy: { sortOrder: "asc" } },
-  instructions: { orderBy: { sortOrder: "asc" } },
-  tags: true,
-  images: true,
-} satisfies Prisma.RecipeInclude;
 
 // Explicit fields keep save keys and internal search data out of tool responses.
 function publicRecipe(recipe: RecipeWithRelations) {
@@ -87,50 +79,10 @@ export function registerRecipeTools(server: McpServer) {
     },
     (input) =>
       recipeTool(async () => {
-        const where: Prisma.RecipeWhereInput = {};
-        if (input.query) {
-          where.OR = ["title", "description", "searchText"].map((field) => ({
-            [field]: { contains: input.query, mode: "insensitive" },
-          }));
-        }
-        if (input.cuisine) where.cuisine = { equals: input.cuisine, mode: "insensitive" };
-        if (input.course) where.course = input.course;
-        if (input.difficulty) where.difficulty = input.difficulty;
-        if (input.tag) where.tags = { some: { slug: input.tag } };
-        if (input.isFavorite !== undefined) where.isFavorite = input.isFavorite;
-        if (input.maxTime !== undefined) where.totalTime = { lte: input.maxTime };
-
-        const [recipes, total] = await Promise.all([
-          prisma.recipe.findMany({
-            where,
-            select: {
-              id: true,
-              slug: true,
-              title: true,
-              description: true,
-              totalTime: true,
-              servings: true,
-              cuisine: true,
-              course: true,
-              difficulty: true,
-              isFavorite: true,
-              rating: true,
-              tags: { select: { name: true, slug: true } },
-            },
-            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-            take: input.limit,
-            skip: input.offset,
-          }),
-          prisma.recipe.count({ where }),
-        ]);
+        const { recipes, total, limit, offset, hasMore } = await listRecipes(input, "summary");
         return toolResult({
           recipes: recipes.map((recipe) => ({ ...recipe, path: `/recipe/${recipe.slug}` })),
-          pagination: {
-            total,
-            limit: input.limit,
-            offset: input.offset,
-            hasMore: input.offset + recipes.length < total,
-          },
+          pagination: { total, limit, offset, hasMore },
         });
       }),
   );
@@ -151,10 +103,7 @@ export function registerRecipeTools(server: McpServer) {
     },
     ({ slug }) =>
       recipeTool(async () => {
-        const recipe = await prisma.recipe.findUnique({
-          where: { slug },
-          include: recipeRelations,
-        });
+        const recipe = await getRecipeBySlug(slug);
         if (!recipe) throw new RecipeNotFoundError(slug);
         return toolResult({ recipe: publicRecipe(recipe) });
       }),
