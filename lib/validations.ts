@@ -87,6 +87,49 @@ export const recipeInputSchema = z.object({
 
 export type RecipeInputSchema = z.infer<typeof recipeInputSchema>;
 
+/** MCP tools use the same recipe validation as the app. Array order defines step order. */
+export const mcpAddRecipeSchema = recipeInputSchema.omit({ sourceType: true }).extend({
+  ingredients: z
+    .array(ingredientSchema.omit({ sortOrder: true }))
+    .min(1)
+    .max(1000),
+  instructions: z
+    .array(
+      instructionSchema.omit({ sortOrder: true }).extend({
+        duration: z.number().int().min(0).max(10000).optional(),
+      }),
+    )
+    .min(1)
+    .max(1000),
+  rating: z.number().int().min(1).max(5).optional().nullable(),
+  saveKey: z
+    .string()
+    .uuid()
+    .optional()
+    .describe("Optional UUID. Reuse the same key when retrying a save to avoid duplicate recipes."),
+});
+
+export const mcpListRecipesSchema = z.object({
+  query: z.string().trim().min(1).max(500).optional().describe("Keyword search in recipe content"),
+  limit: z.number().int().min(1).max(100).default(20),
+  offset: z.number().int().min(0).max(1000000).default(0),
+  cuisine: z.string().trim().min(1).max(100).optional(),
+  course: z.enum(courseValues).optional(),
+  difficulty: z.enum(difficultyValues).optional(),
+  tag: z.string().trim().min(1).max(100).optional().describe("Tag slug"),
+  isFavorite: z.boolean().optional(),
+  maxTime: z.number().int().min(0).max(10000).optional().describe("Maximum total time in minutes"),
+});
+
+export const mcpGetRecipeSchema = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(300)
+    .describe("Recipe slug returned by list_recipes or add_recipe"),
+});
+
 /**
  * URL import schema
  */
