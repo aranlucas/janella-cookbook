@@ -17,10 +17,7 @@ test.describe("Recipes page", () => {
     const recipeLinks = page.locator('a[href^="/recipe/"]');
     const emptyState = page.getByText("No recipes found");
 
-    const hasRecipes = (await recipeLinks.count()) > 0;
-    const hasEmpty = await emptyState.isVisible().catch(() => false);
-
-    expect(hasRecipes || hasEmpty).toBe(true);
+    await expect(recipeLinks.first().or(emptyState)).toBeVisible();
   });
 
   test("search within recipes redirects with query param", async ({ page }) => {
@@ -40,6 +37,7 @@ test.describe("Recipe detail page", () => {
     await page.goto("/recipes");
 
     const firstRecipeLink = page.locator('a[href^="/recipe/"]').first();
+    await expect(firstRecipeLink.or(page.getByText("No recipes found"))).toBeVisible();
     const hasRecipes = (await firstRecipeLink.count()) > 0;
 
     if (!hasRecipes) {

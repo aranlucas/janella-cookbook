@@ -21,31 +21,15 @@
 
 import { NextRequest } from "next/server";
 import { ok, err, ResultAsync } from "neverthrow";
-import { prisma } from "@/lib/prisma";
+import { getRecipeBySlug } from "@/lib/recipe-queries";
 import { apiSuccess, apiError } from "@/lib/api-response";
 import { RecipeNotFoundError, toAppError } from "@/lib/errors";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  return ResultAsync.fromPromise(
-    prisma.recipe.findUnique({
-      where: { slug },
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
-    }),
-    (error) => toAppError(error),
-  )
-    .andThen((recipe) =>
-      recipe ? ok(recipe) : err(new RecipeNotFoundError(slug)),
-    )
+  return ResultAsync.fromPromise(getRecipeBySlug(slug), (error) => toAppError(error))
+    .andThen((recipe) => (recipe ? ok(recipe) : err(new RecipeNotFoundError(slug))))
     .match(
       (recipe) => apiSuccess(recipe),
       (error) => apiError(error),

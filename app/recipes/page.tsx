@@ -1,15 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+import { listRecipes } from "@/lib/recipe-queries";
 import { hybridSearch } from "@/lib/search";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { ButtonLink } from "@/components/recipe/button-link";
 import { PaginationControls } from "@/components/recipe/pagination-controls";
-import {
-  ContentEmptyState,
-  RecipeGridSkeleton,
-} from "@/components/ui/content-state";
+import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { AppLayout } from "@/components/layout/app-layout";
 import type { Metadata } from "next";
@@ -51,10 +49,7 @@ function sortRecipesInMemory(
       case "newest":
         return b.createdAt.getTime() - a.createdAt.getTime();
       case "quick":
-        return (
-          (a.totalTime ?? Number.MAX_SAFE_INTEGER) -
-          (b.totalTime ?? Number.MAX_SAFE_INTEGER)
-        );
+        return (a.totalTime ?? Number.MAX_SAFE_INTEGER) - (b.totalTime ?? Number.MAX_SAFE_INTEGER);
       case "favorites":
         if (a.isFavorite === b.isFavorite) {
           return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -67,9 +62,7 @@ function sortRecipesInMemory(
   });
 }
 
-export async function generateMetadata({
-  searchParams,
-}: RecipesPageProps): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: RecipesPageProps): Promise<Metadata> {
   const { q, category, sort } = await searchParams;
   const normalizedSort: SortOption = isSortOption(sort) ? sort : "recent";
 
@@ -109,12 +102,7 @@ async function getAllRecipes(
     if (query || category) {
       const searchQuery = query || category || "";
       const offset = (page - 1) * ITEMS_PER_PAGE;
-      const searchResult = await hybridSearch(
-        searchQuery,
-        {},
-        ITEMS_PER_PAGE,
-        offset,
-      );
+      const searchResult = await hybridSearch(searchQuery, {}, ITEMS_PER_PAGE, offset);
       if (searchResult.isErr()) {
         console.error("Search error:", searchResult.error);
         return { recipes: [], total: 0 };
@@ -128,7 +116,10 @@ async function getAllRecipes(
       };
     }
 
-    const orderByMap: Record<SortOption, unknown> = {
+    const orderByMap: Record<
+      SortOption,
+      Prisma.RecipeOrderByWithRelationInput | Prisma.RecipeOrderByWithRelationInput[]
+    > = {
       recent: { updatedAt: "desc" },
       newest: { createdAt: "desc" },
       title: { title: "asc" },
@@ -136,28 +127,11 @@ async function getAllRecipes(
       favorites: [{ isFavorite: "desc" }, { updatedAt: "desc" }],
     };
 
-    // If no search query, fall back to fetching all recipes (existing behavior)
-    const [recipes, total] = await Promise.all([
-      prisma.recipe.findMany({
-        include: {
-          ingredients: { orderBy: { sortOrder: "asc" } },
-          instructions: { orderBy: { sortOrder: "asc" } },
-          tags: true,
-          images: true,
-        },
-        orderBy: orderByMap[sort] as
-          | { updatedAt: "desc" }
-          | { createdAt: "desc" }
-          | { title: "asc" }
-          | { totalTime: "asc" }
-          | Array<{ isFavorite: "desc" } | { updatedAt: "desc" }>,
-        take: ITEMS_PER_PAGE,
-        skip: (page - 1) * ITEMS_PER_PAGE,
-      }),
-      prisma.recipe.count(),
-    ]);
-
-    return { recipes: recipes as unknown as RecipeWithRelations[], total };
+    return await listRecipes({
+      orderBy: orderByMap[sort],
+      limit: ITEMS_PER_PAGE,
+      offset: (page - 1) * ITEMS_PER_PAGE,
+    });
   } catch (error) {
     console.error("Error fetching recipes:", error);
     return { recipes: [], total: 0 };
@@ -188,11 +162,7 @@ async function RecipeList({
             : "Try adjusting your filters or search terms."
         }
         action={
-          <ButtonLink
-            href="/recipes"
-            variant="outline"
-            className="rounded-full px-8"
-          >
+          <ButtonLink href="/recipes" variant="outline" className="rounded-full px-8">
             View All Recipes
           </ButtonLink>
         }
@@ -211,11 +181,7 @@ async function RecipeList({
   return (
     <div>
       <RecipeGrid recipes={recipes} />
-      <PaginationControls
-        currentPage={page}
-        totalPages={totalPages}
-        baseUrl={baseUrl}
-      />
+      <PaginationControls currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
     </div>
   );
 }
@@ -283,12 +249,7 @@ export default async function RecipesPage(props: RecipesPageProps) {
       }
     >
       <Suspense fallback={<RecipeGridSkeleton />}>
-        <RecipeList
-          query={q}
-          category={category}
-          page={currentPage}
-          sort={currentSort}
-        />
+        <RecipeList query={q} category={category} page={currentPage} sort={currentSort} />
       </Suspense>
     </AppLayout>
   );
