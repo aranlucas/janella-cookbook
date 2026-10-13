@@ -18,8 +18,7 @@ import { NextResponse } from "next/server";
 const API_SCHEMA = {
   version: "1.0",
   name: "Janella Cookbook API",
-  description:
-    "A recipe management API with AI-powered search and recipe parsing capabilities",
+  description: "A recipe management API with AI-powered search and recipe parsing capabilities",
   baseUrl: "/api",
 
   endpoints: [
@@ -99,8 +98,7 @@ const API_SCHEMA = {
           },
           maxTime: {
             type: "number",
-            description:
-              "Filter recipes with totalTime <= maxTime (in minutes)",
+            description: "Filter recipes with totalTime <= maxTime (in minutes)",
           },
         },
       },
@@ -140,9 +138,7 @@ const API_SCHEMA = {
           version: "string",
         },
       },
-      errors: [
-        { status: 404, code: "NOT_FOUND", description: "Recipe not found" },
-      ],
+      errors: [{ status: 404, code: "NOT_FOUND", description: "Recipe not found" }],
     },
     {
       path: "/api/search",
@@ -209,8 +205,7 @@ const API_SCHEMA = {
     {
       path: "/api/filters",
       method: "GET",
-      description:
-        "Get available filter options based on existing recipes in the database",
+      description: "Get available filter options based on existing recipes in the database",
       response: {
         success: true,
         data: {
@@ -391,7 +386,7 @@ const API_SCHEMA = {
   ],
 };
 
-export async function GET() {
+export function GET() {
   return NextResponse.json(API_SCHEMA, {
     headers: {
       "Cache-Control": "public, max-age=3600",

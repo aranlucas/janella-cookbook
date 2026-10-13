@@ -14,7 +14,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useShoppingList } from "@/components/providers/session-provider";
+import { useShoppingList } from "@/components/providers/session-context";
 
 export function ShoppingListDrawer() {
   const { items, toggle, remove, clear, clearChecked, count } = useShoppingList();
@@ -22,10 +22,15 @@ export function ShoppingListDrawer() {
   const checkedCount = items.filter((i) => i.checked).length;
 
   // Group items by recipe
-  const grouped = items.reduce<Record<string, typeof items>>((acc, item) => {
-    const key = item.recipeTitle || "Other";
-    if (!acc[key]) acc[key] = [];
+  const grouped = items.reduce<Record<string, (typeof items)[number][]>>((acc, item) => {
+    const key = item.recipeTitle ?? "Other";
+
+    if (!acc[key]) {
+      acc[key] = [];
+    }
+
     acc[key].push(item);
+
     return acc;
   }, {});
 
@@ -33,13 +38,13 @@ export function ShoppingListDrawer() {
     <Sheet>
       <SheetTrigger
         className={cn(
-          "relative inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+          "relative inline-flex size-9 items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
         )}
         aria-label="Shopping list"
       >
-        <ShoppingCart className="h-5 w-5" />
+        <ShoppingCart className="size-5" />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+          <span className="absolute -inset-e-1 -inset-bs-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-primary-foreground">
             {count}
           </span>
         )}
@@ -48,10 +53,10 @@ export function ShoppingListDrawer() {
       <SheetContent side="right" className="flex flex-col">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2 font-serif text-lg">
-            <ShoppingCart className="h-5 w-5" />
+            <ShoppingCart className="size-5" />
             Shopping List
             {items.length > 0 && (
-              <Badge variant="outline" className="ml-auto font-sans text-xs">
+              <Badge variant="outline" className="ms-auto font-sans text-xs">
                 {checkedCount}/{items.length}
               </Badge>
             )}
@@ -61,18 +66,18 @@ export function ShoppingListDrawer() {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <ShoppingCart className="h-10 w-10 opacity-30" />
+            <ShoppingCart className="size-10 opacity-30" />
             <p className="text-sm">Your shopping list is empty.</p>
             <p className="text-xs">Add ingredients from any recipe page.</p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto px-4">
             {Object.entries(grouped).map(([recipeName, groupItems]) => (
-              <div key={recipeName} className="mb-4">
-                <h4 className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <div key={recipeName} className="mbe-4">
+                <h4 className="mbe-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   {recipeName}
                 </h4>
-                <ul className="space-y-1.5">
+                <ul className="flex flex-col gap-1.5">
                   {groupItems.map((item) => (
                     <li
                       key={item.id}
@@ -89,7 +94,7 @@ export function ShoppingListDrawer() {
                       <button
                         type="button"
                         className={cn(
-                          "flex-1 cursor-pointer text-left select-none",
+                          "flex-1 cursor-pointer text-start select-none",
                           item.checked && "line-through opacity-60",
                         )}
                         onClick={() => toggle(item.id)}
@@ -102,11 +107,12 @@ export function ShoppingListDrawer() {
                         )}
                       </button>
                       <button
+                        type="button"
                         onClick={() => remove(item.id)}
                         className="shrink-0 rounded p-0.5 text-muted-foreground/60 hover:text-destructive"
                         aria-label={`Remove ${item.name}`}
                       >
-                        <X className="h-3.5 w-3.5" />
+                        <X className="size-3.5" />
                       </button>
                     </li>
                   ))}
@@ -117,16 +123,16 @@ export function ShoppingListDrawer() {
         )}
 
         {items.length > 0 && (
-          <SheetFooter className="border-t">
+          <SheetFooter className="border-bs">
             <div className="flex w-full gap-2">
               {checkedCount > 0 && (
                 <Button variant="outline" size="sm" onClick={clearChecked} className="flex-1">
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  <Trash2 className="me-1.5 size-3.5" />
                   Clear checked ({checkedCount})
                 </Button>
               )}
               <Button variant="destructive" size="sm" onClick={clear} className="flex-1">
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                <Trash2 className="me-1.5 size-3.5" />
                 Clear all
               </Button>
             </div>

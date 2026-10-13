@@ -12,11 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { createContext, useContext } from "react";
@@ -31,22 +27,19 @@ const PlanContext = createContext<PlanContextValue | null>(null);
 
 const usePlan = () => {
   const context = useContext(PlanContext);
+
   if (!context) {
     throw new Error("Plan components must be used within Plan");
   }
+
   return context;
 };
 
 export type PlanProps = ComponentProps<typeof Collapsible> & {
-  isStreaming?: boolean;
+  readonly isStreaming?: boolean;
 };
 
-export const Plan = ({
-  className,
-  isStreaming = false,
-  children,
-  ...props
-}: PlanProps) => (
+export const Plan = ({ className, isStreaming = false, children, ...props }: PlanProps) => (
   <PlanContext.Provider value={{ isStreaming }}>
     <Collapsible
       data-slot="plan"
@@ -68,14 +61,11 @@ export const PlanHeader = ({ className, ...props }: PlanHeaderProps) => (
   />
 );
 
-export type PlanTitleProps = Omit<
-  ComponentProps<typeof CardTitle>,
-  "children"
-> & {
-  children: string;
+export type PlanTitleProps = Omit<ComponentProps<typeof CardTitle>, "children"> & {
+  readonly children: string;
 };
 
-export const PlanTitle = ({ children, ...props }: PlanTitleProps) => {
+export const PlanTitle = ({ children, ...props }: Readonly<PlanTitleProps>) => {
   const { isStreaming } = usePlan();
 
   return (
@@ -85,18 +75,15 @@ export const PlanTitle = ({ children, ...props }: PlanTitleProps) => {
   );
 };
 
-export type PlanDescriptionProps = Omit<
-  ComponentProps<typeof CardDescription>,
-  "children"
-> & {
-  children: string;
+export type PlanDescriptionProps = Omit<ComponentProps<typeof CardDescription>, "children"> & {
+  readonly children: string;
 };
 
 export const PlanDescription = ({
   className,
   children,
   ...props
-}: PlanDescriptionProps) => {
+}: Readonly<PlanDescriptionProps>) => {
   const { isStreaming } = usePlan();
 
   return (
@@ -119,9 +106,7 @@ export const PlanAction = (props: PlanActionProps) => (
 export type PlanContentProps = ComponentProps<typeof CardContent>;
 
 export const PlanContent = (props: PlanContentProps) => (
-  <CollapsibleContent
-    render={<CardContent data-slot="plan-content" {...props} />}
-  ></CollapsibleContent>
+  <CollapsibleContent render={<CardContent data-slot="plan-content" {...props} />} />
 );
 
 export type PlanFooterProps = ComponentProps<"div">;
@@ -134,10 +119,10 @@ export type PlanTriggerProps = Omit<
   ComponentProps<typeof CollapsibleTrigger>,
   "children" | "render" | "style"
 > & {
-  style?: CSSProperties;
+  readonly style?: CSSProperties;
 };
 
-export const PlanTrigger = ({ className, ...props }: PlanTriggerProps) => (
+export const PlanTrigger = ({ className, ...props }: Readonly<PlanTriggerProps>) => (
   <CollapsibleTrigger
     {...props}
     render={

@@ -19,19 +19,25 @@
  * - 500: Server error
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { ok, err, ResultAsync } from "neverthrow";
 import { getRecipeBySlug } from "@/lib/recipe-queries";
 import { apiSuccess, apiError } from "@/lib/api-response";
-import { RecipeNotFoundError, toAppError } from "@/lib/errors";
+import { RecipeNotFoundError, thrownValueSchema, toAppError } from "@/lib/errors";
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+type RecipeRouteParams = { readonly slug: string };
+
+type RecipeRouteContext = { readonly params: Promise<RecipeRouteParams> };
+
+export async function GET(request: NextRequest, { params }: RecipeRouteContext) {
   const { slug } = await params;
 
-  return ResultAsync.fromPromise(getRecipeBySlug(slug), (error) => toAppError(error))
+  return ResultAsync.fromPromise(getRecipeBySlug(slug), (error) =>
+    toAppError(thrownValueSchema.parse(error)),
+  )
     .andThen((recipe) => (recipe ? ok(recipe) : err(new RecipeNotFoundError(slug))))
     .match(
       (recipe) => apiSuccess(recipe),
-      (error) => apiError(error),
+      (error) => apiError(thrownValueSchema.parse(error)),
     );
 }

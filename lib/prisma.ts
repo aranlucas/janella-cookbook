@@ -1,13 +1,27 @@
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { isTransientDatabaseError } from "./errors";
+import { isTransientDatabaseError, thrownValueSchema } from "./errors";
 
-const globalForPrisma = globalThis as unknown as {
+type PrismaGlobal = typeof globalThis & {
   prisma: PrismaClient | undefined;
   pool: Pool | undefined;
   prismaBeforeExitHookRegistered: boolean | undefined;
 };
+
+interface RetryOptions {
+  readonly retries?: number;
+  readonly baseDelayMs?: number;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+// SAFETY: this module owns these three process-wide properties for Prisma's hot-reload singleton.
+const globalForPrisma = globalThis as PrismaGlobal;
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
@@ -16,7 +30,7 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL environment variable is required");
   }
 
-  const poolMax = parseInt(process.env.DATABASE_POOL_MAX || "5", 10);
+  const poolMax = parseInt(process.env.DATABASE_POOL_MAX ?? "5", 10);
 
   const pool = new Pool({
     connectionString,
@@ -36,21 +50,22 @@ function createPrismaClient() {
 
   return new PrismaClient({
     adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
+    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
 
 // Graceful shutdown: drain the pool when the process exits
 if (!globalForPrisma.prismaBeforeExitHookRegistered) {
-  process.once("beforeExit", async () => {
-    await globalForPrisma.pool?.end();
+  process.once("beforeExit", () => {
+    globalForPrisma.pool?.end().catch(() => {
+      console.error("Failed to close database pool");
+    });
   });
   globalForPrisma.prismaBeforeExitHookRegistered = true;
 }
@@ -71,30 +86,32 @@ if (!globalForPrisma.prismaBeforeExitHookRegistered) {
  *   export const prisma = createPrismaClient().$extends({ query: { $allModels: { $allOperations({ args, query }) { return withDatabaseRetry(() => query(args)); } } } });
  * but per-query is clearer and avoids hiding slow cold starts.
  */
-export async function withDatabaseRetry<T>(
-  fn: () => Promise<T>,
-  opts: { retries?: number; baseDelayMs?: number } = {},
-): Promise<T> {
+export function withDatabaseRetry<T>(fn: () => Promise<T>, opts: RetryOptions = {}): Promise<T> {
   const retries = opts.retries ?? 4; // ~0.4s, 0.8s, 1.6s, 3.2s = ~6s total, covers Railway wake-up
   const baseDelayMs = opts.baseDelayMs ?? 400;
 
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  async function attempt(attemptNumber: number): Promise<T> {
     try {
       return await fn();
     } catch (error) {
-      lastError = error;
-      const isTransient = isTransientDatabaseError(error);
-      const isLastAttempt = attempt === retries;
-      if (!isTransient || isLastAttempt) throw error;
+      const thrownValue = thrownValueSchema.parse(error);
+      const isTransient = isTransientDatabaseError(thrownValue);
+      const isLastAttempt = attemptNumber === retries;
 
-      const delay = baseDelayMs * 2 ** attempt + Math.random() * 150;
+      if (!isTransient || isLastAttempt) {
+        throw error;
+      }
+
+      const delay = baseDelayMs * 2 ** attemptNumber + Math.random() * 150;
       console.warn(
-        `Transient DB error (attempt ${attempt + 1}/${retries + 1}), retrying in ${Math.round(delay)}ms:`,
+        `Transient DB error (attempt ${attemptNumber + 1}/${retries + 1}), retrying in ${Math.round(delay)}ms:`,
         error instanceof Error ? error.message : String(error),
       );
-      await new Promise((r) => setTimeout(r, delay));
+      await sleep(delay);
+
+      return attempt(attemptNumber + 1);
     }
   }
-  throw lastError;
+
+  return attempt(0);
 }

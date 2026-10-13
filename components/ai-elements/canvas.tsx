@@ -5,7 +5,7 @@ import { Background, ReactFlow } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
 type CanvasProps = ReactFlowProps & {
-  children?: ReactNode;
+  readonly children?: ReactNode;
 };
 
 const deleteKeyCode = ["Backspace", "Delete"];

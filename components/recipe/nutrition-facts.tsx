@@ -8,7 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface NutritionFactsProps {
-  recipe: RecipeWithRelations;
+  readonly recipe: RecipeWithRelations;
 }
 
 export function NutritionFacts({ recipe }: NutritionFactsProps) {
@@ -32,14 +32,12 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-serif text-lg font-semibold md:text-xl">
-          Nutrition Facts
-        </h3>
+        <h3 className="font-serif text-lg font-semibold md:text-xl">Nutrition Facts</h3>
         {!hasGenerated && !isLoading && (
           <Button
-            onClick={handleGenerate}
+            onClick={() => void handleGenerate()}
             variant="outline"
             size="sm"
             className="text-sm"
@@ -49,7 +47,7 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
         )}
         {hasGenerated && !isLoading && (
           <Button
-            onClick={handleGenerate}
+            onClick={() => void handleGenerate()}
             variant="ghost"
             size="sm"
             className="text-sm"
@@ -61,10 +59,8 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
 
       {isLoading && (
         <div className="flex items-center justify-center py-8">
-          <Spinner className="h-6 w-6" />
-          <span className="ml-2 text-sm text-muted-foreground">
-            Analyzing nutrition...
-          </span>
+          <Spinner className="size-6" />
+          <span className="ms-2 text-sm text-muted-foreground">Analyzing nutrition...</span>
         </div>
       )}
 
@@ -76,13 +72,12 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
 
       {completion && (
         <div className="rounded-lg bg-card p-4 shadow-sm md:p-6">
-          <div className="prose prose-sm max-w-none overflow-x-auto text-foreground">
+          <div className="max-w-none overflow-x-auto text-foreground">
             <Streamdown mode="streaming">{completion}</Streamdown>
           </div>
-          <p className="mt-4 border-t pt-4 text-xs text-muted-foreground">
-            <strong>Note:</strong> Nutritional information is AI-generated and
-            approximate. For precise values, consult a registered dietitian or
-            use a nutrition calculator.
+          <p className="mbs-4 border-bs pbs-4 text-xs text-muted-foreground">
+            <strong>Note:</strong> Nutritional information is AI-generated and approximate. For
+            precise values, consult a registered dietitian or use a nutrition calculator.
           </p>
         </div>
       )}
@@ -90,8 +85,8 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       {!hasGenerated && !isLoading && !completion && (
         <div className="rounded-lg bg-muted/50 p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Click &quot;Generate with AI&quot; to get estimated nutritional
-            information for this recipe.
+            Click &quot;Generate with AI&quot; to get estimated nutritional information for this
+            recipe.
           </p>
         </div>
       )}

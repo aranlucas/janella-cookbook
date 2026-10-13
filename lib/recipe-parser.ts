@@ -2,13 +2,21 @@ import { fetchRecipeSource } from "@/lib/imports/fetch-source";
 import { extractStructuredRecipe } from "@/lib/imports/structured-recipe";
 import { generateText, Output } from "ai";
 import { z } from "zod";
+import { isJsonArray, jsonValueSchema, readJsonObject, readJsonString } from "@/lib/json";
+import type { JsonObject, JsonValue } from "@/types/json";
 import { load } from "cheerio";
 import { encode } from "gpt-tokenizer";
 import { ResultAsync } from "neverthrow";
-import { RecipeParseError, ExternalApiError, toAppError, type AppError } from "./errors";
+import {
+  RecipeParseError,
+  ExternalApiError,
+  thrownValueSchema,
+  toAppError,
+  type AppError,
+} from "./errors";
 import { model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
-import type { ParsedRecipe, Course, Difficulty } from "@/types/recipe";
+import type { ParsedRecipe } from "@/types/recipe";
 import {
   extractYouTubeVideoId,
   getYouTubeTranscript,
@@ -18,9 +26,13 @@ import {
 
 // Model context window configuration
 const MAX_CONTEXT_TOKENS = 256000; // Devstral 2512 supports 256K tokens
+
 const SYSTEM_PROMPT_TOKENS = 500; // Estimate for system prompt
+
 const RESPONSE_TOKENS = 2000; // Estimate for structured recipe response
+
 const SAFETY_BUFFER = 3500; // Safety buffer
+
 const MAX_INPUT_TOKENS =
   MAX_CONTEXT_TOKENS - SYSTEM_PROMPT_TOKENS - RESPONSE_TOKENS - SAFETY_BUFFER; // ~250K tokens
 
@@ -92,6 +104,36 @@ const recipeSchema = z.object({
   difficulty: z.enum(["EASY", "MEDIUM", "HARD", "EXPERT"]).optional(),
 });
 
+type ParsedIngredient = z.infer<typeof recipeSchema>["ingredients"][number];
+
+type ParsedInstruction = NonNullable<z.infer<typeof recipeSchema>["instructions"][number]>;
+
+type RecipeSchemaOutput = Readonly<
+  Omit<z.infer<typeof recipeSchema>, "ingredients" | "instructions">
+> & {
+  readonly ingredients: readonly Readonly<ParsedIngredient>[];
+  readonly instructions: readonly (Readonly<ParsedInstruction> | undefined)[];
+};
+
+interface JsonLdRecipe {
+  image?: JsonValue;
+}
+
+type ImageObject = JsonObject & { readonly url: string };
+
+function hasImageUrl(value: JsonValue): value is ImageObject {
+  const object = readJsonObject(value);
+  const url = object ? readJsonString(object.url ?? null) : undefined;
+
+  return object !== undefined && url !== undefined && url.length > 0;
+}
+
+function recipeImageValue(image: JsonValue): JsonValue | undefined {
+  const list = isJsonArray(image) ? image : undefined;
+
+  return list ? list[0] : image;
+}
+
 /**
  * Extract the most important image from HTML content
  * Priority: JSON-LD schema > Open Graph > Twitter Card > Common selectors
@@ -101,7 +143,10 @@ function extractImageFromHtml(html: string, baseUrl: string): string | undefined
 
   // Helper to resolve relative URLs
   const resolveUrl = (imgUrl: string | undefined): string | undefined => {
-    if (!imgUrl) return undefined;
+    if (!imgUrl) {
+      return undefined;
+    }
+
     try {
       return normalizeRecipeImageUrl(new URL(imgUrl, baseUrl).href) ?? undefined;
     } catch {
@@ -111,23 +156,29 @@ function extractImageFromHtml(html: string, baseUrl: string): string | undefined
 
   // 1. Try JSON-LD schema.org Recipe format (most reliable for recipe sites)
   const jsonLdScripts = $('script[type="application/ld+json"]');
+
   for (let i = 0; i < jsonLdScripts.length; i++) {
     try {
       const content = $(jsonLdScripts[i]).html();
-      if (!content) continue;
 
-      const data = JSON.parse(content);
+      if (!content) {
+        continue;
+      }
+
+      const data = jsonValueSchema.parse(JSON.parse(content));
       const recipes = findRecipeInJsonLd(data);
 
       for (const recipe of recipes) {
-        if (recipe.image) {
-          // image can be string, array of strings, or ImageObject(s)
-          const img = Array.isArray(recipe.image) ? recipe.image[0] : recipe.image;
-          if (typeof img === "string") {
-            return resolveUrl(img);
-          } else if (img?.url) {
-            return resolveUrl(img.url);
-          }
+        const img = recipeImageValue(recipe.image ?? null);
+
+        const imageUrl = img ? readJsonString(img) : undefined;
+
+        if (imageUrl !== undefined) {
+          return resolveUrl(imageUrl);
+        }
+
+        if (img && hasImageUrl(img)) {
+          return resolveUrl(img.url);
         }
       }
     } catch {
@@ -137,12 +188,14 @@ function extractImageFromHtml(html: string, baseUrl: string): string | undefined
 
   // 2. Try Open Graph meta tag (commonly used for social sharing)
   const ogImage = $('meta[property="og:image"]').attr("content");
+
   if (ogImage) {
     return resolveUrl(ogImage);
   }
 
   // 3. Try Twitter Card image
   const twitterImage = $('meta[name="twitter:image"]').attr("content");
+
   if (twitterImage) {
     return resolveUrl(twitterImage);
   }
@@ -163,7 +216,8 @@ function extractImageFromHtml(html: string, baseUrl: string): string | undefined
 
   for (const selector of selectors) {
     const img = $(selector).first();
-    const src = img.attr("src") || img.attr("data-src") || img.attr("data-lazy-src");
+    const src = img.attr("src") ?? img.attr("data-src") ?? img.attr("data-lazy-src");
+
     if (src && !src.includes("placeholder") && !src.includes("avatar")) {
       return resolveUrl(src);
     }
@@ -175,26 +229,30 @@ function extractImageFromHtml(html: string, baseUrl: string): string | undefined
 /**
  * Find Recipe objects within JSON-LD data (handles @graph arrays)
  */
-function findRecipeInJsonLd(data: unknown): Array<{ image?: unknown }> {
-  const recipes: Array<{ image?: unknown }> = [];
+function findRecipeInJsonLd(data: JsonValue): JsonLdRecipe[] {
+  const recipes: JsonLdRecipe[] = [];
 
-  if (Array.isArray(data)) {
+  if (isJsonArray(data)) {
     for (const item of data) {
       recipes.push(...findRecipeInJsonLd(item));
     }
-  } else if (data && typeof data === "object") {
-    const obj = data as Record<string, unknown>;
+  } else {
+    const obj = readJsonObject(data);
+
+    if (!obj) {
+      return recipes;
+    }
 
     // Check if this is a Recipe
     if (
       obj["@type"] === "Recipe" ||
-      (Array.isArray(obj["@type"]) && obj["@type"].includes("Recipe"))
+      (isJsonArray(obj["@type"]) && obj["@type"].includes("Recipe"))
     ) {
-      recipes.push(obj as { image?: unknown });
+      recipes.push(obj);
     }
 
     // Check @graph array
-    if (Array.isArray(obj["@graph"])) {
+    if (isJsonArray(obj["@graph"])) {
       recipes.push(...findRecipeInJsonLd(obj["@graph"]));
     }
   }
@@ -208,12 +266,17 @@ function findRecipeInJsonLd(data: unknown): Array<{ image?: unknown }> {
 function validateUrl(url: string): URL {
   try {
     const parsed = new URL(url);
+
     if (!["http:", "https:"].includes(parsed.protocol)) {
       throw new RecipeParseError("Only HTTP and HTTPS URLs are supported", url);
     }
+
     return parsed;
   } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
+
     throw new RecipeParseError("Invalid URL format", url);
   }
 }
@@ -231,7 +294,7 @@ export function parseRecipeFromUrl(url: string): ResultAsync<ParsedRecipe, AppEr
   return ResultAsync.fromPromise(parseRecipeFromUrlImpl(url), (error) =>
     error instanceof RecipeParseError || error instanceof ExternalApiError
       ? error
-      : toAppError(error),
+      : toAppError(thrownValueSchema.parse(error)),
   );
 }
 
@@ -244,14 +307,23 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
     const html = await fetchRecipeSource(href);
     const imageUrl = extractImageFromHtml(html, href);
     const structured = extractStructuredRecipe(html);
-    if (structured) return { ...structured, imageUrl };
-    if (!process.env.OPENROUTER_API_KEY)
+
+    if (structured) {
+      return { ...structured, imageUrl };
+    }
+
+    if (!process.env.OPENROUTER_API_KEY) {
       throw new RecipeParseError(
         "This website needs AI extraction, which is not configured. Paste the text or enter the recipe manually.",
       );
-    return extractRecipeWithAI(html, href, imageUrl);
+    }
+
+    return await extractRecipeWithAI(html, href, imageUrl);
   } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
+
     throw new RecipeParseError(
       `Failed to fetch recipe: ${error instanceof Error ? error.message : "Unknown error"}`,
       url,
@@ -263,9 +335,9 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
  * Validate AI output and build a ParsedRecipe from the structured result
  */
 function buildParsedRecipe(
-  parsed: z.infer<typeof recipeSchema>,
+  parsed: RecipeSchemaOutput,
   sourceUrl: string,
-  imageUrl: string | undefined,
+  imageUrl?: string,
 ): ParsedRecipe {
   if (!parsed.title || parsed.title === "Untitled Recipe") {
     throw new RecipeParseError("Could not extract recipe title from the page", sourceUrl);
@@ -283,7 +355,7 @@ function buildParsedRecipe(
       sortOrder: i,
     })),
     instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      text: inst?.text || "",
+      text: inst?.text ?? "",
       group: inst?.group,
       sortOrder: i,
     })),
@@ -292,8 +364,8 @@ function buildParsedRecipe(
     totalTime: parsed.totalTime,
     servings: parsed.servings,
     cuisine: parsed.cuisine,
-    course: parsed.course as Course | undefined,
-    difficulty: parsed.difficulty as Difficulty | undefined,
+    course: parsed.course,
+    difficulty: parsed.difficulty,
     imageUrl,
   };
 }
@@ -307,7 +379,7 @@ async function extractRecipeWithAI(
   imageUrl: string | undefined,
 ): Promise<ParsedRecipe> {
   // Clean and validate HTML - send full page content to LLM
-  const cleanedHtml = html.replace(/\s+/g, " ").trim();
+  const cleanedHtml = html.replaceAll(/\s+/g, " ").trim();
 
   // Validate and truncate to fit within model's context window
   const validatedContent = validateAndTruncateContent(cleanedHtml);
@@ -339,11 +411,16 @@ CRITICAL INSTRUCTIONS:
 
     return buildParsedRecipe(parsed, sourceUrl, imageUrl);
   } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
+
+    const thrownValue = thrownValueSchema.parse(error);
+
     throw new ExternalApiError(
       "OpenRouter",
-      `Failed to parse recipe with AI: ${error instanceof Error ? error.message : "Unknown error"}`,
-      error,
+      `Failed to parse recipe with AI: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
+      thrownValue,
     );
   }
 }
@@ -356,7 +433,7 @@ export function parseRecipeFromText(text: string): ResultAsync<ParsedRecipe, App
   return ResultAsync.fromPromise(parseRecipeFromTextImpl(text), (error) =>
     error instanceof RecipeParseError || error instanceof ExternalApiError
       ? error
-      : toAppError(error),
+      : toAppError(thrownValueSchema.parse(error)),
   );
 }
 
@@ -392,7 +469,7 @@ Be accurate and organized. Extract all ingredients and instructions even if form
         sortOrder: i,
       })),
       instructions: (parsed.instructions || []).map((inst, i: number) => ({
-        text: inst?.text || "",
+        text: inst?.text ?? "",
         group: inst?.group,
         sortOrder: i,
       })),
@@ -401,15 +478,20 @@ Be accurate and organized. Extract all ingredients and instructions even if form
       totalTime: parsed.totalTime,
       servings: parsed.servings,
       cuisine: parsed.cuisine,
-      course: parsed.course as Course | undefined,
-      difficulty: parsed.difficulty as Difficulty | undefined,
+      course: parsed.course,
+      difficulty: parsed.difficulty,
     };
   } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
+
+    const thrownValue = thrownValueSchema.parse(error);
+
     throw new ExternalApiError(
       "OpenRouter",
-      `Failed to parse recipe text: ${error instanceof Error ? error.message : "Unknown error"}`,
-      error,
+      `Failed to parse recipe text: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
+      thrownValue,
     );
   }
 }
@@ -423,11 +505,12 @@ export function parseRecipeFromYouTube(url: string): ResultAsync<ParsedRecipe, A
   // Chain: extract video ID (sync) → fetch transcript (async) → parse (async)
   return new ResultAsync(Promise.resolve(extractYouTubeVideoId(url))).andThen((videoId) => {
     const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
+
     return getYouTubeTranscript(videoId).andThen((transcript) =>
       ResultAsync.fromPromise(parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl), (error) =>
         error instanceof RecipeParseError || error instanceof ExternalApiError
           ? error
-          : toAppError(error),
+          : toAppError(thrownValueSchema.parse(error)),
       ),
     );
   });
@@ -523,7 +606,7 @@ CRITICAL INSTRUCTIONS:
         sortOrder: i,
       })),
       instructions: (parsed.instructions || []).map((inst, i: number) => ({
-        text: inst?.text || "",
+        text: inst?.text ?? "",
         group: inst?.group,
         sortOrder: i,
       })),
@@ -532,16 +615,21 @@ CRITICAL INSTRUCTIONS:
       totalTime: parsed.totalTime,
       servings: parsed.servings,
       cuisine: parsed.cuisine,
-      course: parsed.course as Course | undefined,
-      difficulty: parsed.difficulty as Difficulty | undefined,
+      course: parsed.course,
+      difficulty: parsed.difficulty,
       imageUrl: thumbnailUrl, // Use YouTube thumbnail as recipe image
     };
   } catch (error) {
-    if (error instanceof RecipeParseError) throw error;
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
+
+    const thrownValue = thrownValueSchema.parse(error);
+
     throw new ExternalApiError(
       "OpenRouter",
-      `Failed to parse recipe from YouTube video: ${error instanceof Error ? error.message : "Unknown error"}`,
-      error,
+      `Failed to parse recipe from YouTube video: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
+      thrownValue,
     );
   }
 }
@@ -550,10 +638,12 @@ CRITICAL INSTRUCTIONS:
 export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecipe, AppError> {
   return ResultAsync.fromPromise(
     (async () => {
-      if (!process.env.OPENROUTER_API_KEY)
+      if (!process.env.OPENROUTER_API_KEY) {
         throw new RecipeParseError(
           "Photo import is not configured. Paste the recipe text or enter it manually.",
         );
+      }
+
       const { output } = await generateText({
         model,
         output: Output.object({ schema: recipeSchema }),
@@ -570,8 +660,9 @@ export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecip
           },
         ],
       });
-      return buildParsedRecipe(output, "", undefined);
+
+      return buildParsedRecipe(output, "");
     })(),
-    toAppError,
+    (error) => toAppError(thrownValueSchema.parse(error)),
   );
 }

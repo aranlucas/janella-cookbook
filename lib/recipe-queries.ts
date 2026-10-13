@@ -8,7 +8,7 @@ export const recipeRelations = {
   instructions: { orderBy: { sortOrder: "asc" } },
   tags: true,
   images: true,
-} satisfies Prisma.RecipeInclude;
+} as const satisfies Prisma.RecipeInclude;
 
 const recipeSummarySelect = {
   id: true,
@@ -25,51 +25,94 @@ const recipeSummarySelect = {
   tags: { select: { name: true, slug: true } },
 } satisfies Prisma.RecipeSelect;
 
-type RecipeSummary = Prisma.RecipeGetPayload<{ select: typeof recipeSummarySelect }>;
-type RecipeListOptions = Partial<RecipeListInput> & {
-  orderBy?: Prisma.RecipeOrderByWithRelationInput | Prisma.RecipeOrderByWithRelationInput[];
+export type RecipeSummary = Prisma.RecipeGetPayload<{ select: typeof recipeSummarySelect }>;
+
+type RecipeOrderBy = Readonly<Prisma.RecipeOrderByWithRelationInput>;
+
+export type RecipeListOptions = Readonly<Partial<RecipeListInput>> & {
+  readonly orderBy?: RecipeOrderBy | readonly RecipeOrderBy[];
 };
-interface RecipeList<T> {
-  recipes: T[];
-  total: number;
-  limit: number;
-  offset: number;
-  hasMore: boolean;
+
+function isOrderByList(
+  value: RecipeOrderBy | readonly RecipeOrderBy[] | undefined,
+): value is readonly RecipeOrderBy[] {
+  return Array.isArray(value);
+}
+
+export interface RecipeList<T> {
+  readonly recipes: readonly T[];
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+  readonly hasMore: boolean;
 }
 
 // The app and MCP use identical filters and pagination, with different projections.
 export function listRecipes(
-  options: RecipeListOptions,
+  options: Readonly<RecipeListOptions>,
   view: "summary",
 ): Promise<RecipeList<RecipeSummary>>;
-export function listRecipes(options?: RecipeListOptions): Promise<RecipeList<RecipeWithRelations>>;
-export async function listRecipes(options: RecipeListOptions = {}, view?: "summary") {
+export function listRecipes(
+  options?: Readonly<RecipeListOptions>,
+): Promise<RecipeList<RecipeWithRelations>>;
+export async function listRecipes(
+  options: Readonly<RecipeListOptions> = {},
+  view?: "summary",
+): Promise<RecipeList<RecipeSummary> | RecipeList<RecipeWithRelations>> {
   const { limit = 20, offset = 0 } = options;
   const where: Prisma.RecipeWhereInput = {};
+
   if (options.query) {
     where.OR = ["title", "description", "searchText"].map((field) => ({
       [field]: { contains: options.query, mode: "insensitive" },
     }));
   }
-  if (options.cuisine) where.cuisine = { equals: options.cuisine, mode: "insensitive" };
-  if (options.course) where.course = options.course;
-  if (options.difficulty) where.difficulty = options.difficulty;
-  if (options.tag) where.tags = { some: { slug: options.tag } };
-  if (options.isFavorite !== undefined) where.isFavorite = options.isFavorite;
-  if (options.maxTime !== undefined) where.totalTime = { lte: options.maxTime };
+
+  if (options.cuisine) {
+    where.cuisine = { equals: options.cuisine, mode: "insensitive" };
+  }
+
+  if (options.course) {
+    where.course = options.course;
+  }
+
+  if (options.difficulty) {
+    where.difficulty = options.difficulty;
+  }
+
+  if (options.tag) {
+    where.tags = { some: { slug: options.tag } };
+  }
+
+  if (options.isFavorite !== undefined) {
+    where.isFavorite = options.isFavorite;
+  }
+
+  if (options.maxTime !== undefined) {
+    where.totalTime = { lte: options.maxTime };
+  }
+
+  const orderBy: Prisma.RecipeOrderByWithRelationInput | Prisma.RecipeOrderByWithRelationInput[] =
+    options.orderBy === undefined
+      ? [{ createdAt: "desc" as const }, { id: "desc" as const }]
+      : isOrderByList(options.orderBy)
+        ? options.orderBy.map((item) => ({ ...item }))
+        : { ...options.orderBy };
 
   const query = {
     where,
     take: limit,
     skip: offset,
-    orderBy: options.orderBy ?? [{ createdAt: "desc" as const }, { id: "desc" as const }],
+    orderBy,
   };
+
   const [recipes, total] = await Promise.all([
     view === "summary"
       ? prisma.recipe.findMany({ ...query, select: recipeSummarySelect })
       : prisma.recipe.findMany({ ...query, include: recipeRelations }),
     prisma.recipe.count({ where }),
   ]);
+
   return { recipes, total, limit, offset, hasMore: offset + recipes.length < total };
 }
 

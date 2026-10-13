@@ -17,7 +17,11 @@ import { deleteRecipe } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeManagementActionsProps {
-  recipe: RecipeWithRelations;
+  readonly recipe: RecipeWithRelations;
+}
+
+function printPage() {
+  window.print();
 }
 
 export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps) {
@@ -31,16 +35,13 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
       toast.success("Recipe deleted");
       router.push("/");
     });
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   return (
@@ -50,9 +51,9 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
           variant="ghost"
           size="icon"
           onClick={() => router.push(`/recipe/${recipe.slug}/edit`)}
-          className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+          className="size-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         >
-          <Pencil className="h-4 w-4" />
+          <Pencil className="size-4" />
           <span className="sr-only">Edit recipe</span>
         </Button>
 
@@ -61,11 +62,11 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
             variant="ghost"
             size="icon"
             onClick={() =>
-              router.push(`/recipes/new?source=${encodeURIComponent(recipe.sourceUrl || "")}`)
+              router.push(`/recipes/new?source=${encodeURIComponent(recipe.sourceUrl ?? "")}`)
             }
-            className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+            className="size-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           >
-            <RotateCw className="h-4 w-4" />
+            <RotateCw className="size-4" />
             <span className="sr-only">Regenerate from source</span>
           </Button>
         )}
@@ -73,10 +74,10 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
         <Button
           variant="ghost"
           size="icon"
-          onClick={handlePrint}
-          className="h-9 w-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+          onClick={printPage}
+          className="size-9 text-muted-foreground hover:bg-accent/10 hover:text-foreground"
         >
-          <Printer className="h-4 w-4" />
+          <Printer className="size-4" />
           <span className="sr-only">Print recipe</span>
         </Button>
 
@@ -84,9 +85,9 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
           variant="ghost"
           size="icon"
           onClick={() => setDeleteDialogOpen(true)}
-          className="h-9 w-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+          className="size-9 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="size-4" />
           <span className="sr-only">Delete recipe</span>
         </Button>
       </div>
@@ -96,7 +97,7 @@ export function RecipeManagementActions({ recipe }: RecipeManagementActionsProps
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif text-2xl">Delete Recipe?</DialogTitle>
-            <DialogDescription className="pt-2 text-base">
+            <DialogDescription className="pbs-2 text-base">
               Are you sure you want to delete{" "}
               <span className="font-semibold">&quot;{recipe.title}&quot;</span>? This action cannot
               be undone.

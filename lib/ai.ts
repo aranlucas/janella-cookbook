@@ -12,6 +12,7 @@ const openrouter = createOpenAI({
 });
 
 export const chatModel = openrouter.chat(freeModel(process.env.OPENROUTER_MODEL));
+
 export const model = openrouter.chat(
   freeModel(process.env.OPENROUTER_RECIPE_MODEL, "dots-studio/dots-3-note-preview:free"),
 );

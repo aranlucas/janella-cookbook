@@ -6,9 +6,7 @@ test.describe("About page", () => {
 
     await expect(page.getByText("About the")).toBeVisible();
     await expect(page.getByText("Philosophy")).toBeVisible();
-    await expect(
-      page.getByText("Fresh ingredients are the heart of every dish."),
-    ).toBeVisible();
+    await expect(page.getByText("Fresh ingredients are the heart of every dish.")).toBeVisible();
   });
 });
 
@@ -16,9 +14,7 @@ test.describe("Privacy page", () => {
   test("renders privacy policy", async ({ page }) => {
     await page.goto("/privacy");
 
-    await expect(
-      page.getByRole("heading", { name: "Privacy Policy" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Privacy Policy" })).toBeVisible();
   });
 });
 

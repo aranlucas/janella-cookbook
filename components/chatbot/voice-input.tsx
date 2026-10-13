@@ -3,88 +3,25 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Mic, MicOff } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import type {
+  SpeechRecognition,
+  SpeechRecognitionErrorEvent,
+  SpeechRecognitionEvent,
+} from "@/components/chatbot/speech-recognition";
+import {
+  getServerSnapshot,
+  getSnapshot,
+  getSpeechRecognition,
+  subscribe,
+} from "@/components/chatbot/speech-recognition";
 
 interface VoiceInputProps {
-  onTranscript: (text: string) => void;
-  onInterimTranscript?: (text: string) => void;
-  disabled?: boolean;
-  className?: string;
-}
-
-// Type declarations for Web Speech API
-interface SpeechRecognitionEvent extends Event {
-  results: SpeechRecognitionResultList;
-  resultIndex: number;
-}
-
-interface SpeechRecognitionResultList {
-  length: number;
-  item(index: number): SpeechRecognitionResult;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  length: number;
-  item(index: number): SpeechRecognitionAlternative;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message?: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  onstart: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
-
-// Use useSyncExternalStore for browser API detection (SSR-safe)
-function subscribe() {
-  // No-op: browser support doesn't change
-  return () => {};
-}
-
-function getSnapshot(): boolean {
-  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-}
-
-function getServerSnapshot(): boolean {
-  return false; // Assume not supported during SSR
-}
-
-function getSpeechRecognition(): (new () => SpeechRecognition) | null {
-  if (typeof window === "undefined") return null;
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  readonly onTranscript: (text: string) => void;
+  readonly onInterimTranscript?: (text: string) => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }
 
 export function VoiceInput({
@@ -92,30 +29,30 @@ export function VoiceInput({
   onInterimTranscript,
   disabled,
   className,
-}: VoiceInputProps) {
+}: Readonly<VoiceInputProps>) {
   const [isListening, setIsListening] = useState(false);
-  const isSupported = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
+  const isSupported = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     const SpeechRecognitionClass = getSpeechRecognition();
-    if (!SpeechRecognitionClass) return;
+
+    if (!SpeechRecognitionClass) {
+      return () => {};
+    }
 
     const recognition = new SpeechRecognitionClass();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-US";
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: Readonly<SpeechRecognitionEvent>) => {
       let interimTranscript = "";
       let finalTranscript = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
+
         if (event.results[i].isFinal) {
           finalTranscript += transcript;
         } else {
@@ -129,6 +66,7 @@ export function VoiceInput({
 
       if (finalTranscript) {
         onTranscript(finalTranscript);
+
         // Provide haptic feedback on successful transcription
         if (navigator.vibrate) {
           navigator.vibrate(50);
@@ -136,15 +74,14 @@ export function VoiceInput({
       }
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.addEventListener("error", (event: Readonly<SpeechRecognitionErrorEvent>) => {
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
 
       switch (event.error) {
         case "not-allowed":
           toast.error("Microphone access denied", {
-            description:
-              "Please enable microphone access in your browser settings",
+            description: "Please enable microphone access in your browser settings",
           });
           break;
         case "no-speech":
@@ -162,7 +99,7 @@ export function VoiceInput({
             description: "Please try again",
           });
       }
-    };
+    });
 
     recognition.onend = () => {
       setIsListening(false);
@@ -170,6 +107,7 @@ export function VoiceInput({
 
     recognition.onstart = () => {
       setIsListening(true);
+
       // Haptic feedback when starting
       if (navigator.vibrate) {
         navigator.vibrate([50, 50, 50]);
@@ -184,7 +122,9 @@ export function VoiceInput({
   }, [onTranscript, onInterimTranscript]);
 
   const toggleListening = useCallback(() => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      return;
+    }
 
     if (isListening) {
       recognitionRef.current.stop();
@@ -221,85 +161,12 @@ export function VoiceInput({
     >
       {isListening ? (
         <>
-          <MicOff className="h-4 w-4" />
-          <span className="absolute -top-1 -right-1 h-2 w-2 animate-ping rounded-full bg-red-300" />
+          <MicOff className="size-4" />
+          <span className="absolute -inset-e-1 -inset-bs-1 size-2 animate-ping rounded-full bg-red-300" />
         </>
       ) : (
-        <Mic className="h-4 w-4" />
+        <Mic className="size-4" />
       )}
     </Button>
   );
-}
-
-// Hook for using voice input anywhere
-export function useVoiceInput() {
-  const isSupported = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
-  );
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  useEffect(() => {
-    const SpeechRecognitionClass = getSpeechRecognition();
-    if (!SpeechRecognitionClass) return;
-
-    const recognition = new SpeechRecognitionClass();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-      if (finalTranscript) {
-        setTranscript((prev) => prev + finalTranscript);
-      }
-    };
-
-    recognition.onend = () => setIsListening(false);
-    recognition.onstart = () => setIsListening(true);
-    recognition.onerror = () => setIsListening(false);
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      recognition.abort();
-    };
-  }, []);
-
-  const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListening) {
-      try {
-        recognitionRef.current.start();
-      } catch (error) {
-        console.error("Failed to start:", error);
-      }
-    }
-  }, [isListening]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-  }, [isListening]);
-
-  const clearTranscript = useCallback(() => {
-    setTranscript("");
-  }, []);
-
-  return {
-    isSupported,
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-    clearTranscript,
-  };
 }

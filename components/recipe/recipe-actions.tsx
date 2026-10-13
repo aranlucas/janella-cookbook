@@ -17,8 +17,12 @@ import { toggleFavorite, markAsCooked, deleteRecipe } from "@/lib/actions";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeActionsProps {
-  recipe: RecipeWithRelations;
-  onUpdate?: (recipe: RecipeWithRelations) => void;
+  readonly recipe: RecipeWithRelations;
+  readonly onUpdate?: (recipe: RecipeWithRelations) => void;
+}
+
+function printPage() {
+  window.print();
 }
 
 export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
@@ -34,15 +38,12 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
       onUpdate?.(result.data);
-      toast.success(
-        result.data.isFavorite
-          ? "Added to favorites"
-          : "Removed from favorites",
-      );
+      toast.success(result.data.isFavorite ? "Added to favorites" : "Removed from favorites");
     });
   };
 
@@ -52,6 +53,7 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
@@ -66,16 +68,13 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
       toast.success("Recipe deleted");
       router.push("/");
     });
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   return (
@@ -111,25 +110,14 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
         Edit
       </Button>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handlePrint}
-        className="no-print gap-1"
-      >
+      <Button variant="outline" size="sm" onClick={printPage} className="no-print gap-1">
         <span>🖨️</span>
         Print
       </Button>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogTrigger
-          render={
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1 text-destructive"
-            />
-          }
+          render={<Button variant="outline" size="sm" className="gap-1 text-destructive" />}
         >
           <span>🗑️</span>
           Delete
@@ -138,22 +126,15 @@ export function RecipeActions({ recipe, onUpdate }: RecipeActionsProps) {
           <DialogHeader>
             <DialogTitle>Delete Recipe</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{recipe.title}&quot;? This
-              action cannot be undone.
+              Are you sure you want to delete &quot;{recipe.title}&quot;? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

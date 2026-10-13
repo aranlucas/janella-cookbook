@@ -1,8 +1,4 @@
-import {
-  createUIMessageStreamResponse,
-  streamText,
-  toUIMessageStream,
-} from "ai";
+import { createUIMessageStreamResponse, streamText, toUIMessageStream } from "ai";
 import { z } from "zod";
 import { ResultAsync } from "neverthrow";
 import { model } from "@/lib/ai";
@@ -33,25 +29,19 @@ export async function POST(req: Request) {
   }
 
   const parsed = nutritionRequestSchema.safeParse(bodyResult.value);
+
   if (!parsed.success) {
-    return apiValidationError(
-      "Invalid request body",
-      parsed.error.flatten().fieldErrors as Record<string, string[]>,
-    );
+    return apiValidationError("Invalid request body", parsed.error.flatten().fieldErrors);
   }
 
   const { title, ingredients, servings } = parsed.data;
 
   const ingredientsList = ingredients
     .map((ing) => {
-      const parts = [
-        ing.quantity,
-        ing.unit,
-        ing.name,
-        ing.notes ? `(${ing.notes})` : "",
-      ]
+      const parts = [ing.quantity, ing.unit, ing.name, ing.notes ? `(${ing.notes})` : ""]
         .filter(Boolean)
         .join(" ");
+
       return `- ${parts}`;
     })
     .join("\n");
@@ -59,7 +49,7 @@ export async function POST(req: Request) {
   const prompt = `Analyze this recipe and provide nutritional information per serving:
 
 Recipe: ${title}
-Servings: ${servings || "Not specified"}
+Servings: ${servings ?? "Not specified"}
 
 Ingredients:
 ${ingredientsList}

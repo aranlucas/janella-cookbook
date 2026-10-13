@@ -21,10 +21,10 @@ const PackageInfoContext = createContext<PackageInfoContextType>({
 });
 
 export type PackageInfoProps = HTMLAttributes<HTMLDivElement> & {
-  name: string;
-  currentVersion?: string;
-  newVersion?: string;
-  changeType?: ChangeType;
+  readonly name: string;
+  readonly currentVersion?: string;
+  readonly newVersion?: string;
+  readonly changeType?: ChangeType;
 };
 
 export const PackageInfo = ({
@@ -36,20 +36,15 @@ export const PackageInfo = ({
   children,
   ...props
 }: PackageInfoProps) => (
-  <PackageInfoContext.Provider
-    value={{ changeType, currentVersion, name, newVersion }}
-  >
-    <div
-      className={cn("rounded-lg border bg-background p-4", className)}
-      {...props}
-    >
+  <PackageInfoContext.Provider value={{ changeType, currentVersion, name, newVersion }}>
+    <div className={cn("rounded-lg border bg-background p-4", className)} {...props}>
       {children ?? (
         <>
           <PackageInfoHeader>
             <PackageInfoName />
             {changeType && <PackageInfoChangeType />}
           </PackageInfoHeader>
-          {(currentVersion || newVersion) && <PackageInfoVersion />}
+          {(currentVersion ?? newVersion) && <PackageInfoVersion />}
         </>
       )}
     </div>
@@ -62,11 +57,8 @@ export const PackageInfoHeader = ({
   className,
   children,
   ...props
-}: PackageInfoHeaderProps) => (
-  <div
-    className={cn("flex items-center justify-between gap-2", className)}
-    {...props}
-  >
+}: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex items-center justify-between gap-2", className)} {...props}>
     {children}
   </div>
 );
@@ -77,7 +69,7 @@ export const PackageInfoName = ({
   className,
   children,
   ...props
-}: PackageInfoNameProps) => {
+}: HTMLAttributes<HTMLDivElement>) => {
   const { name } = useContext(PackageInfoContext);
 
   return (
@@ -91,8 +83,7 @@ export const PackageInfoName = ({
 const changeTypeStyles: Record<ChangeType, string> = {
   added: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   major: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  minor:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+  minor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
   patch: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
   removed: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
 };
@@ -111,7 +102,7 @@ export const PackageInfoChangeType = ({
   className,
   children,
   ...props
-}: PackageInfoChangeTypeProps) => {
+}: HTMLAttributes<HTMLDivElement>) => {
   const { changeType } = useContext(PackageInfoContext);
 
   if (!changeType) {
@@ -120,11 +111,7 @@ export const PackageInfoChangeType = ({
 
   return (
     <Badge
-      className={cn(
-        "gap-1 text-xs capitalize",
-        changeTypeStyles[changeType],
-        className,
-      )}
+      className={cn("gap-1 text-xs capitalize", changeTypeStyles[changeType], className)}
       variant="secondary"
       {...props}
     >
@@ -140,7 +127,7 @@ export const PackageInfoVersion = ({
   className,
   children,
   ...props
-}: PackageInfoVersionProps) => {
+}: HTMLAttributes<HTMLDivElement>) => {
   const { currentVersion, newVersion } = useContext(PackageInfoContext);
 
   if (!(currentVersion || newVersion)) {
@@ -150,7 +137,7 @@ export const PackageInfoVersion = ({
   return (
     <div
       className={cn(
-        "mt-2 flex items-center gap-2 font-mono text-sm text-muted-foreground",
+        "mbs-2 flex items-center gap-2 font-mono text-sm text-muted-foreground",
         className,
       )}
       {...props}
@@ -158,12 +145,8 @@ export const PackageInfoVersion = ({
       {children ?? (
         <>
           {currentVersion && <span>{currentVersion}</span>}
-          {currentVersion && newVersion && (
-            <ArrowRightIcon className="size-3" />
-          )}
-          {newVersion && (
-            <span className="font-medium text-foreground">{newVersion}</span>
-          )}
+          {currentVersion && newVersion && <ArrowRightIcon className="size-3" />}
+          {newVersion && <span className="font-medium text-foreground">{newVersion}</span>}
         </>
       )}
     </div>
@@ -176,8 +159,8 @@ export const PackageInfoDescription = ({
   className,
   children,
   ...props
-}: PackageInfoDescriptionProps) => (
-  <p className={cn("mt-2 text-sm text-muted-foreground", className)} {...props}>
+}: HTMLAttributes<HTMLParagraphElement>) => (
+  <p className={cn("mbs-2 text-sm text-muted-foreground", className)} {...props}>
     {children}
   </p>
 );
@@ -188,8 +171,8 @@ export const PackageInfoContent = ({
   className,
   children,
   ...props
-}: PackageInfoContentProps) => (
-  <div className={cn("mt-3 border-t pt-3", className)} {...props}>
+}: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("mbs-3 border-bs pbs-3", className)} {...props}>
     {children}
   </div>
 );
@@ -200,18 +183,18 @@ export const PackageInfoDependencies = ({
   className,
   children,
   ...props
-}: PackageInfoDependenciesProps) => (
-  <div className={cn("space-y-2", className)} {...props}>
+}: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col gap-2", className)} {...props}>
     <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
       Dependencies
     </span>
-    <div className="space-y-1">{children}</div>
+    <div className="flex flex-col gap-1">{children}</div>
   </div>
 );
 
 export type PackageInfoDependencyProps = HTMLAttributes<HTMLDivElement> & {
-  name: string;
-  version?: string;
+  readonly name: string;
+  readonly version?: string;
 };
 
 export const PackageInfoDependency = ({
@@ -221,10 +204,7 @@ export const PackageInfoDependency = ({
   children,
   ...props
 }: PackageInfoDependencyProps) => (
-  <div
-    className={cn("flex items-center justify-between text-sm", className)}
-    {...props}
-  >
+  <div className={cn("flex items-center justify-between text-sm", className)} {...props}>
     {children ?? (
       <>
         <span className="font-mono text-muted-foreground">{name}</span>

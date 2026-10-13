@@ -1,12 +1,14 @@
 import { auth } from "@ai-sdk/mcp";
 import { MCPOAuthProvider } from "@/lib/mcp-oauth";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
 
 function getBaseUrl(request: NextRequest): string {
   const host = request.headers.get("host") ?? "localhost:3000";
   const protocol = host.includes("localhost") ? "http" : "https";
+
   return `${protocol}://${host}`;
 }
 
@@ -17,20 +19,15 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     const errorDescription = searchParams.get("error_description") ?? error;
+
     return NextResponse.redirect(
-      new URL(
-        `/chat?auth_error=${encodeURIComponent(errorDescription)}`,
-        request.url,
-      ),
+      new URL(`/chat?auth_error=${encodeURIComponent(errorDescription)}`, request.url),
     );
   }
 
   if (!code) {
     return NextResponse.redirect(
-      new URL(
-        "/chat?auth_error=No%20authorization%20code%20received",
-        request.url,
-      ),
+      new URL("/chat?auth_error=No%20authorization%20code%20received", request.url),
     );
   }
 
@@ -56,6 +53,7 @@ export async function GET(request: NextRequest) {
   } catch (err) {
     console.error("OAuth callback error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
+
     return NextResponse.redirect(
       new URL(`/chat?auth_error=${encodeURIComponent(message)}`, request.url),
     );

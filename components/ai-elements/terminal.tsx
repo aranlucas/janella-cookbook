@@ -4,6 +4,7 @@ import type { ComponentProps, HTMLAttributes } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toError } from "@/lib/error-utils";
 import Ansi from "ansi-to-react";
 import { CheckIcon, CopyIcon, TerminalIcon, Trash2Icon } from "lucide-react";
 import {
@@ -32,10 +33,10 @@ const TerminalContext = createContext<TerminalContextType>({
 });
 
 export type TerminalProps = HTMLAttributes<HTMLDivElement> & {
-  output: string;
-  isStreaming?: boolean;
-  autoScroll?: boolean;
-  onClear?: () => void;
+  readonly output: string;
+  readonly isStreaming?: boolean;
+  readonly autoScroll?: boolean;
+  readonly onClear?: () => void;
 };
 
 export const Terminal = ({
@@ -87,10 +88,10 @@ export const TerminalHeader = ({
   className,
   children,
   ...props
-}: TerminalHeaderProps) => (
+}: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex items-center justify-between border-b border-zinc-800 px-4 py-2",
+      "flex items-center justify-between border-be border-zinc-800 px-4 py-2",
       className,
     )}
     {...props}
@@ -105,11 +106,8 @@ export const TerminalTitle = ({
   className,
   children,
   ...props
-}: TerminalTitleProps) => (
-  <div
-    className={cn("flex items-center gap-2 text-sm text-zinc-400", className)}
-    {...props}
-  >
+}: HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex items-center gap-2 text-sm text-zinc-400", className)} {...props}>
     <TerminalIcon className="size-4" />
     {children ?? "Terminal"}
   </div>
@@ -121,7 +119,7 @@ export const TerminalStatus = ({
   className,
   children,
   ...props
-}: TerminalStatusProps) => {
+}: HTMLAttributes<HTMLDivElement>) => {
   const { isStreaming } = useContext(TerminalContext);
 
   if (!isStreaming) {
@@ -129,10 +127,7 @@ export const TerminalStatus = ({
   }
 
   return (
-    <div
-      className={cn("flex items-center gap-2 text-xs text-zinc-400", className)}
-      {...props}
-    >
+    <div className={cn("flex items-center gap-2 text-xs text-zinc-400", className)} {...props}>
       {children ?? <Shimmer className="w-16">Streaming</Shimmer>}
     </div>
   );
@@ -144,16 +139,16 @@ export const TerminalActions = ({
   className,
   children,
   ...props
-}: TerminalActionsProps) => (
+}: HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex items-center gap-1", className)} {...props}>
     {children}
   </div>
 );
 
 export type TerminalCopyButtonProps = ComponentProps<typeof Button> & {
-  onCopy?: () => void;
-  onError?: (error: Error) => void;
-  timeout?: number;
+  readonly onCopy?: () => void;
+  readonly onError?: (error: Error) => void;
+  readonly timeout?: number;
 };
 
 export const TerminalCopyButton = ({
@@ -171,6 +166,7 @@ export const TerminalCopyButton = ({
   const copyToClipboard = useCallback(async () => {
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
       onError?.(new Error("Clipboard API not available"));
+
       return;
     }
 
@@ -180,7 +176,7 @@ export const TerminalCopyButton = ({
       onCopy?.();
       timeoutRef.current = window.setTimeout(() => setIsCopied(false), timeout);
     } catch (error) {
-      onError?.(error as Error);
+      onError?.(toError(error));
     }
   }, [output, onCopy, onError, timeout]);
 
@@ -199,7 +195,9 @@ export const TerminalCopyButton = ({
         "size-7 shrink-0 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100",
         className,
       )}
-      onClick={copyToClipboard}
+      onClick={() => {
+        copyToClipboard().catch(() => {});
+      }}
       size="icon"
       variant="ghost"
       {...props}
@@ -244,7 +242,7 @@ export const TerminalContent = ({
   className,
   children,
   ...props
-}: TerminalContentProps) => {
+}: HTMLAttributes<HTMLDivElement>) => {
   const { output, isStreaming, autoScroll } = useContext(TerminalContext);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -257,18 +255,15 @@ export const TerminalContent = ({
 
   return (
     <div
-      className={cn(
-        "max-h-96 overflow-auto p-4 font-mono text-sm leading-relaxed",
-        className,
-      )}
+      className={cn("max-h-96 overflow-auto p-4 font-mono text-sm leading-relaxed", className)}
       ref={containerRef}
       {...props}
     >
       {children ?? (
-        <pre className="break-words whitespace-pre-wrap">
+        <pre className="wrap-break-word whitespace-pre-wrap">
           <Ansi>{output}</Ansi>
           {isStreaming && (
-            <span className="ml-0.5 inline-block h-4 w-2 animate-pulse bg-zinc-100" />
+            <span className="ms-0.5 inline-block h-4 w-2 animate-pulse bg-zinc-100" />
           )}
         </pre>
       )}

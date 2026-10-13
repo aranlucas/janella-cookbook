@@ -2,74 +2,24 @@
  * Custom error classes for the cookbook application
  */
 
-export class AppError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode: number = 500,
-    public details?: Record<string, unknown>,
-  ) {
-    super(message);
-    this.name = "AppError";
-  }
-}
+import { AppError } from "./app-errors/app-error";
+import { DatabaseUnavailableError } from "./app-errors/database-unavailable-error";
+import { z } from "zod";
+import type { JsonObject } from "@/types/json";
 
-export class RecipeNotFoundError extends AppError {
-  constructor(identifier: string) {
-    super(`Recipe not found: ${identifier}`, "RECIPE_NOT_FOUND", 404);
-    this.name = "RecipeNotFoundError";
-  }
-}
+export { AppError };
 
-export class RecipeParseError extends AppError {
-  constructor(
-    message: string,
-    public url?: string,
-  ) {
-    super(message, "RECIPE_PARSE_ERROR", 400, { url });
-    this.name = "RecipeParseError";
-  }
-}
+export { RecipeNotFoundError } from "./app-errors/recipe-not-found-error";
 
-export class ValidationError extends AppError {
-  constructor(
-    message: string,
-    public field?: string,
-    public errors?: Record<string, string[]>,
-  ) {
-    super(message, "VALIDATION_ERROR", 400, { field, errors });
-    this.name = "ValidationError";
-  }
-}
+export { RecipeParseError } from "./app-errors/recipe-parse-error";
 
-export class ExternalApiError extends AppError {
-  constructor(
-    service: string,
-    message: string,
-    public originalError?: unknown,
-  ) {
-    super(`${service} API error: ${message}`, "EXTERNAL_API_ERROR", 502, {
-      service,
-    });
-    this.name = "ExternalApiError";
-  }
-}
+export { ValidationError } from "./app-errors/validation-error";
 
-export class DatabaseError extends AppError {
-  constructor(operation: string, message: string) {
-    super(`Database ${operation} failed: ${message}`, "DATABASE_ERROR", 500, {
-      operation,
-    });
-    this.name = "DatabaseError";
-  }
-}
+export { ExternalApiError } from "./app-errors/external-api-error";
 
-export class DatabaseUnavailableError extends AppError {
-  constructor(message = "Database is starting up — please retry in a few seconds") {
-    super(message, "DATABASE_UNAVAILABLE", 503, { retryable: true });
-    this.name = "DatabaseUnavailableError";
-  }
-}
+export { DatabaseError } from "./app-errors/database-error";
+
+export { DatabaseUnavailableError };
 
 /**
  * Postgres / Prisma codes that indicate the DB is temporarily unavailable
@@ -108,62 +58,88 @@ const TRANSIENT_MESSAGE_FRAGMENTS = [
   "server has closed the connection",
 ];
 
-export function isTransientDatabaseError(error: unknown): boolean {
-  if (!error || typeof error !== "object") return false;
+const errorMetadataSchema = z.object({
+  code: z.string().optional(),
+  cause: z.unknown().optional(),
+  details: z
+    .object({
+      meta: z.object({ code: z.string().optional() }).optional(),
+    })
+    .optional(),
+  message: z.string().optional(),
+  meta: z.object({ code: z.string().optional() }).optional(),
+});
 
-  const candidate = error as Record<string, unknown>;
+export const thrownValueSchema = z.union([
+  z.instanceof(Error),
+  z.object({
+    code: z.string().optional(),
+    cause: z.unknown().optional(),
+    details: z.unknown().optional(),
+    message: z.string().optional(),
+    meta: z.unknown().optional(),
+  }),
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.bigint(),
+  z.symbol(),
+  z.null(),
+  z.undefined(),
+]);
+
+export type ThrownValue = z.infer<typeof thrownValueSchema>;
+
+export function isTransientDatabaseError(error: ThrownValue): boolean {
+  const parsed = errorMetadataSchema.safeParse(error);
+
+  if (!parsed.success) {
+    return false;
+  }
+
+  const candidate = parsed.data;
+  const cause = errorMetadataSchema.safeParse(candidate.cause);
 
   // Direct pg error (cause chain may hold it)
   const code =
-    (candidate.code as string | undefined) ??
-    ((candidate.cause as Record<string, unknown> | undefined)?.code as
-      | string
-      | undefined) ??
-    ((candidate.meta as Record<string, unknown> | undefined)?.code as
-      | string
-      | undefined);
+    candidate.code ?? (cause.success ? cause.data.code : undefined) ?? candidate.meta?.code;
 
-  if (code && TRANSIENT_PG_CODES.has(String(code).toUpperCase())) {
+  if (code && TRANSIENT_PG_CODES.has(code.toUpperCase())) {
     return true;
   }
 
-  // Prisma meta.code or AppError.details.meta.code etc.
-  const nestedMetaCode = (() => {
-    try {
-      const details = (candidate.details as Record<string, unknown> | undefined)
-        ?.meta as Record<string, unknown> | undefined;
-      return details?.code as string | undefined;
-    } catch {
-      return undefined;
-    }
-  })();
-  if (nestedMetaCode && TRANSIENT_PG_CODES.has(String(nestedMetaCode).toUpperCase())) {
+  const nestedMetaCode = candidate.details?.meta?.code;
+
+  if (nestedMetaCode && TRANSIENT_PG_CODES.has(nestedMetaCode.toUpperCase())) {
     return true;
   }
 
   const messageParts: string[] = [];
-  if (typeof candidate.message === "string") messageParts.push(candidate.message.toLowerCase());
-  if (candidate.cause && typeof (candidate.cause as Record<string, unknown>).message === "string") {
-    messageParts.push(
-      String((candidate.cause as Record<string, unknown>).message).toLowerCase(),
-    );
+
+  if (candidate.message) {
+    messageParts.push(candidate.message.toLowerCase());
   }
+
+  if (cause.success && cause.data.message) {
+    messageParts.push(cause.data.message.toLowerCase());
+  }
+
   // Prisma error stringification often embeds original pg message
   const combined = messageParts.join(" | ");
+
   return TRANSIENT_MESSAGE_FRAGMENTS.some((frag) => combined.includes(frag));
 }
 
-export function isDatabaseUnavailableError(error: unknown): boolean {
+export function isDatabaseUnavailableError(error: ThrownValue): boolean {
   return (
-    isAppError(error) && error.code === "DATABASE_UNAVAILABLE" ||
-    isTransientDatabaseError(error)
+    (isAppError(error) && error.code === "DATABASE_UNAVAILABLE") || isTransientDatabaseError(error)
   );
 }
 
 /**
  * Type guard to check if an error is an AppError
  */
-export function isAppError(error: unknown): error is AppError {
+export function isAppError(error: ThrownValue): error is AppError {
   return error instanceof AppError;
 }
 
@@ -173,45 +149,62 @@ export function isAppError(error: unknown): error is AppError {
  * DatabaseUnavailableError (503) so callers can retry and UIs can show a
  * friendly "waking up" state instead of a generic 500.
  */
-export function toAppError(error: unknown): AppError {
-  if (isAppError(error)) {
-    return error;
+export function toAppError(thrownValue: ThrownValue): AppError {
+  if (isAppError(thrownValue)) {
+    return thrownValue;
   }
 
-  if (isTransientDatabaseError(error)) {
+  if (isTransientDatabaseError(thrownValue)) {
+    const candidate = errorMetadataSchema.safeParse(thrownValue);
+
+    const cause = candidate.success
+      ? errorMetadataSchema.safeParse(candidate.data.cause)
+      : undefined;
+
     const message =
-      error instanceof Error && error.message
-        ? error.message
+      thrownValue instanceof Error && thrownValue.message
+        ? thrownValue.message
         : "Database is starting up — please retry in a few seconds";
+
     // Preserve original code in details for debugging but surface as 503
     const transient = new DatabaseUnavailableError(message);
     // attach original code/message for logs without leaking internals to client
     transient.details = {
       ...transient.details,
       originalCode:
-        (error as Record<string, unknown>).code ??
-        ((error as Record<string, unknown>).cause as Record<string, unknown> | undefined)?.code ??
-        undefined,
+        (candidate?.success ? candidate.data.code : undefined) ??
+        (cause?.success ? cause.data.code : undefined) ??
+        null,
     };
+
     return transient;
   }
 
-  if (error instanceof Error) {
-    return new AppError(error.message, "UNKNOWN_ERROR", 500);
+  if (thrownValue instanceof Error) {
+    return new AppError(thrownValue.message, "UNKNOWN_ERROR", 500);
   }
 
-  return new AppError(String(error), "UNKNOWN_ERROR", 500);
+  const message = z.string().safeParse(thrownValue);
+
+  return new AppError(
+    message.success ? message.data : "An unexpected error occurred",
+    "UNKNOWN_ERROR",
+    500,
+  );
 }
 
 /**
  * Format error for client response
  */
-export function formatErrorResponse(error: unknown): {
-  error: string;
-  code: string;
-  details?: Record<string, unknown>;
-} {
+interface ErrorResponse {
+  readonly error: string;
+  readonly code: string;
+  readonly details?: JsonObject;
+}
+
+export function formatErrorResponse(error: ThrownValue): ErrorResponse {
   const appError = toAppError(error);
+
   return {
     error: appError.message,
     code: appError.code,

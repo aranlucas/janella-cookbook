@@ -8,17 +8,23 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
+import { isAbortError } from "@/lib/error-utils";
 import { Copy, Share2, RefreshCw, Bookmark, Flag } from "lucide-react";
 import { type ReactNode, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface MessageContextMenuProps {
-  children: ReactNode;
-  messageContent: string;
-  messageRole: "user" | "assistant";
-  onRegenerate?: () => void;
-  onBookmark?: () => void;
-  onReport?: () => void;
+  readonly children: ReactNode;
+  readonly messageContent: string;
+  readonly messageRole: "user" | "assistant";
+  readonly onRegenerate?: () => void;
+  readonly onBookmark?: () => void;
+  readonly onReport?: () => void;
+}
+
+interface TouchPoint {
+  x: number;
+  y: number;
 }
 
 export function MessageContextMenu({
@@ -31,7 +37,7 @@ export function MessageContextMenu({
 }: MessageContextMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
-  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  const touchStartPos = useRef<TouchPoint | null>(null);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -53,7 +59,7 @@ export function MessageContextMenu({
         hapticSuccess();
       } catch (error) {
         // User cancelled or share failed
-        if ((error as Error).name !== "AbortError") {
+        if (!isAbortError(error)) {
           toast.error("Failed to share");
         }
       }
@@ -77,7 +83,9 @@ export function MessageContextMenu({
   }, []);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartPos.current || !longPressTimer.current) return;
+    if (!touchStartPos.current || !longPressTimer.current) {
+      return;
+    }
 
     const moveThreshold = 10;
     const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
@@ -94,6 +102,7 @@ export function MessageContextMenu({
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+
     touchStartPos.current = null;
   }, []);
 
@@ -109,12 +118,12 @@ export function MessageContextMenu({
         {children}
       </ContextMenuTrigger>
       <ContextMenuContent className="w-48">
-        <ContextMenuItem onClick={handleCopy}>
-          <Copy className="mr-2 h-4 w-4" />
+        <ContextMenuItem onClick={() => void handleCopy()}>
+          <Copy className="me-2 size-4" />
           Copy text
         </ContextMenuItem>
-        <ContextMenuItem onClick={handleShare}>
-          <Share2 className="mr-2 h-4 w-4" />
+        <ContextMenuItem onClick={() => void handleShare()}>
+          <Share2 className="me-2 size-4" />
           Share
         </ContextMenuItem>
 
@@ -122,7 +131,7 @@ export function MessageContextMenu({
           <>
             <ContextMenuSeparator />
             <ContextMenuItem onClick={onRegenerate}>
-              <RefreshCw className="mr-2 h-4 w-4" />
+              <RefreshCw className="me-2 size-4" />
               Regenerate response
             </ContextMenuItem>
           </>
@@ -130,7 +139,7 @@ export function MessageContextMenu({
 
         {onBookmark && (
           <ContextMenuItem onClick={onBookmark}>
-            <Bookmark className="mr-2 h-4 w-4" />
+            <Bookmark className="me-2 size-4" />
             Save to favorites
           </ContextMenuItem>
         )}
@@ -139,7 +148,7 @@ export function MessageContextMenu({
           <>
             <ContextMenuSeparator />
             <ContextMenuItem onClick={onReport} className="text-red-600">
-              <Flag className="mr-2 h-4 w-4" />
+              <Flag className="me-2 size-4" />
               Report issue
             </ContextMenuItem>
           </>

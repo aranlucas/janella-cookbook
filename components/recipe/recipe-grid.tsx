@@ -1,15 +1,12 @@
 "use client";
 
 import { RecipeCard } from "./recipe-card";
-import {
-  ContentEmptyState,
-  RecipeGridSkeleton,
-} from "@/components/ui/content-state";
+import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeGridProps {
-  recipes: RecipeWithRelations[];
-  isLoading?: boolean;
+  readonly recipes: readonly RecipeWithRelations[];
+  readonly isLoading?: boolean;
 }
 
 export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {

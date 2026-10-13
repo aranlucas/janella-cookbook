@@ -16,10 +16,10 @@ export interface BreadcrumbNavItem {
 }
 
 interface BreadcrumbNavProps {
-  items: BreadcrumbNavItem[];
-  className?: string;
-  container?: boolean;
-  maxWidth?: "3xl" | "4xl" | "5xl" | "none";
+  readonly items: readonly BreadcrumbNavItem[];
+  readonly className?: string;
+  readonly container?: boolean;
+  readonly maxWidth?: "3xl" | "4xl" | "5xl" | "none";
 }
 
 export function BreadcrumbNav({
@@ -27,7 +27,7 @@ export function BreadcrumbNav({
   className,
   container = true,
   maxWidth = "none",
-}: BreadcrumbNavProps) {
+}: Readonly<BreadcrumbNavProps>) {
   const content = (
     <Breadcrumb className="[&_[data-slot=breadcrumb-list]]:text-muted-foreground/95 [&_[data-slot=breadcrumb-page]]:font-medium [&_[data-slot=breadcrumb-separator]]:text-muted-foreground/80">
       <BreadcrumbList>
@@ -58,7 +58,7 @@ export function BreadcrumbNav({
   return (
     <nav
       className={cn(
-        "no-print container pt-2 pb-4",
+        "no-print container pbs-2 pbe-4",
         maxWidth === "3xl" && "max-w-3xl",
         maxWidth === "4xl" && "max-w-4xl",
         maxWidth === "5xl" && "max-w-5xl",
@@ -73,10 +73,10 @@ export function BreadcrumbNav({
 }
 
 // Helper to wrap the breadcrumb in the same container as the detail page
-export function BreadcrumbContainer({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+interface BreadcrumbContainerProps {
+  readonly children: React.ReactNode;
+}
+
+export function BreadcrumbContainer({ children }: Readonly<BreadcrumbContainerProps>) {
   return <div className="no-print container py-4">{children}</div>;
 }

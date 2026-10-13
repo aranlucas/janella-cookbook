@@ -4,6 +4,8 @@ import { SessionProvider } from "@/components/providers/session-provider";
 import { createPageMetadata } from "@/lib/metadata";
 import "./globals.css";
 
+type RootLayoutProps = Readonly<{ readonly children: React.ReactNode }>;
+
 export const metadata: Metadata = {
   ...createPageMetadata({
     title: "Cookbook - Your Personal Recipe Collection",
@@ -14,11 +16,7 @@ export const metadata: Metadata = {
   keywords: ["cookbook", "recipes", "cooking", "meal planning", "food"],
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className="font-sans antialiased">

@@ -3,11 +3,10 @@
 import type { ComponentProps } from "react";
 import type { VariantProps } from "class-variance-authority";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 
-type ButtonLinkProps = ComponentProps<typeof Link> &
-  VariantProps<typeof buttonVariants>;
+type ButtonLinkProps = ComponentProps<typeof Link> & VariantProps<typeof buttonVariants>;
 
 export function ButtonLink({
   className,
@@ -15,10 +14,5 @@ export function ButtonLink({
   size = "default",
   ...props
 }: ButtonLinkProps) {
-  return (
-    <Link
-      className={cn(buttonVariants({ variant, size }), className)}
-      {...props}
-    />
-  );
+  return <Link className={cn(buttonVariants({ variant, size }), className)} {...props} />;
 }

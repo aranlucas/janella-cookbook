@@ -2,17 +2,23 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { Difficulty, Course } from "@/types/recipe";
 
+const starSlots = ["star-1", "star-2", "star-3", "star-4", "star-5"];
+
+function formatCourse(course: Course) {
+  return course.charAt(0) + course.slice(1).toLowerCase();
+}
+
 interface RecipeMetaProps {
-  prepTime?: number | null;
-  cookTime?: number | null;
-  totalTime?: number | null;
-  servings?: string | null;
-  difficulty?: Difficulty | null;
-  cuisine?: string | null;
-  course?: Course | null;
-  rating?: number | null;
-  cookCount?: number;
-  className?: string;
+  readonly prepTime?: number | null;
+  readonly cookTime?: number | null;
+  readonly totalTime?: number | null;
+  readonly servings?: string | null;
+  readonly difficulty?: Difficulty | null;
+  readonly cuisine?: string | null;
+  readonly course?: Course | null;
+  readonly rating?: number | null;
+  readonly cookCount?: number;
+  readonly className?: string;
 }
 
 export function RecipeMeta({
@@ -34,15 +40,12 @@ export function RecipeMeta({
     EXPERT: "bg-destructive text-destructive-foreground",
   };
 
-  const formatCourse = (c: Course) => {
-    return c.charAt(0) + c.slice(1).toLowerCase();
-  };
   const hasPositiveRatingOrCookCount =
     (rating !== undefined && rating !== null && rating > 0) ||
     (cookCount !== undefined && cookCount > 0);
 
   return (
-    <div className={cn("space-y-3 md:space-y-4", className)}>
+    <div className={cn("flex flex-col gap-3 md:gap-4", className)}>
       {/* Time info */}
       <div className="flex flex-wrap gap-3 text-xs sm:gap-4 sm:text-sm">
         {prepTime && (
@@ -65,7 +68,7 @@ export function RecipeMeta({
         )}
         {totalTime && (
           <div className="group/meta flex items-center gap-1.5 sm:gap-2">
-            <span className="inline-block transition-transform duration-300 group-hover/meta:rotate-[360deg]">
+            <span className="inline-block transition-transform duration-300 group-hover/meta:rotate-360">
               ⏱️
             </span>
             <span className="text-muted-foreground/95">Total:</span>
@@ -98,13 +101,8 @@ export function RecipeMeta({
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           {rating !== undefined && rating !== null && rating > 0 && (
             <div className="flex items-center gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span
-                  key={i}
-                  className={
-                    i < rating ? "text-primary" : "text-muted-foreground"
-                  }
-                >
+              {starSlots.map((slot, i) => (
+                <span key={slot} className={i < rating ? "text-primary" : "text-muted-foreground"}>
                   ★
                 </span>
               ))}

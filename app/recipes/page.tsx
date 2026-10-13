@@ -16,15 +16,28 @@ import { createPageMetadata } from "@/lib/metadata";
 export const revalidate = 86400;
 
 interface RecipesPageProps {
-  searchParams: Promise<{
-    q?: string;
-    category?: string;
-    page?: string;
-    sort?: string;
+  readonly searchParams: Promise<{
+    readonly q?: string;
+    readonly category?: string;
+    readonly page?: string;
+    readonly sort?: string;
   }>;
 }
 
 const ITEMS_PER_PAGE = 20;
+
+type RecipeQueryResult = {
+  readonly recipes: readonly RecipeWithRelations[];
+  readonly total: number;
+};
+
+type RecipeListProps = {
+  readonly query?: string;
+  readonly category?: string;
+  readonly page: number;
+  readonly sort: SortOption;
+};
+
 const SORT_OPTIONS = [
   { value: "recent", label: "Recently Updated" },
   { value: "newest", label: "Newest" },
@@ -32,6 +45,7 @@ const SORT_OPTIONS = [
   { value: "quick", label: "Quickest" },
   { value: "favorites", label: "Favorites First" },
 ] as const;
+
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
 
 function isSortOption(value?: string): value is SortOption {
@@ -39,10 +53,10 @@ function isSortOption(value?: string): value is SortOption {
 }
 
 function sortRecipesInMemory(
-  recipes: RecipeWithRelations[],
+  recipes: readonly RecipeWithRelations[],
   sort: SortOption,
 ): RecipeWithRelations[] {
-  return [...recipes].sort((a, b) => {
+  return [...recipes].toSorted((a, b) => {
     switch (sort) {
       case "recent":
         return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -54,8 +68,13 @@ function sortRecipesInMemory(
         if (a.isFavorite === b.isFavorite) {
           return b.updatedAt.getTime() - a.updatedAt.getTime();
         }
+
         return a.isFavorite ? -1 : 1;
-      case "title":
+
+      case "title": {
+        throw new Error('Not implemented yet: "title" case');
+      }
+
       default:
         return a.title.localeCompare(b.title);
     }
@@ -79,9 +98,19 @@ export async function generateMetadata({ searchParams }: RecipesPageProps): Prom
       : "Explore the complete collection of tried and true favorites.";
 
   const query = new URLSearchParams();
-  if (q) query.set("q", q);
-  if (category) query.set("category", category);
-  if (normalizedSort !== "recent") query.set("sort", normalizedSort);
+
+  if (q) {
+    query.set("q", q);
+  }
+
+  if (category) {
+    query.set("category", category);
+  }
+
+  if (normalizedSort !== "recent") {
+    query.set("sort", normalizedSort);
+  }
+
   const queryString = query.toString();
 
   return createPageMetadata({
@@ -96,17 +125,20 @@ async function getAllRecipes(
   category?: string,
   page: number = 1,
   sort: SortOption = "recent",
-): Promise<{ recipes: RecipeWithRelations[]; total: number }> {
+): Promise<RecipeQueryResult> {
   try {
     // Use hybridSearch for sophisticated search capabilities
     if (query || category) {
-      const searchQuery = query || category || "";
+      const searchQuery = query ?? category ?? "";
       const offset = (page - 1) * ITEMS_PER_PAGE;
       const searchResult = await hybridSearch(searchQuery, {}, ITEMS_PER_PAGE, offset);
+
       if (searchResult.isErr()) {
         console.error("Search error:", searchResult.error);
+
         return { recipes: [], total: 0 };
       }
+
       return {
         recipes: sortRecipesInMemory(
           searchResult.value.results.map((r) => r.recipe),
@@ -134,21 +166,12 @@ async function getAllRecipes(
     });
   } catch (error) {
     console.error("Error fetching recipes:", error);
+
     return { recipes: [], total: 0 };
   }
 }
 
-async function RecipeList({
-  query,
-  category,
-  page,
-  sort,
-}: {
-  query?: string;
-  category?: string;
-  page: number;
-  sort: SortOption;
-}) {
+async function RecipeList({ query, category, page, sort }: RecipeListProps) {
   const { recipes, total } = await getAllRecipes(query, category, page, sort);
 
   if (recipes.length === 0) {
@@ -172,9 +195,19 @@ async function RecipeList({
 
   const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
   const baseParams = new URLSearchParams();
-  if (query) baseParams.set("q", query);
-  if (category) baseParams.set("category", category);
-  if (sort !== "recent") baseParams.set("sort", sort);
+
+  if (query) {
+    baseParams.set("q", query);
+  }
+
+  if (category) {
+    baseParams.set("category", category);
+  }
+
+  if (sort !== "recent") {
+    baseParams.set("sort", sort);
+  }
+
   const baseQuery = baseParams.toString();
   const baseUrl = baseQuery ? `/recipes?${baseQuery}` : "/recipes";
 
@@ -203,13 +236,22 @@ export default async function RecipesPage(props: RecipesPageProps) {
     : "Explore the complete collection of tried and true favorites.";
 
   const sharedParams = new URLSearchParams();
-  if (q) sharedParams.set("q", q);
-  if (category) sharedParams.set("category", category);
+
+  if (q) {
+    sharedParams.set("q", q);
+  }
+
+  if (category) {
+    sharedParams.set("category", category);
+  }
+
   const buildSortHref = (sortValue: SortOption) => {
     const params = new URLSearchParams(sharedParams);
+
     if (sortValue !== "recent") {
       params.set("sort", sortValue);
     }
+
     return params.toString() ? `/recipes?${params.toString()}` : "/recipes";
   };
 
@@ -219,7 +261,7 @@ export default async function RecipesPage(props: RecipesPageProps) {
       title={title}
       description={description}
       headerChildren={
-        <div className="mx-auto mt-6 flex w-full max-w-4xl flex-col gap-4">
+        <div className="mx-auto mbs-6 flex w-full max-w-4xl flex-col gap-4">
           <Suspense>
             <SearchBar
               placeholder="Search within collection..."
@@ -230,6 +272,7 @@ export default async function RecipesPage(props: RecipesPageProps) {
           <div className="flex flex-wrap items-center justify-center gap-2">
             {SORT_OPTIONS.map((option) => {
               const isActive = option.value === currentSort;
+
               return (
                 <Link
                   key={option.value}

@@ -2,72 +2,59 @@
 
 import type { HTMLAttributes, ReactNode } from "react";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import {
-  ChevronRightIcon,
-  FileIcon,
-  FolderIcon,
-  FolderOpenIcon,
-} from "lucide-react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { ChevronRightIcon, FileIcon, FolderIcon, FolderOpenIcon } from "lucide-react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 interface FileTreeContextType {
-  expandedPaths: Set<string>;
+  expandedPaths: ReadonlySet<string>;
   togglePath: (path: string) => void;
   selectedPath?: string;
   onSelect?: (path: string) => void;
 }
 
 // Default noop for context default value
-// oxlint-disable-next-line eslint(no-empty-function)
 const noop = () => {};
 
+const EMPTY_EXPANDED_PATHS = new Set<string>();
+
 const FileTreeContext = createContext<FileTreeContextType>({
-  // oxlint-disable-next-line eslint-plugin-unicorn(no-new-builtin)
-  expandedPaths: new Set(),
+  expandedPaths: EMPTY_EXPANDED_PATHS,
   togglePath: noop,
 });
 
 export type FileTreeProps = HTMLAttributes<HTMLDivElement> & {
-  expanded?: Set<string>;
-  defaultExpanded?: Set<string>;
-  selectedPath?: string;
-  onSelect?: (path: string) => void;
-  onExpandedChange?: (expanded: Set<string>) => void;
+  readonly expanded?: ReadonlySet<string>;
+  readonly defaultExpanded?: ReadonlySet<string>;
+  readonly selectedPath?: string;
+  readonly onSelect?: (path: string) => void;
+  readonly onExpandedChange?: (expanded: ReadonlySet<string>) => void;
 };
 
 export const FileTree = ({
   expanded: controlledExpanded,
-  defaultExpanded = new Set(),
+  defaultExpanded = EMPTY_EXPANDED_PATHS,
   selectedPath,
   onSelect,
   onExpandedChange,
   className,
   children,
   ...props
-}: FileTreeProps) => {
+}: Readonly<FileTreeProps>) => {
   const [internalExpanded, setInternalExpanded] = useState(defaultExpanded);
   const expandedPaths = controlledExpanded ?? internalExpanded;
 
   const togglePath = useCallback(
     (path: string) => {
       const newExpanded = new Set(expandedPaths);
+
       if (newExpanded.has(path)) {
         newExpanded.delete(path);
       } else {
         newExpanded.add(path);
       }
+
       setInternalExpanded(newExpanded);
       onExpandedChange?.(newExpanded);
     },
@@ -82,10 +69,7 @@ export const FileTree = ({
   return (
     <FileTreeContext.Provider value={contextValue}>
       <div
-        className={cn(
-          "rounded-lg border bg-background font-mono text-sm",
-          className,
-        )}
+        className={cn("rounded-lg border bg-background font-mono text-sm", className)}
         role="tree"
         {...props}
       >
@@ -108,8 +92,8 @@ const FileTreeFolderContext = createContext<FileTreeFolderContextType>({
 });
 
 export type FileTreeFolderProps = HTMLAttributes<HTMLDivElement> & {
-  path: string;
-  name: string;
+  readonly path: string;
+  readonly name: string;
 };
 
 export const FileTreeFolder = ({
@@ -119,8 +103,7 @@ export const FileTreeFolder = ({
   children,
   ...props
 }: FileTreeFolderProps) => {
-  const { expandedPaths, togglePath, selectedPath, onSelect } =
-    useContext(FileTreeContext);
+  const { expandedPaths, togglePath, selectedPath, onSelect } = useContext(FileTreeContext);
   const isExpanded = expandedPaths.has(path);
   const isSelected = selectedPath === path;
 
@@ -132,25 +115,17 @@ export const FileTreeFolder = ({
     onSelect?.(path);
   }, [onSelect, path]);
 
-  const folderContextValue = useMemo(
-    () => ({ isExpanded, name, path }),
-    [isExpanded, name, path],
-  );
+  const folderContextValue = useMemo(() => ({ isExpanded, name, path }), [isExpanded, name, path]);
 
   return (
     <FileTreeFolderContext.Provider value={folderContextValue}>
       <Collapsible onOpenChange={handleOpenChange} open={isExpanded}>
-        <div
-          className={cn("", className)}
-          role="treeitem"
-          tabIndex={0}
-          {...props}
-        >
+        <div className={cn("", className)} role="treeitem" tabIndex={0} {...props}>
           <CollapsibleTrigger
             render={
               <button
                 className={cn(
-                  "flex w-full items-center gap-1 rounded px-2 py-1 text-left transition-colors hover:bg-muted/50",
+                  "flex w-full items-center gap-1 rounded px-2 py-1 text-start transition-colors hover:bg-muted/50",
                   isSelected && "bg-muted",
                 )}
                 onClick={handleSelect}
@@ -174,7 +149,7 @@ export const FileTreeFolder = ({
             <FileTreeName>{name}</FileTreeName>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="ml-4 border-l pl-2">{children}</div>
+            <div className="ms-4 border-s ps-2">{children}</div>
           </CollapsibleContent>
         </div>
       </Collapsible>
@@ -193,9 +168,9 @@ const FileTreeFileContext = createContext<FileTreeFileContextType>({
 });
 
 export type FileTreeFileProps = HTMLAttributes<HTMLDivElement> & {
-  path: string;
-  name: string;
-  icon?: ReactNode;
+  readonly path: string;
+  readonly name: string;
+  readonly icon?: ReactNode;
 };
 
 export const FileTreeFile = ({
@@ -259,7 +234,7 @@ export const FileTreeIcon = ({
   className,
   children,
   ...props
-}: FileTreeIconProps) => (
+}: HTMLAttributes<HTMLSpanElement>) => (
   <span className={cn("shrink-0", className)} {...props}>
     {children}
   </span>
@@ -271,7 +246,7 @@ export const FileTreeName = ({
   className,
   children,
   ...props
-}: FileTreeNameProps) => (
+}: HTMLAttributes<HTMLSpanElement>) => (
   <span className={cn("truncate", className)} {...props}>
     {children}
   </span>
@@ -285,11 +260,11 @@ export const FileTreeActions = ({
   className,
   children,
   ...props
-}: FileTreeActionsProps) => (
+}: HTMLAttributes<HTMLDivElement>) => (
   // biome-ignore lint/a11y/noNoninteractiveElementInteractions: stopPropagation required for nested interactions
   // biome-ignore lint/a11y/useSemanticElements: fieldset doesn't fit this UI pattern
   <div
-    className={cn("ml-auto flex items-center gap-1", className)}
+    className={cn("ms-auto flex items-center gap-1", className)}
     onClick={stopPropagation}
     onKeyDown={stopPropagation}
     role="group"

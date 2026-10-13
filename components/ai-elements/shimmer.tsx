@@ -1,69 +1,59 @@
 "use client";
 
 import type { MotionProps } from "motion/react";
-import type { CSSProperties, ElementType, JSX } from "react";
 
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { memo, useMemo } from "react";
 
-type MotionHTMLProps = MotionProps & Record<string, unknown>;
+const motionComponents = {
+  div: motion.div,
+  p: motion.p,
+  span: motion.span,
+} as const;
 
-// Cache motion components at module level to avoid creating during render
-const motionComponentCache = new Map<
-  keyof JSX.IntrinsicElements,
-  React.ComponentType<MotionHTMLProps>
->();
+type ShimmerElement = keyof typeof motionComponents;
 
-const getMotionComponent = (element: keyof JSX.IntrinsicElements) => {
-  let component = motionComponentCache.get(element);
-  if (!component) {
-    component = motion.create(element);
-    motionComponentCache.set(element, component);
-  }
-  return component;
+type ShimmerStyle = NonNullable<MotionProps["style"]> & {
+  readonly "--bg": string;
+  readonly "--spread": string;
 };
 
 export interface TextShimmerProps {
-  children: string;
-  as?: ElementType;
-  className?: string;
-  duration?: number;
-  spread?: number;
+  readonly children: string;
+  readonly as?: ShimmerElement;
+  readonly className?: string;
+  readonly duration?: number;
+  readonly spread?: number;
 }
 
 const ShimmerComponent = ({
   children,
-  as: Component = "p",
+  as: element = "p",
   className,
   duration = 2,
   spread = 2,
 }: TextShimmerProps) => {
-  const MotionComponent = getMotionComponent(
-    Component as keyof JSX.IntrinsicElements,
-  );
+  const MotionComponent = motionComponents[element];
 
-  const dynamicSpread = useMemo(
-    () => (children?.length ?? 0) * spread,
-    [children, spread],
-  );
+  const dynamicSpread = useMemo(() => (children?.length ?? 0) * spread, [children, spread]);
+
+  const style: ShimmerStyle = {
+    "--bg":
+      "linear-gradient(90deg,#0000 calc(50%-var(--spread)),var(--color-background),#0000 calc(50%+var(--spread)))",
+    "--spread": `${dynamicSpread}px`,
+    backgroundImage:
+      "var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))",
+    backgroundRepeat: "no-repeat, padding-box",
+    backgroundSize: "250% 100%, auto",
+  };
 
   return (
     <MotionComponent
       animate={{ backgroundPosition: "0% center" }}
-      className={cn(
-        "relative inline-block bg-[length:250%_100%,auto] bg-clip-text text-transparent",
-        "[background-repeat:no-repeat,padding-box] [--bg:linear-gradient(90deg,#0000_calc(50%-var(--spread)),var(--color-background),#0000_calc(50%+var(--spread)))]",
-        className,
-      )}
+      className={cn("relative inline-block bg-clip-text text-transparent", className)}
       initial={{ backgroundPosition: "100% center" }}
-      style={
-        {
-          "--spread": `${dynamicSpread}px`,
-          backgroundImage:
-            "var(--bg), linear-gradient(var(--color-muted-foreground), var(--color-muted-foreground))",
-        } as CSSProperties
-      }
+      style={style}
       transition={{
         duration,
         ease: "linear",

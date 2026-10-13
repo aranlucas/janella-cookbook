@@ -6,6 +6,7 @@ test("structured recipes preserve section order and times without an AI dependen
   const result = extractStructuredRecipe(
     `<script type="application/ld+json">${JSON.stringify({ "@graph": [{ "@type": ["Recipe"], name: "Rice", recipeIngredient: ["1 cup rice", "2 cups water"], recipeInstructions: [{ "@type": "HowToSection", name: "Cook", itemListElement: [{ text: "Boil water." }, { text: "Add rice." }] }], prepTime: "PT5M", cookTime: "PT1H10M", recipeYield: 2 }] })}</script>`,
   );
+
   expect(result?.title).toBe("Rice");
   expect(result?.ingredients).toHaveLength(2);
   expect(result?.instructions).toEqual([
@@ -14,6 +15,7 @@ test("structured recipes preserve section order and times without an AI dependen
   ]);
   expect(result?.cookTime).toBe(70);
 });
+
 test("incomplete and malformed structured data does not become a saved recipe", () => {
   expect(
     extractStructuredRecipe('<script type="application/ld+json">{bad}</script>'),
@@ -24,6 +26,7 @@ test("incomplete and malformed structured data does not become a saved recipe", 
     ),
   ).toBeUndefined();
 });
+
 test("source fetching rejects internal addresses, including IPv6 and mapped forms", async () => {
   for (const address of [
     "127.0.0.1",
@@ -35,8 +38,10 @@ test("source fetching rejects internal addresses, including IPv6 and mapped form
     "::ffff:127.0.0.1",
     "fc00::1",
     "2001:db8::1",
-  ])
+  ]) {
     expect(isPublicAddress(address), address).toBe(false);
+  }
+
   expect(isPublicAddress("8.8.8.8")).toBe(true);
   expect(isPublicAddress("2606:4700:4700::1111")).toBe(true);
   await expect(fetchRecipeSource("http://127.0.0.1/")).rejects.toThrow("public website");

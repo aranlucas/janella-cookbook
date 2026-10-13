@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  readonly params: Promise<{ readonly slug: string }>;
 }
 
 async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
@@ -18,6 +18,7 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
     return await getRecipeBySlug(slug);
   } catch (error) {
     console.error("Error fetching recipe:", error);
+
     return null;
   }
 }
@@ -39,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: `Edit ${recipe.title} | Cookbook`,
     description: `Update ingredients, instructions, and details for ${recipe.title}.`,
     path: `/recipe/${recipe.slug}/edit`,
-    image: recipe.imageUrl || undefined,
+    image: recipe.imageUrl ?? undefined,
     noIndex: true,
   });
 }

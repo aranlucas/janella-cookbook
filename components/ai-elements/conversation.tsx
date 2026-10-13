@@ -10,7 +10,7 @@ import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 
 export type ConversationProps = ComponentProps<typeof StickToBottom>;
 
-export const Conversation = ({ className, ...props }: ConversationProps) => (
+export const Conversation = ({ className, ...props }: ComponentProps<typeof StickToBottom>) => (
   <StickToBottom
     className={cn("relative flex-1 overflow-y-hidden", className)}
     initial="smooth"
@@ -20,24 +20,19 @@ export const Conversation = ({ className, ...props }: ConversationProps) => (
   />
 );
 
-export type ConversationContentProps = ComponentProps<
-  typeof StickToBottom.Content
->;
+export type ConversationContentProps = ComponentProps<typeof StickToBottom.Content>;
 
 export const ConversationContent = ({
   className,
   ...props
-}: ConversationContentProps) => (
-  <StickToBottom.Content
-    className={cn("flex flex-col gap-8 p-4", className)}
-    {...props}
-  />
+}: ComponentProps<typeof StickToBottom.Content>) => (
+  <StickToBottom.Content className={cn("flex flex-col gap-8 p-4", className)} {...props} />
 );
 
 export type ConversationEmptyStateProps = ComponentProps<"div"> & {
-  title?: string;
-  description?: string;
-  icon?: React.ReactNode;
+  readonly title?: string;
+  readonly description?: string;
+  readonly icon?: React.ReactNode;
 };
 
 export const ConversationEmptyState = ({
@@ -58,11 +53,9 @@ export const ConversationEmptyState = ({
     {children ?? (
       <>
         {icon && <div className="text-muted-foreground">{icon}</div>}
-        <div className="space-y-1">
+        <div className="flex flex-col gap-1">
           <h3 className="text-sm font-medium">{title}</h3>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
       </>
     )}
@@ -78,14 +71,14 @@ export const ConversationScrollButton = ({
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();
 
   const handleScrollToBottom = useCallback(() => {
-    scrollToBottom();
+    Promise.resolve(scrollToBottom()).catch(() => {});
   }, [scrollToBottom]);
 
   return (
     !isAtBottom && (
       <Button
         className={cn(
-          "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full dark:bg-background dark:hover:bg-muted",
+          "absolute inset-s-1/2 inset-be-4 -translate-x-1/2 rounded-full dark:bg-background dark:hover:bg-muted",
           className,
         )}
         onClick={handleScrollToBottom}
@@ -101,31 +94,25 @@ export const ConversationScrollButton = ({
 };
 
 export interface ConversationMessage {
-  role: "user" | "assistant" | "system" | "data" | "tool";
-  content: string;
+  readonly role: "user" | "assistant" | "system" | "data" | "tool";
+  readonly content: string;
 }
 
-export type ConversationDownloadProps = Omit<
-  ComponentProps<typeof Button>,
-  "onClick"
-> & {
-  messages: ConversationMessage[];
-  filename?: string;
-  formatMessage?: (message: ConversationMessage, index: number) => string;
+export type ConversationDownloadProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
+  readonly messages: readonly ConversationMessage[];
+  readonly filename?: string;
+  readonly formatMessage?: (message: ConversationMessage, index: number) => string;
 };
 
 const defaultFormatMessage = (message: ConversationMessage): string => {
-  const roleLabel =
-    message.role.charAt(0).toUpperCase() + message.role.slice(1);
+  const roleLabel = message.role.charAt(0).toUpperCase() + message.role.slice(1);
+
   return `**${roleLabel}:** ${message.content}`;
 };
 
-export const messagesToMarkdown = (
-  messages: ConversationMessage[],
-  formatMessage: (
-    message: ConversationMessage,
-    index: number,
-  ) => string = defaultFormatMessage,
+const messagesToMarkdown = (
+  messages: readonly ConversationMessage[],
+  formatMessage: (message: ConversationMessage, index: number) => string = defaultFormatMessage,
 ): string => messages.map((msg, i) => formatMessage(msg, i)).join("\n\n");
 
 export const ConversationDownload = ({
@@ -135,7 +122,7 @@ export const ConversationDownload = ({
   className,
   children,
   ...props
-}: ConversationDownloadProps) => {
+}: Readonly<ConversationDownloadProps>) => {
   const handleDownload = useCallback(() => {
     const markdown = messagesToMarkdown(messages, formatMessage);
     const blob = new Blob([markdown], { type: "text/markdown" });
@@ -152,7 +139,7 @@ export const ConversationDownload = ({
   return (
     <Button
       className={cn(
-        "absolute top-4 right-4 rounded-full dark:bg-background dark:hover:bg-muted",
+        "absolute inset-e-4 inset-bs-4 rounded-full dark:bg-background dark:hover:bg-muted",
         className,
       )}
       onClick={handleDownload}

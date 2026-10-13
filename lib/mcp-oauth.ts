@@ -5,12 +5,38 @@ import type {
   OAuthClientInformation,
   OAuthClientMetadata,
 } from "@ai-sdk/mcp";
+import { z } from "zod";
+import { AuthRequiredError } from "./mcp-auth-error";
+
+export { AuthRequiredError } from "./mcp-auth-error";
 
 const COOKIES = {
   TOKENS: "mcp_tokens",
   CODE_VERIFIER: "mcp_code_verifier",
   CLIENT_INFO: "mcp_client_info",
 } as const;
+
+const oauthTokensSchema = z.object({
+  access_token: z.string(),
+  id_token: z.string().optional(),
+  token_type: z.string(),
+  expires_in: z.number().optional(),
+  scope: z.string().optional(),
+  refresh_token: z.string().optional(),
+  issuer: z.string().optional(),
+  authorization_server: z.string().optional(),
+  token_endpoint: z.string().optional(),
+});
+
+const oauthClientInformationSchema = z.object({
+  client_id: z.string(),
+  client_secret: z.string().optional(),
+  client_id_issued_at: z.number().optional(),
+  client_secret_expires_at: z.number().optional(),
+  issuer: z.string().optional(),
+  authorization_server: z.string().optional(),
+  token_endpoint: z.string().optional(),
+});
 
 /**
  * Server-side OAuth provider for MCP using HTTP-only cookies.
@@ -32,7 +58,14 @@ export class MCPOAuthProvider implements OAuthClientProvider {
   async tokens(): Promise<OAuthTokens | undefined> {
     const cookieStore = await cookies();
     const value = cookieStore.get(COOKIES.TOKENS)?.value;
-    return value ? JSON.parse(value) : undefined;
+
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = oauthTokensSchema.safeParse(JSON.parse(value));
+
+    return parsed.success ? parsed.data : undefined;
   }
 
   async saveTokens(tokens: OAuthTokens): Promise<void> {
@@ -47,7 +80,7 @@ export class MCPOAuthProvider implements OAuthClientProvider {
     });
   }
 
-  async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
+  redirectToAuthorization(authorizationUrl: URL): void {
     // Throw error with auth URL - caller must handle the redirect
     throw new AuthRequiredError(authorizationUrl.toString());
   }
@@ -66,14 +99,25 @@ export class MCPOAuthProvider implements OAuthClientProvider {
   async codeVerifier(): Promise<string> {
     const cookieStore = await cookies();
     const value = cookieStore.get(COOKIES.CODE_VERIFIER)?.value;
-    if (!value) throw new Error("Code verifier not found");
+
+    if (!value) {
+      throw new Error("Code verifier not found");
+    }
+
     return value;
   }
 
   async clientInformation(): Promise<OAuthClientInformation | undefined> {
     const cookieStore = await cookies();
     const value = cookieStore.get(COOKIES.CLIENT_INFO)?.value;
-    return value ? JSON.parse(value) : undefined;
+
+    if (!value) {
+      return undefined;
+    }
+
+    const parsed = oauthClientInformationSchema.safeParse(JSON.parse(value));
+
+    return parsed.success ? parsed.data : undefined;
   }
 
   async saveClientInformation(info: OAuthClientInformation): Promise<void> {
@@ -85,15 +129,5 @@ export class MCPOAuthProvider implements OAuthClientProvider {
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
     });
-  }
-}
-
-/**
- * Error thrown when OAuth authorization is required.
- */
-export class AuthRequiredError extends Error {
-  constructor(public readonly authorizationUrl: string) {
-    super("Authorization required");
-    this.name = "AuthRequiredError";
   }
 }

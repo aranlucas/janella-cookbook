@@ -11,8 +11,8 @@ import type { RecipeWithRelations } from "@/types/recipe";
 import { cn } from "@/lib/utils";
 
 interface RecipeEngagementActionsProps {
-  recipe: RecipeWithRelations;
-  className?: string;
+  readonly recipe: RecipeWithRelations;
+  readonly className?: string;
 }
 
 export function RecipeEngagementActions({
@@ -30,6 +30,7 @@ export function RecipeEngagementActions({
       recipe: recipe.slug,
       title: recipe.title,
     });
+
     router.push(`/chat?${params.toString()}`);
   };
 
@@ -39,15 +40,12 @@ export function RecipeEngagementActions({
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
       setRecipe(result.data);
-      toast.success(
-        result.data.isFavorite
-          ? "Added to favorites"
-          : "Removed from favorites",
-      );
+      toast.success(result.data.isFavorite ? "Added to favorites" : "Removed from favorites");
     });
   };
 
@@ -57,6 +55,7 @@ export function RecipeEngagementActions({
 
       if (!result.success) {
         toast.error(result.error);
+
         return;
       }
 
@@ -81,10 +80,8 @@ export function RecipeEngagementActions({
           className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
         >
           <Heart
-            className={`mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-125 sm:mr-2 sm:h-5 sm:w-5 ${
-              recipe.isFavorite
-                ? "animate-heart-pop fill-current"
-                : "group-hover:-rotate-12"
+            className={`me-1.5 size-4 transition-transform duration-300 group-hover:scale-125 sm:me-2 sm:size-5 ${
+              recipe.isFavorite ? "animate-heart-pop fill-current" : "group-hover:-rotate-12"
             }`}
           />
           <span className="text-sm font-medium sm:text-base">
@@ -99,10 +96,10 @@ export function RecipeEngagementActions({
           disabled={isCooking}
           className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
         >
-          <ChefHat className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
+          <ChefHat className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:me-2 sm:size-5" />
           <span className="text-sm font-medium sm:text-base">I Made This</span>
           {(recipe.cookCount || 0) > 0 && (
-            <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground transition-transform duration-200 group-hover:scale-110 sm:ml-2 sm:px-2 sm:text-xs">
+            <span className="ms-1.5 rounded-full bg-primary px-1.5 py-0.5 text-3xs font-semibold text-primary-foreground transition-transform duration-200 group-hover:scale-110 sm:ms-2 sm:px-2 sm:text-xs">
               {recipe.cookCount}
             </span>
           )}
@@ -120,12 +117,10 @@ export function RecipeEngagementActions({
         variant="default"
         size="default"
         onClick={handleChatWithRecipe}
-        className="hover-squish group relative w-full overflow-hidden bg-gradient-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
+        className="hover-squish group relative w-full overflow-hidden bg-linear-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
       >
-        <MessageCircle className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:mr-2 sm:h-5 sm:w-5" />
-        <span className="text-sm font-medium sm:text-base">
-          Chat with Recipe
-        </span>
+        <MessageCircle className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:me-2 sm:size-5" />
+        <span className="text-sm font-medium sm:text-base">Chat with Recipe</span>
       </Button>
     </div>
   );

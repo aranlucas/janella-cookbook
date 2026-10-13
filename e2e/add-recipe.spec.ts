@@ -6,8 +6,11 @@ test.describe("Recipe intake", () => {
   }) => {
     await page.goto("/recipes/new");
     await expect(page.getByRole("heading", { name: "Add a Recipe" })).toBeVisible();
-    for (const name of [/Link Website/, /Photo Recipe/, /Text Paste/, /Manual Write/])
-      await expect(page.getByRole("button", { name })).toBeVisible();
+    await Promise.all(
+      [/Link Website/, /Photo Recipe/, /Text Paste/, /Manual Write/].map((name) =>
+        expect(page.getByRole("button", { name })).toBeVisible(),
+      ),
+    );
     await page.getByRole("button", { name: /Manual Write/ }).click();
     await page.getByLabel("Recipe Title").fill("My saved draft");
     await page.getByRole("button", { name: /Link Website/ }).click();
@@ -62,12 +65,16 @@ test.describe("Recipe intake", () => {
 test("intake remains usable on a narrow screen", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/recipes/new");
-  for (const name of [/Link Website/, /Photo Recipe/, /Text Paste/, /Manual Write/]) {
-    await page.getByRole("button", { name }).click();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-      390,
-    );
-  }
+  await [/Link Website/, /Photo Recipe/, /Text Paste/, /Manual Write/].reduce(
+    async (previous, name) => {
+      await previous;
+      await page.getByRole("button", { name }).click();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        390,
+      );
+    },
+    Promise.resolve(),
+  );
   await page.getByRole("button", { name: /Photo Recipe/ }).click();
   await page.screenshot({ path: "docs/design/assets/intake-mobile.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });

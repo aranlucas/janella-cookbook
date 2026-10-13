@@ -1,8 +1,11 @@
 import { InferenceClient } from "@huggingface/inference";
 import { ok, err, errAsync, ResultAsync } from "neverthrow";
-import { ExternalApiError } from "./errors";
+import { z } from "zod";
+import { ExternalApiError, thrownValueSchema } from "./errors";
 
 const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
+
+const embeddingSchema = z.array(z.number().finite()).length(768);
 
 /**
  * Generate an embedding vector for the given text using Hugging Face's embedding model
@@ -34,68 +37,84 @@ export function generateEmbedding(text: string): ResultAsync<number[], ExternalA
     ),
     (error) => {
       const message = error instanceof Error ? error.message : "Unknown embedding error";
-      return new ExternalApiError("Hugging Face", message, error);
+
+      return new ExternalApiError("Hugging Face", message, thrownValueSchema.parse(error));
     },
   ).andThen((result) => {
-    if (!Array.isArray(result)) {
-      return err(
-        new ExternalApiError("Hugging Face", `Expected array response, got ${typeof result}`),
-      );
-    }
+    const parsed = embeddingSchema.safeParse(result);
 
-    if (result.length > 0 && Array.isArray(result[0])) {
-      return err(new ExternalApiError("Hugging Face", "Expected 1D array response, got 2D array"));
-    }
-
-    if (
-      result.length !== 768 ||
-      !result.every((value) => typeof value === "number" && Number.isFinite(value))
-    )
+    if (!parsed.success) {
       return err(new ExternalApiError("Hugging Face", "Invalid embedding dimensions or values"));
-    return ok(result as number[]);
+    }
+
+    return ok(parsed.data);
   });
+}
+
+interface NamedTag {
+  readonly name: string;
+}
+
+interface NamedIngredient {
+  readonly name: string;
+}
+
+interface TextInstruction {
+  readonly text: string;
+}
+
+export interface RecipeEmbeddingInput {
+  readonly title: string;
+  readonly description?: string | null;
+  readonly cuisine?: string | null;
+  readonly course?: string | null;
+  readonly tags?: readonly NamedTag[];
+  readonly ingredients?: readonly NamedIngredient[];
+  readonly instructions?: readonly TextInstruction[];
+  readonly totalTime?: number | null;
+  readonly difficulty?: string | null;
+}
+
+interface RecipeEmbeddingResult {
+  searchText: string;
+  embedding: number[];
 }
 
 /**
  * Generate searchable text from a recipe for embedding
  */
-export function generateSearchText(recipe: {
-  title: string;
-  description?: string | null;
-  cuisine?: string | null;
-  course?: string | null;
-  tags?: { name: string }[];
-  ingredients?: { name: string }[];
-  instructions?: { text: string }[];
-  totalTime?: number | null;
-  difficulty?: string | null;
-}): string {
+export function generateSearchText(recipe: RecipeEmbeddingInput): string {
   const parts: string[] = [
     recipe.title,
-    recipe.description || "",
-    recipe.cuisine || "",
-    recipe.course || "",
-    recipe.tags?.map((t) => t.name).join(" ") || "",
-    recipe.ingredients?.map((i) => i.name).join(" ") || "",
-    recipe.instructions?.map((i) => i.text).join(" ") || "",
+    recipe.description ?? "",
+    recipe.cuisine ?? "",
+    recipe.course ?? "",
+    recipe.tags?.map((t) => t.name).join(" ") ?? "",
+    recipe.ingredients?.map((i) => i.name).join(" ") ?? "",
+    recipe.instructions?.map((i) => i.text).join(" ") ?? "",
   ];
 
   // Add semantic hints based on attributes
   if (recipe.totalTime && recipe.totalTime < 30) {
     parts.push("quick fast easy");
   }
+
   if (recipe.totalTime && recipe.totalTime < 15) {
     parts.push("super quick instant");
   }
+
   if (recipe.difficulty === "EASY") {
     parts.push("simple beginner friendly");
   }
+
   if (recipe.difficulty === "MEDIUM") {
     parts.push("intermediate");
   }
+
   if (recipe.difficulty === "HARD") {
     parts.push("challenging advanced");
   }
+
   if (recipe.difficulty === "EXPERT") {
     parts.push("advanced chef professional complex");
   }
@@ -106,18 +125,11 @@ export function generateSearchText(recipe: {
 /**
  * Generate embedding for a recipe and return both the search text and embedding
  */
-export function generateRecipeEmbedding(recipe: {
-  title: string;
-  description?: string | null;
-  cuisine?: string | null;
-  course?: string | null;
-  tags?: { name: string }[];
-  ingredients?: { name: string }[];
-  instructions?: { text: string }[];
-  totalTime?: number | null;
-  difficulty?: string | null;
-}): ResultAsync<{ searchText: string; embedding: number[] }, ExternalApiError> {
+export function generateRecipeEmbedding(
+  recipe: RecipeEmbeddingInput,
+): ResultAsync<RecipeEmbeddingResult, ExternalApiError> {
   const searchText = generateSearchText(recipe);
+
   return generateEmbedding(searchText).map((embedding) => ({
     searchText,
     embedding,
@@ -128,7 +140,7 @@ export function generateRecipeEmbedding(recipe: {
  * Enhance a search query with synonyms and related terms
  */
 export function enhanceSearchQuery(query: string): string {
-  const expansions: Record<string, string> = {
+  const expansions = {
     quick: "quick fast easy under 30 minutes",
     healthy: "healthy light low-calorie nutritious",
     "comfort food": "comfort food hearty warming cozy",
@@ -143,9 +155,10 @@ export function enhanceSearchQuery(query: string): string {
     breakfast: "breakfast brunch morning",
     dinner: "dinner supper evening meal",
     dessert: "dessert sweet treat cake pie",
-  };
+  } satisfies Readonly<Record<string, string>>;
 
   let enhanced = query.toLowerCase();
+
   for (const [term, expansion] of Object.entries(expansions)) {
     if (enhanced.includes(term)) {
       enhanced = enhanced.replace(term, expansion);

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { JsonValue } from "@/types/json";
 
 /**
  * Ingredient schema for form validation
@@ -27,6 +28,7 @@ export const instructionSchema = z.object({
  * Difficulty enum values
  */
 export const difficultyValues = ["EASY", "MEDIUM", "HARD", "EXPERT"] as const;
+
 export type DifficultyValue = (typeof difficultyValues)[number];
 
 /**
@@ -44,6 +46,7 @@ export const courseValues = [
   "SAUCE",
   "BREAD",
 ] as const;
+
 export type CourseValue = (typeof courseValues)[number];
 
 /**
@@ -56,6 +59,7 @@ export const sourceTypeValues = [
   "PHOTO",
   "API",
 ] as const;
+
 export type SourceTypeValue = (typeof sourceTypeValues)[number];
 
 /**
@@ -85,7 +89,9 @@ export const recipeInputSchema = z.object({
   instructions: z.array(instructionSchema).min(1, "At least one instruction is required"),
 });
 
-export type RecipeInputSchema = z.infer<typeof recipeInputSchema>;
+type ParsedRecipeInputSchema = z.infer<typeof recipeInputSchema>;
+
+export type RecipeInputSchema = ParsedRecipeInputSchema;
 
 /** MCP tools use the same recipe validation as the app. Array order defines step order. */
 export const mcpAddRecipeSchema = recipeInputSchema.omit({ sourceType: true }).extend({
@@ -121,7 +127,8 @@ export const recipeListSchema = z.object({
   maxTime: z.number().int().min(0).max(10000).optional().describe("Maximum total time in minutes"),
 });
 
-export type RecipeListInput = z.infer<typeof recipeListSchema>;
+export type RecipeListInput = Readonly<z.infer<typeof recipeListSchema>>;
+
 export const mcpListRecipesSchema = recipeListSchema;
 
 export const mcpGetRecipeSchema = z.object({
@@ -166,6 +173,7 @@ export const youtubeImportSchema = z.object({
       (url) => {
         try {
           const parsedUrl = new URL(url);
+
           return (
             parsedUrl.hostname === "www.youtube.com" ||
             parsedUrl.hostname === "youtube.com" ||
@@ -211,7 +219,7 @@ export type SearchRequestSchema = z.infer<typeof searchRequestSchema>;
 /**
  * Validate recipe input and return typed result
  */
-export function validateRecipeInput(data: unknown):
+type RecipeInputValidationResult =
   | {
       success: true;
       data: RecipeInputSchema;
@@ -219,7 +227,19 @@ export function validateRecipeInput(data: unknown):
   | {
       success: false;
       errors: Record<string, string[]>;
-    } {
+    };
+
+type ImportValidationResult<T> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export function validateRecipeInput(data: JsonValue): RecipeInputValidationResult {
   const result = recipeInputSchema.safeParse(data);
 
   if (result.success) {
@@ -228,11 +248,14 @@ export function validateRecipeInput(data: unknown):
 
   // Format Zod errors into a simple object
   const errors: Record<string, string[]> = {};
+
   for (const issue of result.error.issues) {
     const path = issue.path.join(".");
+
     if (!errors[path]) {
       errors[path] = [];
     }
+
     errors[path].push(issue.message);
   }
 
@@ -242,15 +265,7 @@ export function validateRecipeInput(data: unknown):
 /**
  * Validate URL import input
  */
-export function validateUrlImport(data: unknown):
-  | {
-      success: true;
-      data: UrlImportSchema;
-    }
-  | {
-      success: false;
-      error: string;
-    } {
+export function validateUrlImport(data: JsonValue): ImportValidationResult<UrlImportSchema> {
   const result = urlImportSchema.safeParse(data);
 
   if (result.success) {
@@ -266,15 +281,7 @@ export function validateUrlImport(data: unknown):
 /**
  * Validate text import input
  */
-export function validateTextImport(data: unknown):
-  | {
-      success: true;
-      data: TextImportSchema;
-    }
-  | {
-      success: false;
-      error: string;
-    } {
+export function validateTextImport(data: JsonValue): ImportValidationResult<TextImportSchema> {
   const result = textImportSchema.safeParse(data);
 
   if (result.success) {
@@ -290,15 +297,9 @@ export function validateTextImport(data: unknown):
 /**
  * Validate YouTube import input
  */
-export function validateYouTubeImport(data: unknown):
-  | {
-      success: true;
-      data: YouTubeImportSchema;
-    }
-  | {
-      success: false;
-      error: string;
-    } {
+export function validateYouTubeImport(
+  data: JsonValue,
+): ImportValidationResult<YouTubeImportSchema> {
   const result = youtubeImportSchema.safeParse(data);
 
   if (result.success) {

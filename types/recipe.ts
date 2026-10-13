@@ -13,106 +13,110 @@ import type {
 export type { Difficulty, Course, SourceType };
 
 // Base types from Prisma
-export type Recipe = PrismaRecipe;
-export type Ingredient = PrismaIngredient;
-export type Instruction = PrismaInstruction;
-export type Tag = PrismaTag;
-export type RecipeImage = PrismaRecipeImage;
+export type Recipe = Readonly<PrismaRecipe>;
+
+export type Ingredient = Readonly<PrismaIngredient>;
+
+export type Instruction = Readonly<PrismaInstruction>;
+
+export type Tag = Readonly<PrismaTag>;
+
+export type RecipeImage = Readonly<PrismaRecipeImage>;
 
 // Extended recipe with relations
 export interface RecipeWithRelations extends Omit<Recipe, "embedding" | "saveKey"> {
-  ingredients: Ingredient[];
-  instructions: Instruction[];
-  tags: Tag[];
-  images: RecipeImage[];
+  readonly ingredients: readonly Ingredient[];
+  readonly instructions: readonly Instruction[];
+  readonly tags: readonly Tag[];
+  readonly images: readonly RecipeImage[];
 }
 
 // Input types for creating/updating
 export interface IngredientInput {
-  quantity?: string;
-  unit?: string;
-  name: string;
-  notes?: string;
-  group?: string;
-  sortOrder?: number;
+  readonly quantity?: string;
+  readonly unit?: string;
+  readonly name: string;
+  readonly notes?: string;
+  readonly group?: string;
+  readonly sortOrder?: number;
 }
 
 export interface InstructionInput {
-  text: string;
-  group?: string;
-  sortOrder?: number;
-  duration?: number;
-  imageUrl?: string;
+  readonly text: string;
+  readonly group?: string;
+  readonly sortOrder?: number;
+  readonly duration?: number;
+  readonly imageUrl?: string;
 }
 
 export interface RecipeInput {
-  title: string;
-  description?: string;
-  ingredients: IngredientInput[];
-  instructions: InstructionInput[];
-  prepTime?: number;
-  cookTime?: number;
-  totalTime?: number;
-  servings?: string;
-  difficulty?: Difficulty;
-  cuisine?: string;
-  course?: Course;
-  tags?: string[];
-  sourceUrl?: string;
-  sourceType: SourceType;
-  imageUrl?: string;
-  notes?: string;
-  rating?: number;
+  readonly title: string;
+  readonly description?: string;
+  readonly ingredients: readonly IngredientInput[];
+  readonly instructions: readonly InstructionInput[];
+  readonly prepTime?: number;
+  readonly cookTime?: number;
+  readonly totalTime?: number;
+  readonly servings?: string;
+  readonly difficulty?: Difficulty;
+  readonly cuisine?: string;
+  readonly course?: Course;
+  readonly tags?: readonly string[];
+  readonly sourceUrl?: string;
+  readonly sourceType: SourceType;
+  readonly imageUrl?: string;
+  readonly notes?: string;
+  readonly rating?: number;
 }
 
 // Search types
 export interface SearchFilters {
-  cuisine?: string[];
-  course?: Course[];
-  difficulty?: Difficulty[];
-  maxTime?: number;
-  tags?: string[];
-  isFavorite?: boolean;
+  readonly cuisine?: readonly string[];
+  readonly course?: readonly Course[];
+  readonly difficulty?: readonly Difficulty[];
+  readonly maxTime?: number;
+  readonly tags?: readonly string[];
+  readonly isFavorite?: boolean;
 }
 
 export interface SearchRequest {
-  query: string;
-  filters?: SearchFilters;
-  limit?: number;
-  offset?: number;
+  readonly query: string;
+  readonly filters?: SearchFilters;
+  readonly limit?: number;
+  readonly offset?: number;
 }
 
 export interface SearchResult {
-  recipe: RecipeWithRelations;
-  score: number;
-  highlights?: string[];
+  readonly recipe: RecipeWithRelations;
+  readonly score: number;
+  readonly highlights?: readonly string[];
 }
 
 export interface SearchResponse {
-  results: SearchResult[];
-  total: number;
-  query: string;
-  suggestedFilters?: string[];
+  readonly results: readonly SearchResult[];
+  readonly total: number;
+  readonly query: string;
+  readonly suggestedFilters?: readonly string[];
 }
 
 // API response types
 export interface ApiResponse<T> {
-  data?: T;
-  error?: string;
-  message?: string;
+  readonly data?: T;
+  readonly error?: string;
+  readonly message?: string;
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
+  readonly data: readonly T[];
+  readonly total: number;
+  readonly page: number;
+  readonly pageSize: number;
+  readonly hasMore: boolean;
 }
 
 // Import types
 export interface UrlImportRequest {
-  url: string;
+  readonly url: string;
 }
 
 export interface TextImportRequest {
@@ -120,25 +124,25 @@ export interface TextImportRequest {
 }
 
 export interface ParsedRecipe {
-  title: string;
-  description?: string;
-  ingredients: IngredientInput[];
-  instructions: InstructionInput[];
-  prepTime?: number;
-  cookTime?: number;
-  totalTime?: number;
-  servings?: string;
-  difficulty?: Difficulty;
-  cuisine?: string;
-  course?: Course;
-  imageUrl?: string;
+  readonly title: string;
+  readonly description?: string;
+  readonly ingredients: readonly IngredientInput[];
+  readonly instructions: readonly InstructionInput[];
+  readonly prepTime?: number;
+  readonly cookTime?: number;
+  readonly totalTime?: number;
+  readonly servings?: string;
+  readonly difficulty?: Difficulty;
+  readonly cuisine?: string;
+  readonly course?: Course;
+  readonly imageUrl?: string;
 }
 
 // Filter options for UI
 export interface FilterOptions {
-  cuisines: { value: string; count: number }[];
-  courses: { value: Course; count: number }[];
-  difficulties: { value: Difficulty; count: number }[];
-  tags: { value: string; slug: string; count: number }[];
-  maxTotalTime: number;
+  readonly cuisines: readonly { value: string; count: number }[];
+  readonly courses: readonly { value: Course; count: number }[];
+  readonly difficulties: readonly { value: Difficulty; count: number }[];
+  readonly tags: readonly { value: string; slug: string; count: number }[];
+  readonly maxTotalTime: number;
 }
