@@ -15,12 +15,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import {
@@ -34,7 +29,7 @@ import {
   VenusAndMarsIcon,
   VenusIcon,
 } from "lucide-react";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useMemo } from "react";
 
 interface VoiceSelectorContextValue {
   value: string | undefined;
@@ -43,30 +38,18 @@ interface VoiceSelectorContextValue {
   setOpen: (open: boolean) => void;
 }
 
-const VoiceSelectorContext = createContext<VoiceSelectorContextValue | null>(
-  null,
-);
-
-export const useVoiceSelector = () => {
-  const context = useContext(VoiceSelectorContext);
-  if (!context) {
-    throw new Error(
-      "VoiceSelector components must be used within VoiceSelector",
-    );
-  }
-  return context;
-};
+const VoiceSelectorContext = createContext<VoiceSelectorContextValue | null>(null);
 
 export type VoiceSelectorProps = Omit<
   ComponentProps<typeof Dialog>,
   "open" | "defaultOpen" | "onOpenChange"
 > & {
-  value?: string;
-  defaultValue?: string;
-  onValueChange?: (value: string | undefined) => void;
-  open?: boolean;
-  defaultOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  readonly value?: string;
+  readonly defaultValue?: string;
+  readonly onValueChange?: (value: string | undefined) => void;
+  readonly open?: boolean;
+  readonly defaultOpen?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 };
 
 export const VoiceSelector = ({
@@ -78,7 +61,7 @@ export const VoiceSelector = ({
   onOpenChange,
   children,
   ...props
-}: VoiceSelectorProps) => {
+}: Readonly<VoiceSelectorProps>) => {
   const [value, setValue] = useControllableState({
     defaultProp: defaultValue,
     onChange: onValueChange,
@@ -112,7 +95,7 @@ export const VoiceSelectorTrigger = (props: VoiceSelectorTriggerProps) => (
 );
 
 export type VoiceSelectorContentProps = ComponentProps<typeof DialogContent> & {
-  title?: ReactNode;
+  readonly title?: ReactNode;
 };
 
 export const VoiceSelectorContent = ({
@@ -120,58 +103,40 @@ export const VoiceSelectorContent = ({
   children,
   title = "Voice Selector",
   ...props
-}: VoiceSelectorContentProps) => (
-  <DialogContent
-    aria-describedby={undefined}
-    className={cn("p-0", className)}
-    {...props}
-  >
+}: Readonly<VoiceSelectorContentProps>) => (
+  <DialogContent aria-describedby={undefined} className={cn("p-0", className)} {...props}>
     <DialogTitle className="sr-only">{title}</DialogTitle>
-    <Command className="**:data-[slot=command-input-wrapper]:h-auto">
-      {children}
-    </Command>
+    <Command className="**:data-[slot=command-input-wrapper]:h-auto">{children}</Command>
   </DialogContent>
 );
 
 export type VoiceSelectorDialogProps = ComponentProps<typeof CommandDialog>;
 
-export const VoiceSelectorDialog = (props: VoiceSelectorDialogProps) => (
+export const VoiceSelectorDialog = (props: Readonly<ComponentProps<typeof CommandDialog>>) => (
   <CommandDialog {...props} />
 );
 
 export type VoiceSelectorInputProps = ComponentProps<typeof CommandInput>;
 
-export const VoiceSelectorInput = ({
-  className,
-  ...props
-}: VoiceSelectorInputProps) => (
+export const VoiceSelectorInput = ({ className, ...props }: VoiceSelectorInputProps) => (
   <CommandInput className={cn("h-auto py-3.5", className)} {...props} />
 );
 
 export type VoiceSelectorListProps = ComponentProps<typeof CommandList>;
 
-export const VoiceSelectorList = (props: VoiceSelectorListProps) => (
-  <CommandList {...props} />
-);
+export const VoiceSelectorList = (props: VoiceSelectorListProps) => <CommandList {...props} />;
 
 export type VoiceSelectorEmptyProps = ComponentProps<typeof CommandEmpty>;
 
-export const VoiceSelectorEmpty = (props: VoiceSelectorEmptyProps) => (
-  <CommandEmpty {...props} />
-);
+export const VoiceSelectorEmpty = (props: VoiceSelectorEmptyProps) => <CommandEmpty {...props} />;
 
 export type VoiceSelectorGroupProps = ComponentProps<typeof CommandGroup>;
 
-export const VoiceSelectorGroup = (props: VoiceSelectorGroupProps) => (
-  <CommandGroup {...props} />
-);
+export const VoiceSelectorGroup = (props: VoiceSelectorGroupProps) => <CommandGroup {...props} />;
 
 export type VoiceSelectorItemProps = ComponentProps<typeof CommandItem>;
 
-export const VoiceSelectorItem = ({
-  className,
-  ...props
-}: VoiceSelectorItemProps) => (
+export const VoiceSelectorItem = ({ className, ...props }: VoiceSelectorItemProps) => (
   <CommandItem className={cn("px-4 py-2", className)} {...props} />
 );
 
@@ -181,22 +146,14 @@ export const VoiceSelectorShortcut = (props: VoiceSelectorShortcutProps) => (
   <CommandShortcut {...props} />
 );
 
-export type VoiceSelectorSeparatorProps = ComponentProps<
-  typeof CommandSeparator
->;
+export type VoiceSelectorSeparatorProps = ComponentProps<typeof CommandSeparator>;
 
 export const VoiceSelectorSeparator = (props: VoiceSelectorSeparatorProps) => (
   <CommandSeparator {...props} />
 );
 
 export type VoiceSelectorGenderProps = ComponentProps<"span"> & {
-  value?:
-    | "male"
-    | "female"
-    | "transgender"
-    | "androgyne"
-    | "non-binary"
-    | "intersex";
+  readonly value?: "male" | "female" | "transgender" | "androgyne" | "non-binary" | "intersex";
 };
 
 export const VoiceSelectorGender = ({
@@ -212,26 +169,36 @@ export const VoiceSelectorGender = ({
       icon = <MarsIcon className="size-4" />;
       break;
     }
+
     case "female": {
       icon = <VenusIcon className="size-4" />;
       break;
     }
+
     case "transgender": {
       icon = <TransgenderIcon className="size-4" />;
       break;
     }
+
     case "androgyne": {
       icon = <MarsStrokeIcon className="size-4" />;
       break;
     }
+
     case "non-binary": {
       icon = <NonBinaryIcon className="size-4" />;
       break;
     }
+
     case "intersex": {
       icon = <VenusAndMarsIcon className="size-4" />;
       break;
     }
+
+    case undefined: {
+      throw new Error("Not implemented yet: undefined case");
+    }
+
     default: {
       icon = <CircleSmallIcon className="size-4" />;
     }
@@ -245,7 +212,7 @@ export const VoiceSelectorGender = ({
 };
 
 export type VoiceSelectorAccentProps = ComponentProps<"span"> & {
-  value?:
+  readonly value?:
     | "american"
     | "british"
     | "australian"
@@ -276,7 +243,7 @@ export type VoiceSelectorAccentProps = ComponentProps<"span"> & {
     | "polish"
     | "turkish"
     | "greek"
-    | string;
+    | (string & Record<never, never>);
 };
 
 export const VoiceSelectorAccent = ({
@@ -292,122 +259,156 @@ export const VoiceSelectorAccent = ({
       emoji = "🇺🇸";
       break;
     }
+
     case "british": {
       emoji = "🇬🇧";
       break;
     }
+
     case "australian": {
       emoji = "🇦🇺";
       break;
     }
+
     case "canadian": {
       emoji = "🇨🇦";
       break;
     }
+
     case "irish": {
       emoji = "🇮🇪";
       break;
     }
+
     case "scottish": {
       emoji = "🏴󠁧󠁢󠁳󠁣󠁴󠁿";
       break;
     }
+
     case "indian": {
       emoji = "🇮🇳";
       break;
     }
+
     case "south-african": {
       emoji = "🇿🇦";
       break;
     }
+
     case "new-zealand": {
       emoji = "🇳🇿";
       break;
     }
+
     case "spanish": {
       emoji = "🇪🇸";
       break;
     }
+
     case "french": {
       emoji = "🇫🇷";
       break;
     }
+
     case "german": {
       emoji = "🇩🇪";
       break;
     }
+
     case "italian": {
       emoji = "🇮🇹";
       break;
     }
+
     case "portuguese": {
       emoji = "🇵🇹";
       break;
     }
+
     case "brazilian": {
       emoji = "🇧🇷";
       break;
     }
+
     case "mexican": {
       emoji = "🇲🇽";
       break;
     }
+
     case "argentinian": {
       emoji = "🇦🇷";
       break;
     }
+
     case "japanese": {
       emoji = "🇯🇵";
       break;
     }
+
     case "chinese": {
       emoji = "🇨🇳";
       break;
     }
+
     case "korean": {
       emoji = "🇰🇷";
       break;
     }
+
     case "russian": {
       emoji = "🇷🇺";
       break;
     }
+
     case "arabic": {
       emoji = "🇸🇦";
       break;
     }
+
     case "dutch": {
       emoji = "🇳🇱";
       break;
     }
+
     case "swedish": {
       emoji = "🇸🇪";
       break;
     }
+
     case "norwegian": {
       emoji = "🇳🇴";
       break;
     }
+
     case "danish": {
       emoji = "🇩🇰";
       break;
     }
+
     case "finnish": {
       emoji = "🇫🇮";
       break;
     }
+
     case "polish": {
       emoji = "🇵🇱";
       break;
     }
+
     case "turkish": {
       emoji = "🇹🇷";
       break;
     }
+
     case "greek": {
       emoji = "🇬🇷";
       break;
     }
+
+    case undefined: {
+      throw new Error("Not implemented yet: undefined case");
+    }
+
     default: {
       emoji = null;
     }
@@ -422,26 +423,14 @@ export const VoiceSelectorAccent = ({
 
 export type VoiceSelectorAgeProps = ComponentProps<"span">;
 
-export const VoiceSelectorAge = ({
-  className,
-  ...props
-}: VoiceSelectorAgeProps) => (
-  <span
-    className={cn("text-xs text-muted-foreground tabular-nums", className)}
-    {...props}
-  />
+export const VoiceSelectorAge = ({ className, ...props }: VoiceSelectorAgeProps) => (
+  <span className={cn("text-xs text-muted-foreground tabular-nums", className)} {...props} />
 );
 
 export type VoiceSelectorNameProps = ComponentProps<"span">;
 
-export const VoiceSelectorName = ({
-  className,
-  ...props
-}: VoiceSelectorNameProps) => (
-  <span
-    className={cn("flex-1 truncate text-left font-medium", className)}
-    {...props}
-  />
+export const VoiceSelectorName = ({ className, ...props }: VoiceSelectorNameProps) => (
+  <span className={cn("flex-1 truncate text-start font-medium", className)} {...props} />
 );
 
 export type VoiceSelectorDescriptionProps = ComponentProps<"span">;
@@ -467,26 +456,16 @@ export const VoiceSelectorAttributes = ({
 
 export type VoiceSelectorBulletProps = ComponentProps<"span">;
 
-export const VoiceSelectorBullet = ({
-  className,
-  ...props
-}: VoiceSelectorBulletProps) => (
-  <span
-    aria-hidden="true"
-    className={cn("text-border select-none", className)}
-    {...props}
-  >
+export const VoiceSelectorBullet = ({ className, ...props }: VoiceSelectorBulletProps) => (
+  <span aria-hidden="true" className={cn("text-border select-none", className)} {...props}>
     &bull;
   </span>
 );
 
-export type VoiceSelectorPreviewProps = Omit<
-  ComponentProps<"button">,
-  "children"
-> & {
-  playing?: boolean;
-  loading?: boolean;
-  onPlay?: () => void;
+export type VoiceSelectorPreviewProps = Omit<ComponentProps<"button">, "children"> & {
+  readonly playing?: boolean;
+  readonly loading?: boolean;
+  readonly onPlay?: () => void;
 };
 
 export const VoiceSelectorPreview = ({
@@ -496,7 +475,7 @@ export const VoiceSelectorPreview = ({
   onPlay,
   onClick,
   ...props
-}: VoiceSelectorPreviewProps) => {
+}: Readonly<VoiceSelectorPreviewProps>) => {
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.stopPropagation();

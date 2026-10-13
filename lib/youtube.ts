@@ -1,21 +1,47 @@
 import { YoutubeTranscript } from "youtube-transcript";
 import { Innertube } from "youtubei.js/web";
 import { ok, err, ResultAsync, type Result } from "neverthrow";
-import { RecipeParseError, ExternalApiError, type AppError } from "./errors";
+import { z } from "zod";
+import { RecipeParseError, ExternalApiError, thrownValueSchema, type AppError } from "./errors";
 
 export type TranscriptResult = {
-  text: string;
-  title?: string;
-  source?: "transcript" | "description";
+  readonly text: string;
+  readonly title?: string;
+  readonly source?: "transcript" | "description";
 };
+
+const transcriptDataSchema = z.object({
+  content: z
+    .object({
+      body: z
+        .object({
+          initial_segments: z
+            .array(
+              z.object({
+                snippet: z
+                  .object({
+                    runs: z.array(z.object({ text: z.string().optional() })).optional(),
+                  })
+                  .optional(),
+              }),
+            )
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+export interface YouTubeVideoMetadata {
+  thumbnailUrl: string;
+  videoUrl: string;
+}
 
 /**
  * Extract YouTube video ID from various URL formats.
  * Returns Result instead of throwing.
  */
-export function extractYouTubeVideoId(
-  url: string,
-): Result<string, RecipeParseError> {
+export function extractYouTubeVideoId(url: string): Result<string, RecipeParseError> {
   try {
     const parsedUrl = new URL(url);
 
@@ -32,32 +58,34 @@ export function extractYouTubeVideoId(
     ) {
       // Handle /watch?v=VIDEO_ID
       const videoId = parsedUrl.searchParams.get("v");
+
       if (videoId) {
         return ok(videoId);
       }
 
       // Handle /shorts/VIDEO_ID
       const shortsMatch = parsedUrl.pathname.match(/\/shorts\/([^/?]+)/);
+
       if (shortsMatch) {
         return ok(shortsMatch[1]);
       }
 
       // Handle /embed/VIDEO_ID
       const embedMatch = parsedUrl.pathname.match(/\/embed\/([^/?]+)/);
+
       if (embedMatch) {
         return ok(embedMatch[1]);
       }
 
       // Handle /v/VIDEO_ID
       const vMatch = parsedUrl.pathname.match(/\/v\/([^/?]+)/);
+
       if (vMatch) {
         return ok(vMatch[1]);
       }
     }
 
-    return err(
-      new RecipeParseError("Could not extract video ID from YouTube URL", url),
-    );
+    return err(new RecipeParseError("Could not extract video ID from YouTube URL", url));
   } catch {
     return err(new RecipeParseError("Invalid YouTube URL format", url));
   }
@@ -68,26 +96,26 @@ export function extractYouTubeVideoId(
  * If transcript is unavailable, falls back to video description.
  * Returns ResultAsync instead of throwing.
  */
-export function getYouTubeTranscript(
-  videoId: string,
-): ResultAsync<TranscriptResult, AppError> {
+export function getYouTubeTranscript(videoId: string): ResultAsync<TranscriptResult, AppError> {
   return ResultAsync.fromPromise(getYouTubeTranscriptImpl(videoId), (error) =>
     error instanceof ExternalApiError || error instanceof RecipeParseError
       ? error
-      : new ExternalApiError(
-          "YouTube",
-          error instanceof Error ? error.message : "Unknown transcript error",
-          error,
-        ),
+      : (() => {
+          const thrownValue = thrownValueSchema.parse(error);
+
+          return new ExternalApiError(
+            "YouTube",
+            thrownValue instanceof Error ? thrownValue.message : "Unknown transcript error",
+            thrownValue,
+          );
+        })(),
   );
 }
 
 /**
  * Internal implementation that uses throw/catch for complex fallback logic.
  */
-async function getYouTubeTranscriptImpl(
-  videoId: string,
-): Promise<TranscriptResult> {
+async function getYouTubeTranscriptImpl(videoId: string): Promise<TranscriptResult> {
   let videoDescription: string | undefined;
   let videoTitle: string | undefined;
 
@@ -102,8 +130,8 @@ async function getYouTubeTranscriptImpl(
     const info = await youtube.getInfo(videoId);
 
     // Save title and description for fallback use
-    videoTitle = info.basic_info.title || undefined;
-    videoDescription = info.basic_info.short_description || undefined;
+    videoTitle = info.basic_info.title ?? undefined;
+    videoDescription = info.basic_info.short_description ?? undefined;
 
     const transcriptData = await info.getTranscript();
 
@@ -111,22 +139,20 @@ async function getYouTubeTranscriptImpl(
       throw new ExternalApiError("YouTube", "No transcript available");
     }
 
-    // The transcript data structure from youtubei.js
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const segments = (transcriptData as any).content?.body?.initial_segments;
+    const parsedTranscriptData = transcriptDataSchema.safeParse(transcriptData);
+
+    const segments = parsedTranscriptData.success
+      ? parsedTranscriptData.data.content?.body?.initial_segments
+      : undefined;
+
     if (!segments || !Array.isArray(segments) || segments.length === 0) {
       throw new ExternalApiError("YouTube", "No transcript segments found");
     }
 
     // Combine all transcript segments into a single text
     const text = segments
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((segment: any) => {
-        const runs = segment?.snippet?.runs || [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return runs.map((run: any) => run?.text || "").join("");
-      })
-      .filter((segmentText: string) => segmentText.trim().length > 0)
+      .map((segment) => segment?.snippet?.runs?.map((run) => run?.text ?? "").join("") ?? "")
+      .filter((segmentText) => segmentText.trim().length > 0)
       .join(" ");
 
     if (!text || text.trim().length === 0) {
@@ -142,9 +168,7 @@ async function getYouTubeTranscriptImpl(
     // Log the primary error for debugging
     console.warn(
       "youtubei.js transcript fetch failed, trying fallback:",
-      primaryError instanceof Error
-        ? primaryError.message
-        : String(primaryError),
+      primaryError instanceof Error ? primaryError.message : String(primaryError),
     );
 
     // Fallback to youtube-transcript library
@@ -162,9 +186,8 @@ async function getYouTubeTranscriptImpl(
     } catch (fallbackError) {
       // Both transcript methods failed - try using video description as last resort
       if (videoDescription && videoDescription.trim().length >= 50) {
-        console.warn(
-          "Both transcript methods failed, using video description as fallback",
-        );
+        console.warn("Both transcript methods failed, using video description as fallback");
+
         return {
           text: videoDescription.trim(),
           title: videoTitle,
@@ -174,13 +197,10 @@ async function getYouTubeTranscriptImpl(
 
       // Both methods failed and no usable description, throw a detailed error
       const primaryMsg =
-        primaryError instanceof Error
-          ? primaryError.message
-          : String(primaryError);
+        primaryError instanceof Error ? primaryError.message : String(primaryError);
+
       const fallbackMsg =
-        fallbackError instanceof Error
-          ? fallbackError.message
-          : String(fallbackError);
+        fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
 
       // Handle specific error cases
       if (
@@ -209,7 +229,7 @@ async function getYouTubeTranscriptImpl(
       throw new ExternalApiError(
         "YouTube",
         `Failed to fetch transcript and video description is too short. The video may not have captions enabled, or YouTube may be blocking the request. Primary error: ${primaryMsg}`,
-        fallbackError,
+        thrownValueSchema.parse(fallbackError),
       );
     }
   }
@@ -219,10 +239,7 @@ async function getYouTubeTranscriptImpl(
  * Get YouTube video metadata
  * Returns video title and thumbnail URL
  */
-export function getYouTubeVideoMetadata(videoId: string): {
-  thumbnailUrl: string;
-  videoUrl: string;
-} {
+export function getYouTubeVideoMetadata(videoId: string): YouTubeVideoMetadata {
   return {
     thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
     videoUrl: `https://www.youtube.com/watch?v=${videoId}`,

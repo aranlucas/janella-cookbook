@@ -3,15 +3,30 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { afterEach, expect, test } from "vitest";
+import { z } from "zod";
 import { deploymentSession, deploymentURL } from "../e2e/support/deployment-auth.ts";
 
+/** @type {import("node:http").Server[]} */
 const servers = [];
 
+/**
+ * @param {import("node:http").RequestListener} handler
+ * @returns {Promise<string>}
+ */
 async function server(handler) {
   const instance = createServer(handler);
   servers.push(instance);
-  await new Promise((resolve) => instance.listen(0, "127.0.0.1", resolve));
-  return `http://127.0.0.1:${instance.address().port}`;
+  await new Promise((resolve) => {
+    instance.listen(0, "127.0.0.1", resolve);
+  });
+  const address = instance.address();
+  const addressResult = z.object({ port: z.number() }).safeParse(address);
+
+  if (!addressResult.success) {
+    throw new Error("Expected the test server to bind to a network address");
+  }
+
+  return `http://127.0.0.1:${addressResult.data.port}`;
 }
 
 afterEach(async () => {
@@ -19,16 +34,25 @@ afterEach(async () => {
     servers.splice(0).map(
       (instance) =>
         new Promise((resolve, reject) => {
-          instance.close((error) => (error ? reject(error) : resolve()));
+          instance.close((error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
         }),
     ),
   );
 });
 
 test("protected recipe page becomes accessible using a cookie, without forwarding the secret", async () => {
+  /** @type {Array<{ url: string | undefined, bypass: string | string[] | undefined }>} */
   const seen = [];
+
   const baseURL = await server((req, res) => {
     seen.push({ url: req.url, bypass: req.headers["x-vercel-protection-bypass"] });
+
     if (req.url === "/" && req.headers["x-vercel-protection-bypass"] === "test-secret") {
       assert.equal(req.headers["x-vercel-set-bypass-cookie"], "true");
       res.writeHead(307, {
@@ -41,8 +65,10 @@ test("protected recipe page becomes accessible using a cookie, without forwardin
     } else {
       res.writeHead(302, { location: "/login" });
     }
+
     res.end();
   });
+
   const state = await deploymentSession(baseURL, "test-secret");
   expect(state.cookies[0].value).toBe("test-session");
   expect(seen).toEqual([
@@ -55,6 +81,7 @@ test("a login page containing cookbook branding is rejected immediately", async 
   const baseURL = await server((_req, res) => {
     res.end("<title>Login – Vercel</title><p>Continue to janella-cookbook</p>");
   });
+
   await expect(deploymentSession(baseURL, "invalid-secret")).rejects.toThrow(
     /authentication failed/,
   );
@@ -62,22 +89,23 @@ test("a login page containing cookbook branding is rejected immediately", async 
 
 test("authentication never follows a redirect to another origin", async () => {
   let externalRequests = 0;
+
   const externalURL = await server((_req, res) => {
     externalRequests++;
     res.end("<h1>Add a Recipe</h1>");
   });
+
   const baseURL = await server((_req, res) => {
     res.writeHead(307, { location: externalURL });
     res.end();
   });
+
   await expect(deploymentSession(baseURL, "test-secret")).rejects.toThrow(/authentication failed/);
   expect(externalRequests).toBe(0);
 });
 
 test("missing credentials fail before making requests", async () => {
-  await expect(deploymentSession("http://127.0.0.1:1", undefined)).rejects.toThrow(
-    /SECRET is required/,
-  );
+  await expect(deploymentSession("http://127.0.0.1:1")).rejects.toThrow(/SECRET is required/);
 });
 
 test("only this project's HTTPS deployment origins are accepted", () => {
@@ -87,6 +115,7 @@ test("only this project's HTTPS deployment origins are accepted", () => {
   expect(deploymentURL("https://janella-cookbook.vercel.app")).toBe(
     "https://janella-cookbook.vercel.app",
   );
+
   for (const url of [
     undefined,
     "http://janella-cookbook.vercel.app",
@@ -97,6 +126,6 @@ test("only this project's HTTPS deployment origins are accepted", () => {
     "https://janella-cookbook.vercel.app/login",
     "https://janella-cookbook.vercel.app?redirect=example.com",
   ]) {
-    expect(() => deploymentURL(url)).toThrow();
+    expect(() => deploymentURL(url)).toThrow(/deployment/i);
   }
 });

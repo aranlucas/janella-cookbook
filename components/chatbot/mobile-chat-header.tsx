@@ -1,16 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { isAbortError } from "@/lib/error-utils";
 import { hapticLight } from "@/lib/haptics";
-import {
-  ChefHat,
-  MapPin,
-  MoreVertical,
-  Trash2,
-  Share2,
-  Settings,
-  ArrowLeft,
-} from "lucide-react";
+import { ChefHat, MapPin, MoreVertical, Trash2, Share2, Settings, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -23,14 +16,14 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface MobileChatHeaderProps {
-  title?: string;
-  subtitle?: string;
-  locationEnabled?: boolean;
-  onBack?: () => void;
-  onClearChat?: () => void;
-  onSettings?: () => void;
-  className?: string;
-  scrollContainer?: HTMLElement | null;
+  readonly title?: string;
+  readonly subtitle?: string;
+  readonly locationEnabled?: boolean;
+  readonly onBack?: () => void;
+  readonly onClearChat?: () => void;
+  readonly onSettings?: () => void;
+  readonly className?: string;
+  readonly scrollContainer?: HTMLElement | null;
 }
 
 export function MobileChatHeader({
@@ -42,14 +35,16 @@ export function MobileChatHeader({
   onSettings,
   className,
   scrollContainer,
-}: MobileChatHeaderProps) {
+}: Readonly<MobileChatHeaderProps>) {
   const [isCompact, setIsCompact] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   // Handle scroll behavior - hide on scroll down, show on scroll up
   useEffect(() => {
-    if (!scrollContainer) return;
+    if (!scrollContainer) {
+      return () => {};
+    }
 
     const handleScroll = () => {
       const currentScrollY = scrollContainer.scrollTop;
@@ -69,11 +64,13 @@ export function MobileChatHeader({
     };
 
     scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+
     return () => scrollContainer.removeEventListener("scroll", handleScroll);
   }, [scrollContainer, lastScrollY]);
 
   const handleShare = useCallback(async () => {
     hapticLight();
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -82,7 +79,7 @@ export function MobileChatHeader({
           url: window.location.href,
         });
       } catch (error) {
-        if ((error as Error).name !== "AbortError") {
+        if (!isAbortError(error)) {
           toast.error("Failed to share");
         }
       }
@@ -100,8 +97,8 @@ export function MobileChatHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 shrink-0 border-b border-rustic-sand/50 transition-all duration-300",
-        "bg-gradient-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 backdrop-blur-lg",
+        "sticky inset-bs-0 z-40 shrink-0 border-be border-rustic-sand/50 transition-all duration-300",
+        "bg-linear-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 backdrop-blur-lg",
         isCompact ? "py-2" : "py-3",
         !isVisible && "-translate-y-full",
         className,
@@ -117,23 +114,18 @@ export function MobileChatHeader({
             className="text-rustic-charcoal/60 hover:text-rustic-charcoal md:hidden"
             aria-label="Go back"
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="size-5" />
           </Button>
         )}
 
         {/* Logo/Icon */}
         <div
           className={cn(
-            "flex items-center justify-center rounded-2xl bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-all duration-300",
-            isCompact ? "h-8 w-8 rounded-xl" : "h-10 w-10",
+            "flex items-center justify-center rounded-2xl bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-all duration-300",
+            isCompact ? "size-8 rounded-xl" : "size-10",
           )}
         >
-          <ChefHat
-            className={cn(
-              "transition-all duration-300",
-              isCompact ? "h-4 w-4" : "h-5 w-5",
-            )}
-          />
+          <ChefHat className={cn("transition-all duration-300", isCompact ? "size-4" : "size-5")} />
         </div>
 
         {/* Title area */}
@@ -146,11 +138,7 @@ export function MobileChatHeader({
           >
             {title}
           </h2>
-          {!isCompact && (
-            <p className="truncate text-xs text-rustic-charcoal/50">
-              {subtitle}
-            </p>
-          )}
+          {!isCompact && <p className="truncate text-xs text-rustic-charcoal/50">{subtitle}</p>}
         </div>
 
         {/* Status indicators */}
@@ -162,7 +150,7 @@ export function MobileChatHeader({
                 isCompact ? "px-2 py-0.5" : "px-2.5 py-1",
               )}
             >
-              <MapPin className="h-3 w-3" />
+              <MapPin className="size-3" />
               {!isCompact && <span>Location on</span>}
             </div>
           )}
@@ -179,16 +167,16 @@ export function MobileChatHeader({
                 />
               }
             >
-              <MoreVertical className="h-5 w-5" />
+              <MoreVertical className="size-5" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleShare}>
-                <Share2 className="mr-2 h-4 w-4" />
+              <DropdownMenuItem onClick={() => void handleShare()}>
+                <Share2 className="me-2 size-4" />
                 Share chat
               </DropdownMenuItem>
               {onSettings && (
                 <DropdownMenuItem onClick={onSettings}>
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Settings className="me-2 size-4" />
                   Settings
                 </DropdownMenuItem>
               )}
@@ -199,7 +187,7 @@ export function MobileChatHeader({
                     onClick={handleClearChat}
                     className="text-red-600 focus:text-red-600"
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="me-2 size-4" />
                     Clear chat
                   </DropdownMenuItem>
                 </>

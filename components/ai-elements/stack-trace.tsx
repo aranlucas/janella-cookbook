@@ -4,18 +4,10 @@ import type { ComponentProps } from "react";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import {
-  AlertTriangleIcon,
-  CheckIcon,
-  ChevronDownIcon,
-  CopyIcon,
-} from "lucide-react";
+import { toError } from "@/lib/error-utils";
+import { AlertTriangleIcon, CheckIcon, ChevronDownIcon, CopyIcon } from "lucide-react";
 import {
   createContext,
   memo,
@@ -29,8 +21,11 @@ import {
 
 // Regex patterns for parsing stack traces
 const STACK_FRAME_WITH_PARENS_REGEX = /^at\s+(.+?)\s+\((.+):(\d+):(\d+)\)$/;
+
 const STACK_FRAME_WITHOUT_FN_REGEX = /^at\s+(.+):(\d+):(\d+)$/;
+
 const ERROR_TYPE_REGEX = /^(\w+Error|Error):\s*(.*)$/;
+
 const AT_PREFIX_REGEX = /^at\s+/;
 
 interface StackFrame {
@@ -61,9 +56,11 @@ const StackTraceContext = createContext<StackTraceContextValue | null>(null);
 
 const useStackTrace = () => {
   const context = useContext(StackTraceContext);
+
   if (!context) {
     throw new Error("StackTrace components must be used within StackTrace");
   }
+
   return context;
 };
 
@@ -72,12 +69,15 @@ const parseStackFrame = (line: string): StackFrame => {
 
   // Pattern: at functionName (filePath:line:column)
   const withParensMatch = trimmed.match(STACK_FRAME_WITH_PARENS_REGEX);
+
   if (withParensMatch) {
     const [, functionName, filePath, lineNum, colNum] = withParensMatch;
+
     const isInternal =
       filePath.includes("node_modules") ||
       filePath.startsWith("node:") ||
       filePath.includes("internal/");
+
     return {
       columnNumber: colNum ? Number.parseInt(colNum, 10) : null,
       filePath: filePath ?? null,
@@ -90,12 +90,15 @@ const parseStackFrame = (line: string): StackFrame => {
 
   // Pattern: at filePath:line:column (no function name)
   const withoutFnMatch = trimmed.match(STACK_FRAME_WITHOUT_FN_REGEX);
+
   if (withoutFnMatch) {
     const [, filePath, lineNum, colNum] = withoutFnMatch;
+
     const isInternal =
       (filePath?.includes("node_modules") ?? false) ||
       (filePath?.startsWith("node:") ?? false) ||
       (filePath?.includes("internal/") ?? false);
+
     return {
       columnNumber: colNum ? Number.parseInt(colNum, 10) : null,
       filePath: filePath ?? null,
@@ -135,6 +138,7 @@ const parseStackTrace = (trace: string): ParsedStackTrace => {
 
   // Try to extract error type from "ErrorType: message" format
   const errorMatch = firstLine.match(ERROR_TYPE_REGEX);
+
   if (errorMatch) {
     const [, type, msg] = errorMatch;
     errorType = type;
@@ -156,11 +160,11 @@ const parseStackTrace = (trace: string): ParsedStackTrace => {
 };
 
 export type StackTraceProps = ComponentProps<"div"> & {
-  trace: string;
-  open?: boolean;
-  defaultOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  onFilePathClick?: (filePath: string, line?: number, column?: number) => void;
+  readonly trace: string;
+  readonly open?: boolean;
+  readonly defaultOpen?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
+  readonly onFilePathClick?: (filePath: string, line?: number, column?: number) => void;
 };
 
 export const StackTrace = memo(
@@ -197,7 +201,7 @@ export const StackTrace = memo(
       <StackTraceContext.Provider value={contextValue}>
         <div
           className={cn(
-            "not-prose w-full overflow-hidden rounded-lg border bg-background font-mono text-sm",
+            "w-full overflow-hidden rounded-lg border bg-background font-mono text-sm",
             className,
           )}
           {...props}
@@ -211,47 +215,37 @@ export const StackTrace = memo(
 
 export type StackTraceHeaderProps = ComponentProps<typeof CollapsibleTrigger>;
 
-export const StackTraceHeader = memo(
-  ({ className, children, ...props }: StackTraceHeaderProps) => {
-    const { isOpen, setIsOpen } = useStackTrace();
+export const StackTraceHeader = memo(({ className, children, ...props }: StackTraceHeaderProps) => {
+  const { isOpen, setIsOpen } = useStackTrace();
 
-    return (
-      <Collapsible onOpenChange={setIsOpen} open={isOpen}>
-        <CollapsibleTrigger
-          {...props}
-          render={
-            <div
-              className={cn(
-                "flex w-full cursor-pointer items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50",
-                className,
-              )}
-            />
-          }
-          nativeButton={false}
-        >
-          {children}
-        </CollapsibleTrigger>
-      </Collapsible>
-    );
-  },
-);
+  return (
+    <Collapsible onOpenChange={setIsOpen} open={isOpen}>
+      <CollapsibleTrigger
+        {...props}
+        render={
+          <div
+            className={cn(
+              "flex w-full cursor-pointer items-center gap-3 p-3 text-start transition-colors hover:bg-muted/50",
+              className,
+            )}
+          />
+        }
+        nativeButton={false}
+      >
+        {children}
+      </CollapsibleTrigger>
+    </Collapsible>
+  );
+});
 
 export type StackTraceErrorProps = ComponentProps<"div">;
 
-export const StackTraceError = memo(
-  ({ className, children, ...props }: StackTraceErrorProps) => (
-    <div
-      className={cn(
-        "flex flex-1 items-center gap-2 overflow-hidden",
-        className,
-      )}
-      {...props}
-    >
-      <AlertTriangleIcon className="size-4 shrink-0 text-destructive" />
-      {children}
-    </div>
-  ),
-);
+export const StackTraceError = memo(({ className, children, ...props }: StackTraceErrorProps) => (
+  <div className={cn("flex flex-1 items-center gap-2 overflow-hidden", className)} {...props}>
+    <AlertTriangleIcon className="size-4 shrink-0 text-destructive" />
+    {children}
+  </div>
+));
 
 export type StackTraceErrorTypeProps = ComponentProps<"span">;
 
@@ -260,10 +254,7 @@ export const StackTraceErrorType = memo(
     const { trace } = useStackTrace();
 
     return (
-      <span
-        className={cn("shrink-0 font-semibold text-destructive", className)}
-        {...props}
-      >
+      <span className={cn("shrink-0 font-semibold text-destructive", className)} {...props}>
         {children ?? trace.errorType}
       </span>
     );
@@ -287,6 +278,7 @@ export const StackTraceErrorMessage = memo(
 export type StackTraceActionsProps = ComponentProps<"div">;
 
 const handleActionsClick = (e: React.MouseEvent) => e.stopPropagation();
+
 const handleActionsKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === "Enter" || e.key === " ") {
     e.stopPropagation();
@@ -310,9 +302,9 @@ export const StackTraceActions = memo(
 );
 
 export type StackTraceCopyButtonProps = ComponentProps<typeof Button> & {
-  onCopy?: () => void;
-  onError?: (error: Error) => void;
-  timeout?: number;
+  readonly onCopy?: () => void;
+  readonly onError?: (error: Error) => void;
+  readonly timeout?: number;
 };
 
 export const StackTraceCopyButton = memo(
@@ -331,6 +323,7 @@ export const StackTraceCopyButton = memo(
     const copyToClipboard = useCallback(async () => {
       if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
         onError?.(new Error("Clipboard API not available"));
+
         return;
       }
 
@@ -338,12 +331,9 @@ export const StackTraceCopyButton = memo(
         await navigator.clipboard.writeText(raw);
         setIsCopied(true);
         onCopy?.();
-        timeoutRef.current = window.setTimeout(
-          () => setIsCopied(false),
-          timeout,
-        );
+        timeoutRef.current = window.setTimeout(() => setIsCopied(false), timeout);
       } catch (error) {
-        onError?.(error as Error);
+        onError?.(toError(error));
       }
     }, [raw, onCopy, onError, timeout]);
 
@@ -359,7 +349,9 @@ export const StackTraceCopyButton = memo(
     return (
       <Button
         className={cn("size-7", className)}
-        onClick={copyToClipboard}
+        onClick={() => {
+          copyToClipboard().catch(() => {});
+        }}
         size="icon"
         variant="ghost"
         {...props}
@@ -377,10 +369,7 @@ export const StackTraceExpandButton = memo(
     const { isOpen } = useStackTrace();
 
     return (
-      <div
-        className={cn("flex size-7 items-center justify-center", className)}
-        {...props}
-      >
+      <div className={cn("flex size-7 items-center justify-center", className)} {...props}>
         <ChevronDownIcon
           className={cn(
             "size-4 text-muted-foreground transition-transform",
@@ -392,26 +381,19 @@ export const StackTraceExpandButton = memo(
   },
 );
 
-export type StackTraceContentProps = ComponentProps<
-  typeof CollapsibleContent
-> & {
-  maxHeight?: number;
+export type StackTraceContentProps = ComponentProps<typeof CollapsibleContent> & {
+  readonly maxHeight?: number;
 };
 
 export const StackTraceContent = memo(
-  ({
-    className,
-    maxHeight = 400,
-    children,
-    ...props
-  }: StackTraceContentProps) => {
+  ({ className, maxHeight = 400, children, ...props }: StackTraceContentProps) => {
     const { isOpen } = useStackTrace();
 
     return (
       <Collapsible open={isOpen}>
         <CollapsibleContent
           className={cn(
-            "overflow-auto border-t bg-muted/30",
+            "overflow-auto border-bs bg-muted/30",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
             className,
           )}
@@ -426,56 +408,46 @@ export const StackTraceContent = memo(
 );
 
 export type StackTraceFramesProps = ComponentProps<"div"> & {
-  showInternalFrames?: boolean;
+  readonly showInternalFrames?: boolean;
 };
 
 interface FilePathButtonProps {
-  frame: StackFrame;
-  onFilePathClick?: (
-    filePath: string,
-    lineNumber?: number,
-    columnNumber?: number,
-  ) => void;
+  readonly frame: StackFrame;
+  readonly onFilePathClick?: (filePath: string, lineNumber?: number, columnNumber?: number) => void;
 }
 
-const FilePathButton = memo(
-  ({ frame, onFilePathClick }: FilePathButtonProps) => {
-    const handleClick = useCallback(() => {
-      if (frame.filePath) {
-        onFilePathClick?.(
-          frame.filePath,
-          frame.lineNumber ?? undefined,
-          frame.columnNumber ?? undefined,
-        );
-      }
-    }, [frame, onFilePathClick]);
+const FilePathButton = memo(({ frame, onFilePathClick }: Readonly<FilePathButtonProps>) => {
+  const handleClick = useCallback(() => {
+    if (frame.filePath) {
+      onFilePathClick?.(
+        frame.filePath,
+        frame.lineNumber ?? undefined,
+        frame.columnNumber ?? undefined,
+      );
+    }
+  }, [frame, onFilePathClick]);
 
-    return (
-      <button
-        className={cn(
-          "underline decoration-dotted hover:text-primary",
-          onFilePathClick && "cursor-pointer",
-        )}
-        disabled={!onFilePathClick}
-        onClick={handleClick}
-        type="button"
-      >
-        {frame.filePath}
-        {frame.lineNumber !== null && `:${frame.lineNumber}`}
-        {frame.columnNumber !== null && `:${frame.columnNumber}`}
-      </button>
-    );
-  },
-);
+  return (
+    <button
+      className={cn(
+        "underline decoration-dotted hover:text-primary",
+        onFilePathClick && "cursor-pointer",
+      )}
+      disabled={!onFilePathClick}
+      onClick={handleClick}
+      type="button"
+    >
+      {frame.filePath}
+      {frame.lineNumber !== null && `:${frame.lineNumber}`}
+      {frame.columnNumber !== null && `:${frame.columnNumber}`}
+    </button>
+  );
+});
 
 FilePathButton.displayName = "FilePathButton";
 
 export const StackTraceFrames = memo(
-  ({
-    className,
-    showInternalFrames = true,
-    ...props
-  }: StackTraceFramesProps) => {
+  ({ className, showInternalFrames = true, ...props }: StackTraceFramesProps) => {
     const { trace, onFilePathClick } = useStackTrace();
 
     const framesToShow = showInternalFrames
@@ -483,16 +455,14 @@ export const StackTraceFrames = memo(
       : trace.frames.filter((f) => !f.isInternal);
 
     return (
-      <div className={cn("space-y-1 p-3", className)} {...props}>
-        {framesToShow.map((frame, index) => (
+      <div className={cn("flex flex-col gap-1 p-3", className)} {...props}>
+        {framesToShow.map((frame) => (
           <div
             className={cn(
               "text-xs",
-              frame.isInternal
-                ? "text-muted-foreground/50"
-                : "text-foreground/90",
+              frame.isInternal ? "text-muted-foreground/50" : "text-foreground/90",
             )}
-            key={`${frame.raw}-${index}`}
+            key={`${frame.raw}-${frame.lineNumber ?? ""}-${frame.columnNumber ?? ""}`}
           >
             <span className="text-muted-foreground">at </span>
             {frame.functionName && (
@@ -503,14 +473,11 @@ export const StackTraceFrames = memo(
             {frame.filePath && (
               <>
                 <span className="text-muted-foreground">(</span>
-                <FilePathButton
-                  frame={frame}
-                  onFilePathClick={onFilePathClick}
-                />
+                <FilePathButton frame={frame} onFilePathClick={onFilePathClick} />
                 <span className="text-muted-foreground">)</span>
               </>
             )}
-            {!(frame.filePath || frame.functionName) && (
+            {!(frame.filePath ?? frame.functionName) && (
               <span>{frame.raw.replace(AT_PREFIX_REGEX, "")}</span>
             )}
           </div>
@@ -524,12 +491,21 @@ export const StackTraceFrames = memo(
 );
 
 StackTrace.displayName = "StackTrace";
+
 StackTraceHeader.displayName = "StackTraceHeader";
+
 StackTraceError.displayName = "StackTraceError";
+
 StackTraceErrorType.displayName = "StackTraceErrorType";
+
 StackTraceErrorMessage.displayName = "StackTraceErrorMessage";
+
 StackTraceActions.displayName = "StackTraceActions";
+
 StackTraceCopyButton.displayName = "StackTraceCopyButton";
+
 StackTraceExpandButton.displayName = "StackTraceExpandButton";
+
 StackTraceContent.displayName = "StackTraceContent";
+
 StackTraceFrames.displayName = "StackTraceFrames";

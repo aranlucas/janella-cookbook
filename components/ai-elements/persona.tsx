@@ -1,6 +1,6 @@
 "use client";
 
-import type { RiveParameters } from "@rive-app/react-webgl2";
+import type { Event as RiveEvent, RiveParameters } from "@rive-app/react-webgl2";
 import type { FC, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -13,23 +13,32 @@ import {
 } from "@rive-app/react-webgl2";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
-export type PersonaState =
-  | "idle"
-  | "listening"
-  | "thinking"
-  | "speaking"
-  | "asleep";
+type RiveStateInput = NonNullable<ReturnType<typeof useStateMachineInput>>;
+
+interface RiveStateInputHolder {
+  readonly current: RiveStateInput | null;
+}
+
+function updateRiveInputValue(source: RiveStateInputHolder, value: boolean) {
+  const input = source.current;
+
+  if (input) {
+    input.value = value;
+  }
+}
+
+export type PersonaState = "idle" | "listening" | "thinking" | "speaking" | "asleep";
 
 interface PersonaProps {
-  state: PersonaState;
-  onLoad?: RiveParameters["onLoad"];
-  onLoadError?: RiveParameters["onLoadError"];
-  onReady?: () => void;
-  onPause?: RiveParameters["onPause"];
-  onPlay?: RiveParameters["onPlay"];
-  onStop?: RiveParameters["onStop"];
-  className?: string;
-  variant?: keyof typeof sources;
+  readonly state: PersonaState;
+  readonly onLoad?: RiveParameters["onLoad"];
+  readonly onLoadError?: RiveParameters["onLoadError"];
+  readonly onReady?: () => void;
+  readonly onPause?: RiveParameters["onPause"];
+  readonly onPlay?: RiveParameters["onPlay"];
+  readonly onStop?: RiveParameters["onStop"];
+  readonly className?: string;
+  readonly variant?: keyof typeof sources;
 }
 
 // The state machine name is always 'default' for Elements AI visuals
@@ -39,38 +48,32 @@ const sources = {
   command: {
     dynamicColor: true,
     hasModel: true,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/command-2.0.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/command-2.0.riv",
   },
   glint: {
     dynamicColor: true,
     hasModel: true,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/glint-2.0.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/glint-2.0.riv",
   },
   halo: {
     dynamicColor: true,
     hasModel: true,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/halo-2.0.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/halo-2.0.riv",
   },
   mana: {
     dynamicColor: false,
     hasModel: true,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/mana-2.0.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/mana-2.0.riv",
   },
   obsidian: {
     dynamicColor: true,
     hasModel: true,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/obsidian-2.0.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/obsidian-2.0.riv",
   },
   opal: {
     dynamicColor: false,
     hasModel: false,
-    source:
-      "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/orb-1.2.riv",
+    source: "https://ejiidnob33g9ap1r.public.blob.vercel-storage.com/orb-1.2.riv",
   },
 };
 
@@ -79,10 +82,12 @@ const getCurrentTheme = (): "light" | "dark" => {
     if (document.documentElement.classList.contains("dark")) {
       return "dark";
     }
+
     if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
       return "dark";
     }
   }
+
   return "light";
 };
 
@@ -92,7 +97,7 @@ const useTheme = (enabled: boolean) => {
   useEffect(() => {
     // Skip if not enabled (avoids unnecessary observers for non-dynamic-color variants)
     if (!enabled) {
-      return;
+      return () => {};
     }
 
     // Watch for classList changes
@@ -107,6 +112,7 @@ const useTheme = (enabled: boolean) => {
 
     // Watch for OS-level theme changes
     let mql: MediaQueryList | null = null;
+
     const handleMediaChange = () => {
       setTheme(getCurrentTheme());
     };
@@ -118,6 +124,7 @@ const useTheme = (enabled: boolean) => {
 
     return () => {
       observer.disconnect();
+
       if (mql) {
         mql.removeEventListener("change", handleMediaChange);
       }
@@ -128,53 +135,48 @@ const useTheme = (enabled: boolean) => {
 };
 
 interface PersonaWithModelProps {
-  rive: ReturnType<typeof useRive>["rive"];
-  source: (typeof sources)[keyof typeof sources];
-  children: React.ReactNode;
+  readonly rive: ReturnType<typeof useRive>["rive"];
+  readonly source: (typeof sources)[keyof typeof sources];
+  readonly children: React.ReactNode;
 }
 
-const PersonaWithModel = memo(
-  ({ rive, source, children }: PersonaWithModelProps) => {
-    const theme = useTheme(source.dynamicColor);
-    const viewModel = useViewModel(rive, { useDefault: true });
-    const viewModelInstance = useViewModelInstance(viewModel, {
-      rive,
-      useDefault: true,
-    });
-    const viewModelInstanceColor = useViewModelInstanceColor(
-      "color",
-      viewModelInstance,
-    );
+const PersonaWithModel = memo(({ rive, source, children }: Readonly<PersonaWithModelProps>) => {
+  const theme = useTheme(source.dynamicColor);
+  const viewModel = useViewModel(rive, { useDefault: true });
 
-    useEffect(() => {
-      if (!(viewModelInstanceColor && source.dynamicColor)) {
-        return;
-      }
+  const viewModelInstance = useViewModelInstance(viewModel, {
+    rive,
+    useDefault: true,
+  });
 
-      const [r, g, b] = theme === "dark" ? [255, 255, 255] : [0, 0, 0];
-      viewModelInstanceColor.setRgb(r, g, b);
-    }, [viewModelInstanceColor, theme, source.dynamicColor]);
+  const viewModelInstanceColor = useViewModelInstanceColor("color", viewModelInstance);
 
-    return children;
-  },
-);
+  useEffect(() => {
+    if (!(viewModelInstanceColor && source.dynamicColor)) {
+      return;
+    }
+
+    const [r, g, b] = theme === "dark" ? [255, 255, 255] : [0, 0, 0];
+    viewModelInstanceColor.setRgb(r, g, b);
+  }, [viewModelInstanceColor, theme, source.dynamicColor]);
+
+  return children;
+});
 
 PersonaWithModel.displayName = "PersonaWithModel";
 
 interface PersonaWithoutModelProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
-const PersonaWithoutModel = memo(
-  ({ children }: PersonaWithoutModelProps) => children,
-);
+const PersonaWithoutModel = memo(({ children }: PersonaWithoutModelProps) => children);
 
 PersonaWithoutModel.displayName = "PersonaWithoutModel";
 
 export const Persona: FC<PersonaProps> = memo(
   ({
     variant = "obsidian",
-    state = "idle",
+    state,
     onLoad,
     onLoadError,
     onReady,
@@ -212,21 +214,12 @@ export const Persona: FC<PersonaProps> = memo(
 
     const stableCallbacks = useMemo(
       () => ({
-        onLoad: ((loadedRive) =>
-          callbacksRef.current.onLoad?.(
-            loadedRive,
-          )) as RiveParameters["onLoad"],
-        onLoadError: ((err) =>
-          callbacksRef.current.onLoadError?.(
-            err,
-          )) as RiveParameters["onLoadError"],
-        onPause: ((event) =>
-          callbacksRef.current.onPause?.(event)) as RiveParameters["onPause"],
-        onPlay: ((event) =>
-          callbacksRef.current.onPlay?.(event)) as RiveParameters["onPlay"],
+        onLoad: (event: RiveEvent) => callbacksRef.current.onLoad?.(event),
+        onLoadError: (event: RiveEvent) => callbacksRef.current.onLoadError?.(event),
+        onPause: (event: RiveEvent) => callbacksRef.current.onPause?.(event),
+        onPlay: (event: RiveEvent) => callbacksRef.current.onPlay?.(event),
         onReady: () => callbacksRef.current.onReady?.(),
-        onStop: ((event) =>
-          callbacksRef.current.onStop?.(event)) as RiveParameters["onStop"],
+        onStop: (event: RiveEvent) => callbacksRef.current.onStop?.(event),
       }),
       [],
     );
@@ -243,28 +236,16 @@ export const Persona: FC<PersonaProps> = memo(
       stateMachines: stateMachine,
     });
 
-    const listeningInput = useStateMachineInput(
-      rive,
-      stateMachine,
-      "listening",
-    );
+    const listeningInput = useStateMachineInput(rive, stateMachine, "listening");
     const thinkingInput = useStateMachineInput(rive, stateMachine, "thinking");
     const speakingInput = useStateMachineInput(rive, stateMachine, "speaking");
     const asleepInput = useStateMachineInput(rive, stateMachine, "asleep");
 
     useEffect(() => {
-      if (listeningInput) {
-        listeningInput.value = state === "listening";
-      }
-      if (thinkingInput) {
-        thinkingInput.value = state === "thinking";
-      }
-      if (speakingInput) {
-        speakingInput.value = state === "speaking";
-      }
-      if (asleepInput) {
-        asleepInput.value = state === "asleep";
-      }
+      updateRiveInputValue({ current: listeningInput }, state === "listening");
+      updateRiveInputValue({ current: thinkingInput }, state === "thinking");
+      updateRiveInputValue({ current: speakingInput }, state === "speaking");
+      updateRiveInputValue({ current: asleepInput }, state === "asleep");
     }, [state, listeningInput, thinkingInput, speakingInput, asleepInput]);
 
     const Component = source.hasModel ? PersonaWithModel : PersonaWithoutModel;

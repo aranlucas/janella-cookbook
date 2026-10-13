@@ -15,8 +15,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      theme={theme === "light" || theme === "dark" ? theme : "system"}
+      className="group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
@@ -25,6 +25,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       style={
+        // SAFETY: Sonner reads these CSS custom properties for the application's toast theme.
         {
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",

@@ -3,75 +3,18 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { hapticLight, hapticMedium } from "@/lib/haptics";
-import {
-  Plus,
-  X,
-  Camera,
-  Utensils,
-  Clock,
-  ShoppingCart,
-  Leaf,
-  ChefHat,
-} from "lucide-react";
+import { Plus, X, Camera } from "lucide-react";
 import { useState, useCallback } from "react";
-
-export interface QuickAction {
-  id: string;
-  icon: React.ReactNode;
-  label: string;
-  prompt: string;
-  color: string;
-}
-
-export const quickActions: QuickAction[] = [
-  {
-    id: "quick-dinner",
-    icon: <Clock className="h-4 w-4" />,
-    label: "Quick dinner",
-    prompt: "What's a quick dinner I can make in under 30 minutes?",
-    color: "bg-rustic-marigold hover:bg-rustic-marigold/90",
-  },
-  {
-    id: "healthy",
-    icon: <Leaf className="h-4 w-4" />,
-    label: "Healthy meal",
-    prompt: "Suggest a healthy and nutritious meal for tonight",
-    color: "bg-rustic-moss hover:bg-rustic-moss/90",
-  },
-  {
-    id: "shopping",
-    icon: <ShoppingCart className="h-4 w-4" />,
-    label: "Shopping list",
-    prompt: "Help me create a shopping list for the week",
-    color: "bg-rustic-terracotta/80 hover:bg-rustic-terracotta/70",
-  },
-  {
-    id: "technique",
-    icon: <ChefHat className="h-4 w-4" />,
-    label: "Cooking tip",
-    prompt: "Share a professional cooking technique I should learn",
-    color: "bg-rustic-charcoal/70 hover:bg-rustic-charcoal/60",
-  },
-  {
-    id: "leftovers",
-    icon: <Utensils className="h-4 w-4" />,
-    label: "Use leftovers",
-    prompt: "What can I make with common leftover ingredients?",
-    color: "bg-rustic-blush text-rustic-charcoal hover:bg-rustic-blush/80",
-  },
-];
+import type { QuickAction } from "@/components/chatbot/quick-actions";
+import { quickActions } from "@/components/chatbot/quick-actions";
 
 interface QuickActionsFabProps {
-  onSelectAction: (prompt: string) => void;
-  disabled?: boolean;
-  className?: string;
+  readonly onSelectAction: (prompt: string) => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }
 
-export function QuickActionsFab({
-  onSelectAction,
-  disabled,
-  className,
-}: QuickActionsFabProps) {
+export function QuickActionsFab({ onSelectAction, disabled, className }: QuickActionsFabProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleOpen = useCallback(() => {
@@ -89,11 +32,11 @@ export function QuickActionsFab({
   );
 
   return (
-    <div className={cn("fixed right-4 bottom-52 z-50 md:hidden", className)}>
+    <div className={cn("fixed inset-e-4 inset-be-52 z-50 md:hidden", className)}>
       {/* Action buttons */}
       <div
         className={cn(
-          "mb-2 flex flex-col-reverse gap-2 transition-all duration-300",
+          "mbe-2 flex flex-col-reverse gap-2 transition-all duration-300",
           isOpen
             ? "pointer-events-auto translate-y-0 opacity-100"
             : "pointer-events-none translate-y-4 opacity-0",
@@ -119,7 +62,7 @@ export function QuickActionsFab({
               disabled={disabled}
               onClick={() => handleActionClick(action)}
               className={cn(
-                "h-10 w-10 rounded-full text-white shadow-lg transition-transform active:scale-95",
+                "size-10 rounded-full text-white shadow-lg transition-transform active:scale-95",
                 action.color,
               )}
               aria-label={action.label}
@@ -137,19 +80,15 @@ export function QuickActionsFab({
         onClick={toggleOpen}
         disabled={disabled}
         className={cn(
-          "h-14 w-14 rounded-full shadow-xl transition-all duration-300",
+          "size-14 rounded-full shadow-xl transition-all duration-300",
           isOpen
             ? "rotate-45 bg-rustic-charcoal hover:bg-rustic-charcoal/90"
-            : "bg-gradient-to-br from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75",
+            : "bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75",
         )}
         aria-label={isOpen ? "Close quick actions" : "Open quick actions"}
         aria-expanded={isOpen}
       >
-        {isOpen ? (
-          <X className="h-6 w-6 text-white" />
-        ) : (
-          <Plus className="h-6 w-6 text-white" />
-        )}
+        {isOpen ? <X className="size-6 text-white" /> : <Plus className="size-6 text-white" />}
       </Button>
 
       {/* Backdrop */}
@@ -166,9 +105,9 @@ export function QuickActionsFab({
 
 // Camera FAB for quick photo capture
 interface CameraFabProps {
-  onCapture: () => void;
-  disabled?: boolean;
-  className?: string;
+  readonly onCapture: () => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }
 
 export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
@@ -184,15 +123,15 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       onClick={handleClick}
       disabled={disabled}
       className={cn(
-        "fixed bottom-52 left-4 z-50 md:hidden",
-        "h-12 w-12 rounded-full shadow-lg",
+        "fixed inset-s-4 inset-be-52 z-50 md:hidden",
+        "size-12 rounded-full shadow-lg",
         "bg-rustic-charcoal text-white hover:bg-rustic-charcoal/90",
         "transition-transform active:scale-95",
         className,
       )}
       aria-label="Take photo of recipe"
     >
-      <Camera className="h-5 w-5" />
+      <Camera className="size-5" />
     </Button>
   );
 }

@@ -42,10 +42,16 @@ test.describe("Recipe detail page", () => {
 
     if (!hasRecipes) {
       test.skip();
+
       return;
     }
 
     const href = await firstRecipeLink.getAttribute("href");
+
+    if (!href) {
+      throw new Error("Recipe card is missing its destination");
+    }
+
     await firstRecipeLink.click();
     await page.waitForURL(`**${href}`);
 

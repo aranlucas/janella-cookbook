@@ -4,9 +4,7 @@ test.describe("Categories page", () => {
   test("renders the categories page with heading", async ({ page }) => {
     await page.goto("/categories");
 
-    await expect(
-      page.getByRole("heading", { name: "Categories" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Categories" })).toBeVisible();
   });
 
   test("displays category cards or empty state", async ({ page }) => {
@@ -21,9 +19,7 @@ test.describe("Categories page", () => {
     expect(hasCategories || hasEmpty).toBe(true);
   });
 
-  test("clicking a category navigates to filtered recipes", async ({
-    page,
-  }) => {
+  test("clicking a category navigates to filtered recipes", async ({ page }) => {
     await page.goto("/categories");
 
     const firstCategory = page.locator('a[href^="/recipes?category="]').first();
@@ -31,10 +27,16 @@ test.describe("Categories page", () => {
 
     if (!hasCategories) {
       test.skip();
+
       return;
     }
 
     const href = await firstCategory.getAttribute("href");
+
+    if (!href) {
+      throw new Error("Category card is missing its destination");
+    }
+
     await firstCategory.click();
     await page.waitForURL(`**${href}`);
     await expect(page).toHaveURL(/\/recipes\?category=/);
@@ -48,6 +50,7 @@ test.describe("Categories page", () => {
 
     if (!hasCategories) {
       test.skip();
+
       return;
     }
 

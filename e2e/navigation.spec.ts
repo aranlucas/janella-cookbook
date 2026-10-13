@@ -24,15 +24,14 @@ test.describe("Navigation", () => {
 
     // The "New Recipe" button (desktop variant)
     const newRecipeLink = page.getByRole("link", { name: /New Recipe/i });
+
     if (await newRecipeLink.isVisible()) {
       await newRecipeLink.click();
       await expect(page).toHaveURL(/\/recipes\/new/);
     }
   });
 
-  test("quick tag on home navigates to recipes with query", async ({
-    page,
-  }) => {
+  test("quick tag on home navigates to recipes with query", async ({ page }) => {
     await page.goto("/");
 
     await page.locator('a[href="/recipes?q=Pasta"]').first().click();
@@ -52,12 +51,13 @@ test.describe("Navigation", () => {
       "/terms",
     ];
 
-    for (const route of routes) {
-      const response = await request.get(route);
-      expect(
-        response.ok(),
-        `Expected ${route} to return 200, got ${response.status()}`,
-      ).toBe(true);
-    }
+    await Promise.all(
+      routes.map(async (route) => {
+        const response = await request.get(route);
+        expect(response.ok(), `Expected ${route} to return 200, got ${response.status()}`).toBe(
+          true,
+        );
+      }),
+    );
   });
 });

@@ -2,7 +2,13 @@ import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
 import { recipeRelations } from "./recipe-queries";
 import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
-import { ExternalApiError, DatabaseError, toAppError, type AppError } from "./errors";
+import {
+  ExternalApiError,
+  DatabaseError,
+  thrownValueSchema,
+  toAppError,
+  type AppError,
+} from "./errors";
 import type {
   SearchFilters,
   SearchResult,
@@ -15,19 +21,92 @@ import type {
   RecipeImage,
 } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
+
+const sourceTypeSchema = z.enum(["URL_IMPORT", "MANUAL", "NATURAL_LANGUAGE", "PHOTO", "API"]);
 
 type SearchOutput = { results: SearchResult[]; total: number };
+
+interface BatchRecipeRelations {
+  ingredients: Map<string, Ingredient[]>;
+  instructions: Map<string, Instruction[]>;
+  tags: Map<string, Tag[]>;
+  images: Map<string, RecipeImage[]>;
+}
+
+interface SemanticSearchRow {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  prepTime: number | null;
+  cookTime: number | null;
+  totalTime: number | null;
+  servings: string | null;
+  difficulty: Difficulty;
+  cuisine: string | null;
+  course: Course | null;
+  sourceUrl: string | null;
+  sourceType: string;
+  imageUrl: string | null;
+  notes: string | null;
+  rating: number | null;
+  isFavorite: boolean;
+  cookCount: number;
+  lastCooked: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  similarity: number;
+}
+
+interface CountResult {
+  count: bigint;
+}
+
+type CountResultRows = [CountResult];
+
+interface ScoredRecipe {
+  recipe: RecipeWithRelations;
+  score: number;
+  highlights?: readonly string[];
+}
+
+interface FilterValue {
+  value: string;
+  count: number;
+}
+
+interface CourseFilterValue {
+  value: Course;
+  count: number;
+}
+
+interface DifficultyFilterValue {
+  value: Difficulty;
+  count: number;
+}
+
+interface TagFilterValue {
+  value: string;
+  slug: string;
+  count: number;
+}
+
+interface FilterOptions {
+  readonly cuisines: readonly FilterValue[];
+  readonly courses: readonly CourseFilterValue[];
+  readonly difficulties: readonly DifficultyFilterValue[];
+  readonly tags: readonly TagFilterValue[];
+  readonly maxTotalTime: number;
+}
 
 /**
  * Batch fetch related data for multiple recipes in a single query per relation
  * This fixes the N+1 query problem by fetching all related data at once
  */
-async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
-  ingredients: Map<string, Ingredient[]>;
-  instructions: Map<string, Instruction[]>;
-  tags: Map<string, Tag[]>;
-  images: Map<string, RecipeImage[]>;
-}> {
+async function batchFetchRecipeRelations(
+  recipeIds: readonly string[],
+): Promise<BatchRecipeRelations> {
   if (recipeIds.length === 0) {
     return {
       ingredients: new Map(),
@@ -40,22 +119,22 @@ async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
   // Fetch all related data in parallel with batch queries
   const [allIngredients, allInstructions, recipeTags, allImages] = await Promise.all([
     prisma.ingredient.findMany({
-      where: { recipeId: { in: recipeIds } },
+      where: { recipeId: { in: [...recipeIds] } },
       orderBy: { sortOrder: "asc" },
     }),
     prisma.instruction.findMany({
-      where: { recipeId: { in: recipeIds } },
+      where: { recipeId: { in: [...recipeIds] } },
       orderBy: { sortOrder: "asc" },
     }),
     prisma.recipe.findMany({
-      where: { id: { in: recipeIds } },
+      where: { id: { in: [...recipeIds] } },
       select: {
         id: true,
         tags: true,
       },
     }),
     prisma.recipeImage.findMany({
-      where: { recipeId: { in: recipeIds } },
+      where: { recipeId: { in: [...recipeIds] } },
     }),
   ]);
 
@@ -75,14 +154,14 @@ async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
 
   // Group ingredients by recipe
   for (const ing of allIngredients) {
-    const list = ingredients.get(ing.recipeId) || [];
+    const list = ingredients.get(ing.recipeId) ?? [];
     list.push(ing);
     ingredients.set(ing.recipeId, list);
   }
 
   // Group instructions by recipe
   for (const inst of allInstructions) {
-    const list = instructions.get(inst.recipeId) || [];
+    const list = instructions.get(inst.recipeId) ?? [];
     list.push(inst);
     instructions.set(inst.recipeId, list);
   }
@@ -94,7 +173,7 @@ async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
 
   // Group images by recipe
   for (const img of allImages) {
-    const list = images.get(img.recipeId) || [];
+    const list = images.get(img.recipeId) ?? [];
     list.push(img);
     images.set(img.recipeId, list);
   }
@@ -106,48 +185,39 @@ async function batchFetchRecipeRelations(recipeIds: string[]): Promise<{
  * Build safe WHERE conditions for filters using parameterized queries
  * This fixes the SQL injection vulnerability
  */
-function buildFilterConditions(filters: SearchFilters): {
-  conditions: string[];
-  params: Record<string, unknown>;
-} {
-  const conditions: string[] = ["r.embedding IS NOT NULL"];
-  const params: Record<string, unknown> = {};
+function buildFilterConditions(filters: SearchFilters): Prisma.Sql[] {
+  const conditions: Prisma.Sql[] = [Prisma.sql`r.embedding IS NOT NULL`];
 
   if (filters.cuisine && filters.cuisine.length > 0) {
     // Validate that cuisines are safe strings (alphanumeric + spaces)
     const safeCuisines = filters.cuisine.filter((c) => /^[\w\s-]+$/i.test(c));
+
     if (safeCuisines.length > 0) {
-      const placeholders = safeCuisines.map((_, i) => `$cuisine${i}`).join(", ");
-      conditions.push(`r.cuisine IN (${placeholders})`);
-      safeCuisines.forEach((c, i) => {
-        params[`cuisine${i}`] = c;
-      });
+      conditions.push(Prisma.sql`r.cuisine IN (${Prisma.join(safeCuisines)})`);
     }
   }
 
   if (filters.course && filters.course.length > 0) {
     // Course values are from enum, so they're safe
-    const courseList = filters.course.map((c) => `'${c}'`).join(", ");
-    conditions.push(`r.course::text IN (${courseList})`);
+    conditions.push(Prisma.sql`r.course::text IN (${Prisma.join(filters.course)})`);
   }
 
   if (filters.difficulty && filters.difficulty.length > 0) {
     // Difficulty values are from enum, so they're safe
-    const diffList = filters.difficulty.map((d) => `'${d}'`).join(", ");
-    conditions.push(`r.difficulty::text IN (${diffList})`);
+    conditions.push(Prisma.sql`r.difficulty::text IN (${Prisma.join(filters.difficulty)})`);
   }
 
   if (filters.maxTime !== undefined && filters.maxTime > 0) {
     // Numeric value, safe to use directly after validation
     const maxTime = Math.floor(Math.abs(filters.maxTime));
-    conditions.push(`r."totalTime" <= ${maxTime}`);
+    conditions.push(Prisma.sql`r."totalTime" <= ${maxTime}`);
   }
 
   if (filters.isFavorite !== undefined) {
-    conditions.push(`r."isFavorite" = ${filters.isFavorite}`);
+    conditions.push(Prisma.sql`r."isFavorite" = ${filters.isFavorite}`);
   }
 
-  return { conditions, params };
+  return conditions;
 }
 
 /**
@@ -168,20 +238,21 @@ export function semanticSearch(
         new ExternalApiError(
           "Hugging Face",
           "Failed to generate embedding for search query",
-          error,
-        ) as AppError,
+          thrownValueSchema.parse(error),
+        ),
     )
     .andThen((queryEmbedding) =>
       ResultAsync.fromPromise(
         semanticSearchWithEmbedding(queryEmbedding, query, filters, limit, offset),
-        (error) => (error instanceof DatabaseError ? error : toAppError(error)),
+        (error) =>
+          error instanceof DatabaseError ? error : toAppError(thrownValueSchema.parse(error)),
       ),
     );
 }
 
 /** Internal implementation for semantic search after embedding is generated */
 async function semanticSearchWithEmbedding(
-  queryEmbedding: number[],
+  queryEmbedding: readonly number[],
   query: string,
   filters: SearchFilters,
   limit: number,
@@ -190,34 +261,11 @@ async function semanticSearchWithEmbedding(
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
   // Build safe filter conditions
-  const { conditions } = buildFilterConditions(filters);
-  const whereClause = conditions.join(" AND ");
+  const conditions = buildFilterConditions(filters);
+  const whereClause = Prisma.join(conditions, " AND ");
 
   // Query with vector similarity
-  let results: Array<{
-    id: string;
-    title: string;
-    slug: string;
-    description: string | null;
-    prepTime: number | null;
-    cookTime: number | null;
-    totalTime: number | null;
-    servings: string | null;
-    difficulty: Difficulty;
-    cuisine: string | null;
-    course: Course | null;
-    sourceUrl: string | null;
-    sourceType: string;
-    imageUrl: string | null;
-    notes: string | null;
-    rating: number | null;
-    isFavorite: boolean;
-    cookCount: number;
-    lastCooked: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-    similarity: number;
-  }>;
+  let results: SemanticSearchRow[];
 
   try {
     results = await prisma.$queryRaw`
@@ -246,7 +294,7 @@ async function semanticSearchWithEmbedding(
           r."updatedAt",
           1 - (r.embedding <=> ${embeddingString}::vector) as similarity
         FROM "Recipe" r
-        WHERE ${Prisma.raw(whereClause)}
+        WHERE ${whereClause}
       ) AS sub
       WHERE similarity > 0.35
       ORDER BY similarity DESC
@@ -259,15 +307,17 @@ async function semanticSearchWithEmbedding(
 
   // Get total count with similarity threshold
   let total: number;
+
   try {
-    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+    const countResult = await prisma.$queryRaw<CountResultRows>`
       SELECT COUNT(*) as count FROM (
         SELECT 1 - (r.embedding <=> ${embeddingString}::vector) as similarity
         FROM "Recipe" r
-        WHERE ${Prisma.raw(whereClause)}
+        WHERE ${whereClause}
       ) AS sub
       WHERE similarity > 0.35
     `;
+
     total = Number(countResult[0].count);
   } catch (error) {
     throw new DatabaseError("count query", String(error));
@@ -292,7 +342,7 @@ async function semanticSearchWithEmbedding(
       cuisine: r.cuisine,
       course: r.course,
       sourceUrl: r.sourceUrl,
-      sourceType: r.sourceType as RecipeWithRelations["sourceType"],
+      sourceType: sourceTypeSchema.parse(r.sourceType),
       imageUrl: r.imageUrl,
       searchText: null,
       notes: r.notes,
@@ -302,10 +352,10 @@ async function semanticSearchWithEmbedding(
       lastCooked: r.lastCooked,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
-      ingredients: relations.ingredients.get(r.id) || [],
-      instructions: relations.instructions.get(r.id) || [],
-      tags: relations.tags.get(r.id) || [],
-      images: relations.images.get(r.id) || [],
+      ingredients: relations.ingredients.get(r.id) ?? [],
+      instructions: relations.instructions.get(r.id) ?? [],
+      tags: relations.tags.get(r.id) ?? [],
+      images: relations.images.get(r.id) ?? [],
     };
 
     return {
@@ -329,7 +379,7 @@ export function keywordSearch(
   offset = 0,
 ): ResultAsync<SearchOutput, AppError> {
   return ResultAsync.fromPromise(keywordSearchImpl(query, filters, limit, offset), (error) =>
-    error instanceof DatabaseError ? error : toAppError(error),
+    error instanceof DatabaseError ? error : toAppError(thrownValueSchema.parse(error)),
   );
 }
 
@@ -344,9 +394,9 @@ async function keywordSearchImpl(
 
   // Build filter conditions (shared between empty and non-empty query paths)
   const filterConditions: Prisma.RecipeWhereInput[] = [
-    ...(filters.cuisine?.length ? [{ cuisine: { in: filters.cuisine } }] : []),
-    ...(filters.course?.length ? [{ course: { in: filters.course } }] : []),
-    ...(filters.difficulty?.length ? [{ difficulty: { in: filters.difficulty } }] : []),
+    ...(filters.cuisine?.length ? [{ cuisine: { in: [...filters.cuisine] } }] : []),
+    ...(filters.course?.length ? [{ course: { in: [...filters.course] } }] : []),
+    ...(filters.difficulty?.length ? [{ difficulty: { in: [...filters.difficulty] } }] : []),
     ...(filters.maxTime ? [{ totalTime: { lte: filters.maxTime } }] : []),
     ...(filters.isFavorite !== undefined ? [{ isFavorite: filters.isFavorite }] : []),
   ];
@@ -396,11 +446,16 @@ async function keywordSearchImpl(
       prisma.recipe.count({ where }),
     ]);
 
-    const results: SearchResult[] = recipes.map((recipe) => ({
-      recipe: recipe as unknown as RecipeWithRelations,
-      score: 0.5, // Default score for keyword matches
-      highlights: generateHighlights(recipe as unknown as RecipeWithRelations, query),
-    }));
+    const results: SearchResult[] = recipes.map((recipe) => {
+      // SAFETY: this query includes every relation from recipeRelations and the public type omits private fields.
+      const recipeWithRelations = recipe as RecipeWithRelations;
+
+      return {
+        recipe: recipeWithRelations,
+        score: 0.5, // Default score for keyword matches
+        highlights: generateHighlights(recipeWithRelations, query),
+      };
+    });
 
     return { results, total };
   } catch (error) {
@@ -431,7 +486,7 @@ export function hybridSearch(
 
   // Try hybrid (semantic + keyword), fall back to keyword-only on error
   return ResultAsync.fromPromise(hybridSearchImpl(query, filters, limit, offset), (error) =>
-    toAppError(error),
+    toAppError(thrownValueSchema.parse(error)),
   ).orElse(() => {
     // Fall back to keyword search if hybrid fails
     return keywordSearch(query, filters, limit, offset);
@@ -459,6 +514,7 @@ async function hybridSearchImpl(
   // If semantic failed, just use keyword results
   if (semanticResult.isErr()) {
     console.error("Semantic search failed, using keyword only:", semanticResult.error);
+
     return keywordResult.value;
   }
 
@@ -466,29 +522,28 @@ async function hybridSearchImpl(
   const keywordResults = keywordResult.value;
 
   // Reciprocal Rank Fusion
-  const scores = new Map<
-    string,
-    { recipe: RecipeWithRelations; score: number; highlights?: string[] }
-  >();
+  const scores = new Map<string, ScoredRecipe>();
 
   // Add semantic results with RRF scores
-  semanticResults.results.forEach((result, index) => {
+  for (const [index, result] of semanticResults.results.entries()) {
     const rrf = 1 / (60 + index); // k=60 is a common constant
     scores.set(result.recipe.id, {
       recipe: result.recipe,
       score: rrf,
       highlights: result.highlights,
     });
-  });
+  }
 
   // Add keyword results with RRF scores
-  keywordResults.results.forEach((result, index) => {
+  for (const [index, result] of keywordResults.results.entries()) {
     const rrf = 1 / (60 + index);
     const existing = scores.get(result.recipe.id);
+
     if (existing) {
       existing.score += rrf;
+
       if (result.highlights) {
-        existing.highlights = [...(existing.highlights || []), ...result.highlights];
+        existing.highlights = [...(existing.highlights ?? []), ...result.highlights];
       }
     } else {
       scores.set(result.recipe.id, {
@@ -497,11 +552,11 @@ async function hybridSearchImpl(
         highlights: result.highlights,
       });
     }
-  });
+  }
 
   // Sort by combined score and return top results
   const combined = Array.from(scores.values())
-    .sort((a, b) => b.score - a.score)
+    .toSorted((a, b) => b.score - a.score)
     .slice(offset, offset + limit);
 
   return {
@@ -523,21 +578,18 @@ function generateHighlights(recipe: RecipeWithRelations, query: string): string[
   }
 
   // Check description
-  if (
-    recipe.description &&
-    terms.some((term) => recipe.description!.toLowerCase().includes(term))
-  ) {
-    highlights.push(
-      recipe.description.slice(0, 150) + (recipe.description.length > 150 ? "..." : ""),
-    );
+  const description = recipe.description;
+
+  if (description && terms.some((term) => description.toLowerCase().includes(term))) {
+    highlights.push(description.slice(0, 150) + (description.length > 150 ? "..." : ""));
   }
 
   // Check ingredients
-  recipe.ingredients?.forEach((ing) => {
+  for (const ing of recipe.ingredients ?? []) {
     if (terms.some((term) => ing.name.toLowerCase().includes(term))) {
       highlights.push(`Ingredient: ${ing.name}`);
     }
-  });
+  }
 
   return highlights.slice(0, 3);
 }
@@ -546,18 +598,9 @@ function generateHighlights(recipe: RecipeWithRelations, query: string): string[
  * Get filter options from the database.
  * Returns ResultAsync instead of throwing.
  */
-export function getFilterOptions(): ResultAsync<
-  {
-    cuisines: { value: string; count: number }[];
-    courses: { value: Course; count: number }[];
-    difficulties: { value: Difficulty; count: number }[];
-    tags: { value: string; slug: string; count: number }[];
-    maxTotalTime: number;
-  },
-  AppError
-> {
+export function getFilterOptions(): ResultAsync<FilterOptions, AppError> {
   return ResultAsync.fromPromise(getFilterOptionsImpl(), (error) =>
-    error instanceof DatabaseError ? error : toAppError(error),
+    error instanceof DatabaseError ? error : toAppError(thrownValueSchema.parse(error)),
   );
 }
 
@@ -590,18 +633,22 @@ async function getFilterOptionsImpl() {
     ]);
 
     return {
-      cuisines: cuisines.map((c) => ({ value: c.cuisine!, count: c._count })),
-      courses: courses.map((c) => ({ value: c.course!, count: c._count })),
+      cuisines: cuisines.flatMap((item) =>
+        item.cuisine === null ? [] : [{ value: item.cuisine, count: item["_count"] }],
+      ),
+      courses: courses.flatMap((item) =>
+        item.course === null ? [] : [{ value: item.course, count: item["_count"] }],
+      ),
       difficulties: difficulties.map((d) => ({
         value: d.difficulty,
-        count: d._count,
+        count: d["_count"],
       })),
       tags: tags.map((t) => ({
         value: t.name,
         slug: t.slug,
-        count: t._count.recipes,
+        count: t["_count"].recipes,
       })),
-      maxTotalTime: maxTime._max.totalTime || 120,
+      maxTotalTime: maxTime["_max"].totalTime ?? 120,
     };
   } catch (error) {
     throw new DatabaseError("fetch filter options", String(error));

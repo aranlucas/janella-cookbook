@@ -3,23 +3,17 @@
 import { cn } from "@/lib/utils";
 import { hapticMedium, hapticSuccess } from "@/lib/haptics";
 import { RefreshCw, Loader2 } from "lucide-react";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 interface PullToRefreshProps {
-  children: ReactNode;
-  onRefresh: () => Promise<void>;
-  className?: string;
-  pullThreshold?: number;
-  maxPull?: number;
-  refreshMessage?: string;
-  releaseMessage?: string;
-  pullMessage?: string;
+  readonly children: ReactNode;
+  readonly onRefresh: () => Promise<void>;
+  readonly className?: string;
+  readonly pullThreshold?: number;
+  readonly maxPull?: number;
+  readonly refreshMessage?: string;
+  readonly releaseMessage?: string;
+  readonly pullMessage?: string;
 }
 
 type RefreshState = "idle" | "pulling" | "ready" | "refreshing";
@@ -43,7 +37,10 @@ export function PullToRefresh({
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
       const container = containerRef.current;
-      if (!container || state === "refreshing") return;
+
+      if (!container || state === "refreshing") {
+        return;
+      }
 
       // Only allow pull if at top of scroll
       if (container.scrollTop <= 0) {
@@ -56,13 +53,17 @@ export function PullToRefresh({
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (!isPulling.current || state === "refreshing") return;
+      if (!isPulling.current || state === "refreshing") {
+        return;
+      }
 
       const container = containerRef.current;
+
       if (!container || container.scrollTop > 0) {
         isPulling.current = false;
         setPullDistance(0);
         setState("idle");
+
         return;
       }
 
@@ -94,7 +95,10 @@ export function PullToRefresh({
   );
 
   const handleTouchEnd = useCallback(async () => {
-    if (!isPulling.current) return;
+    if (!isPulling.current) {
+      return;
+    }
+
     isPulling.current = false;
 
     if (state === "ready") {
@@ -106,19 +110,19 @@ export function PullToRefresh({
       } catch (error) {
         console.error("Refresh failed:", error);
       }
-
-      setState("idle");
-      setPullDistance(0);
-    } else {
-      setState("idle");
-      setPullDistance(0);
     }
+
+    setState("idle");
+    setPullDistance(0);
   }, [state, onRefresh]);
 
   // Reset pull on scroll
   useEffect(() => {
     const container = containerRef.current;
-    if (!container) return;
+
+    if (!container) {
+      return () => {};
+    }
 
     const handleScroll = () => {
       if (container.scrollTop > 0 && state === "pulling") {
@@ -129,6 +133,7 @@ export function PullToRefresh({
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
+
     return () => container.removeEventListener("scroll", handleScroll);
   }, [state]);
 
@@ -138,6 +143,14 @@ export function PullToRefresh({
         return refreshMessage;
       case "ready":
         return releaseMessage;
+      case "idle": {
+        throw new Error('Not implemented yet: "idle" case');
+      }
+
+      case "pulling": {
+        throw new Error('Not implemented yet: "pulling" case');
+      }
+
       default:
         return pullMessage;
     }
@@ -150,7 +163,7 @@ export function PullToRefresh({
       {/* Pull indicator */}
       <div
         className={cn(
-          "absolute top-0 right-0 left-0 z-10 flex items-center justify-center transition-all duration-200",
+          "absolute inset-x-0 inset-bs-0 z-10 flex items-center justify-center transition-all duration-200",
           showIndicator ? "opacity-100" : "opacity-0",
         )}
         style={{
@@ -162,7 +175,7 @@ export function PullToRefresh({
           <div
             className={cn(
               "flex items-center justify-center rounded-full bg-white shadow-md transition-all duration-200",
-              state === "refreshing" ? "h-10 w-10" : "h-8 w-8",
+              state === "refreshing" ? "size-10" : "size-8",
             )}
             style={{
               transform:
@@ -172,11 +185,11 @@ export function PullToRefresh({
             }}
           >
             {state === "refreshing" ? (
-              <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+              <Loader2 className="size-5 animate-spin text-orange-500" />
             ) : (
               <RefreshCw
                 className={cn(
-                  "h-4 w-4 transition-colors",
+                  "size-4 transition-colors",
                   state === "ready" ? "text-orange-500" : "text-stone-400",
                 )}
               />
@@ -198,8 +211,8 @@ export function PullToRefresh({
         ref={containerRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
+        onTouchEnd={() => void handleTouchEnd()}
+        onTouchCancel={() => void handleTouchEnd()}
         className="h-full overflow-y-auto"
         style={{
           transform:
@@ -207,9 +220,7 @@ export function PullToRefresh({
               ? `translateY(${pullThreshold}px)`
               : `translateY(${pullDistance}px)`,
           transition:
-            state === "refreshing" || state === "idle"
-              ? "transform 0.2s ease-out"
-              : "none",
+            state === "refreshing" || state === "idle" ? "transform 0.2s ease-out" : "none",
         }}
       >
         {children}

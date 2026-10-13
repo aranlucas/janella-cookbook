@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { NavLink } from "./nav-link";
@@ -17,12 +17,12 @@ const navItems = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/35 bg-background/92 backdrop-blur-xl supports-[backdrop-filter]:bg-background/72">
+    <header className="sticky inset-bs-0 z-50 w-full border-be border-border/35 bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/72">
       <div className="container flex h-14 items-center gap-2 sm:h-16">
         <Logo />
 
         {/* Desktop Navigation */}
-        <nav className="ml-3 hidden items-center space-x-5 md:flex">
+        <nav className="ms-3 hidden items-center gap-5 md:flex">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href}>
               {item.label}
@@ -30,7 +30,7 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
           {/* Shopping list drawer */}
           <ShoppingListDrawer />
 
@@ -38,12 +38,9 @@ export function Header() {
           <Link
             href="/chat"
             aria-label="AI Chat Assistant"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon" }),
-              "h-9 w-9 md:hidden",
-            )}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "size-9 md:hidden")}
           >
-            <MessageSquare className="h-5 w-5" />
+            <MessageSquare className="size-5" />
           </Link>
 
           {/* Icon button visible on small mobile, hidden on larger screens */}

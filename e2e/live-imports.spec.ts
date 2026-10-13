@@ -41,6 +41,7 @@ test.describe("Live provider imports", () => {
     )
       .png()
       .toBuffer();
+
     await page.goto("/recipes/new");
     await page.getByRole("button", { name: /Photo Recipe/ }).click();
     await page
@@ -72,7 +73,11 @@ test("a website import requires review and a repeated URL offers an explicit upd
   await expect(page.getByRole("heading", { name: "Make it yours" }).or(reviewUpdate)).toBeVisible({
     timeout: 60000,
   });
-  if (await reviewUpdate.isVisible()) await reviewUpdate.click();
+
+  if (await reviewUpdate.isVisible()) {
+    await reviewUpdate.click();
+  }
+
   const title = `Website review ${Date.now()}`;
   await page.getByLabel("Recipe Title").fill(title);
   await page.getByRole("button", { name: /^(Save recipe|Update Recipe)$/ }).click();

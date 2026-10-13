@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
+import { z } from "zod";
 
 import { cn } from "@/lib/utils";
 
@@ -13,15 +14,22 @@ function Slider({
   max = 100,
   ...props
 }: SliderPrimitive.Root.Props) {
-  const _values = React.useMemo(
-    () =>
-      Array.isArray(value)
-        ? value
-        : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min, max],
-    [value, defaultValue, min, max],
-  );
+  const values = React.useMemo(() => {
+    const currentValue = value ?? defaultValue;
+    const arrayValue = z.array(z.number()).safeParse(currentValue);
+
+    if (arrayValue.success) {
+      return arrayValue.data;
+    }
+
+    const singleValue = z.number().safeParse(currentValue);
+
+    if (singleValue.success) {
+      return [singleValue.data];
+    }
+
+    return [min, max];
+  }, [value, defaultValue, min, max]);
 
   return (
     <SliderPrimitive.Root
@@ -44,11 +52,11 @@ function Slider({
             className="bg-primary select-none data-horizontal:h-full data-vertical:w-full"
           />
         </SliderPrimitive.Track>
-        {Array.from({ length: _values.length }, (_, index) => (
+        {Array.from({ length: values.length }, (_, index) => (
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
             key={index}
-            className="block size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm ring-ring/50 transition-[color,box-shadow] select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
+            className="block size-4 shrink-0 rounded-full border border-primary bg-white shadow-sm ring-ring/50 transition select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
           />
         ))}
       </SliderPrimitive.Control>

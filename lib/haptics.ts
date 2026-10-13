@@ -3,16 +3,15 @@
  * Uses the Vibration API when available
  */
 
-type HapticPattern =
-  | "light"
-  | "medium"
-  | "heavy"
-  | "success"
-  | "warning"
-  | "error"
-  | "selection";
+type HapticPattern = "light" | "medium" | "heavy" | "success" | "warning" | "error" | "selection";
 
-const patterns: Record<HapticPattern, number | number[]> = {
+type VibrationPattern = number | readonly number[];
+
+function isVibrationSequence(value: VibrationPattern): value is readonly number[] {
+  return Array.isArray(value);
+}
+
+const patterns: Record<HapticPattern, VibrationPattern> = {
   light: 10,
   medium: 25,
   heavy: 50,
@@ -40,7 +39,11 @@ export function haptic(pattern: HapticPattern = "medium"): boolean {
   }
 
   try {
-    return navigator.vibrate(patterns[pattern]);
+    const vibrationPattern = patterns[pattern];
+
+    return navigator.vibrate(
+      isVibrationSequence(vibrationPattern) ? [...vibrationPattern] : vibrationPattern,
+    );
   } catch {
     return false;
   }
@@ -99,13 +102,13 @@ export function hapticSelection(): boolean {
  * Custom vibration pattern
  * @param pattern - Array of durations (vibrate, pause, vibrate, ...) in milliseconds
  */
-export function hapticCustom(pattern: number | number[]): boolean {
+export function hapticCustom(pattern: number | readonly number[]): boolean {
   if (!isHapticsSupported()) {
     return false;
   }
 
   try {
-    return navigator.vibrate(pattern);
+    return navigator.vibrate(isVibrationSequence(pattern) ? [...pattern] : pattern);
   } catch {
     return false;
   }

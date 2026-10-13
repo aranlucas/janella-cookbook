@@ -23,10 +23,11 @@ import type { Metadata } from "next";
 
 // Recipe edits must be visible immediately after saving.
 export const dynamic = "force-dynamic";
+
 export const dynamicParams = true;
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  readonly params: Promise<{ readonly slug: string }>;
 }
 
 async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
@@ -34,6 +35,7 @@ async function getRecipe(slug: string): Promise<RecipeWithRelations | null> {
     return await getRecipeBySlug(slug);
   } catch (error) {
     console.error("Error fetching recipe:", error);
+
     return null;
   }
 }
@@ -53,9 +55,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   return createPageMetadata({
     title: `${recipe.title} | Cookbook`,
-    description: recipe.description || `View the recipe for ${recipe.title}`,
+    description: recipe.description ?? `View the recipe for ${recipe.title}`,
     path: `/recipe/${recipe.slug}`,
-    image: recipe.imageUrl || undefined,
+    image: recipe.imageUrl ?? undefined,
   });
 }
 
@@ -83,10 +85,10 @@ export default async function RecipePage({ params }: PageProps) {
       </div>
 
       {/* Recipe Header */}
-      <section className="container pb-4 sm:pb-6 md:pb-8">
+      <section className="container pbe-4 sm:pbe-6 md:pbe-8">
         <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2">
           {/* Image */}
-          <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border/45 bg-card/55">
+          <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border/45 bg-card/55">
             {recipe.imageUrl ? (
               <a
                 href={recipe.imageUrl}
@@ -108,13 +110,13 @@ export default async function RecipePage({ params }: PageProps) {
           </div>
 
           {/* Info */}
-          <div className="space-y-3 sm:space-y-4 md:space-y-6">
+          <div className="flex flex-col gap-3 sm:gap-4 md:gap-6">
             <div>
               <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
                 {recipe.title}
               </h1>
               {recipe.description && (
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base md:mt-3 md:text-lg">
+                <p className="mbs-2 text-sm leading-relaxed text-muted-foreground sm:text-base md:mbs-3 md:text-lg">
                   {recipe.description}
                 </p>
               )}
@@ -143,7 +145,7 @@ export default async function RecipePage({ params }: PageProps) {
             )}
 
             {/* Engagement Actions */}
-            <div className="no-print sticky bottom-2 z-30 rounded-xl border border-border/50 bg-background/95 p-2 shadow-lg backdrop-blur sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
+            <div className="no-print sticky inset-be-2 z-30 rounded-xl border border-border/50 bg-background/95 p-2 shadow-lg backdrop-blur sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
               <RecipeEngagementActions recipe={recipe} />
             </div>
           </div>
@@ -154,10 +156,10 @@ export default async function RecipePage({ params }: PageProps) {
 
       {/* Recipe Content */}
       <section className="container py-4 sm:py-6 md:py-8">
-        <div className="grid gap-5 sm:gap-6 md:gap-8 lg:grid-cols-[1fr_2fr]">
+        <div className="grid gap-5 sm:gap-6 md:gap-8 lg:grid-cols-recipe">
           {/* Ingredients */}
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
+          <div className="lg:sticky lg:inset-bs-24 lg:self-start">
+            <h2 className="mbe-2.5 font-serif text-lg font-semibold sm:mbe-3 sm:text-xl md:mbe-4 md:text-2xl">
               Ingredients
             </h2>
             <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
@@ -166,9 +168,9 @@ export default async function RecipePage({ params }: PageProps) {
           </div>
 
           {/* Instructions */}
-          <div className="space-y-5 sm:space-y-6 md:space-y-8">
+          <div className="flex flex-col gap-5 sm:gap-6 md:gap-8">
             <div>
-              <h2 className="mb-2.5 font-serif text-lg font-semibold sm:mb-3 sm:text-xl md:mb-4 md:text-2xl">
+              <h2 className="mbe-2.5 font-serif text-lg font-semibold sm:mbe-3 sm:text-xl md:mbe-4 md:text-2xl">
                 Instructions
               </h2>
               <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
@@ -185,7 +187,7 @@ export default async function RecipePage({ params }: PageProps) {
       </section>
 
       {/* Notes and Source */}
-      {(recipe.notes || recipe.sourceUrl) && (
+      {(recipe.notes ?? recipe.sourceUrl) && (
         <>
           <Separator className="container" />
           <section className="container py-6 md:py-8">
@@ -203,8 +205,8 @@ export default async function RecipePage({ params }: PageProps) {
             )}
 
             {recipe.sourceUrl && (
-              <div className="mt-8 border-t pt-8">
-                <h3 className="mb-2 font-serif text-lg font-semibold md:text-xl">
+              <div className="mbs-8 border-bs pbs-8">
+                <h3 className="mbe-2 font-serif text-lg font-semibold md:text-xl">
                   Original Source
                 </h3>
                 <a

@@ -3,10 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ButtonLink } from "@/components/recipe/button-link";
-import {
-  ContentEmptyState,
-  RecipeGridSkeleton,
-} from "@/components/ui/content-state";
+import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
@@ -31,9 +28,11 @@ async function getFavoriteRecipes(): Promise<RecipeWithRelations[]> {
       },
       orderBy: { title: "asc" },
     });
-    return recipes as unknown as RecipeWithRelations[];
+
+    return recipes;
   } catch (error) {
     console.error("Error fetching favorite recipes:", error);
+
     return [];
   }
 }
@@ -55,7 +54,7 @@ async function RecipeList() {
 
   if (recipes.length <= 3) {
     return (
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         <div className="rounded-2xl border border-border/45 bg-card/60 p-4 sm:p-6">
           <RecipeGrid recipes={recipes} />
         </div>
@@ -63,11 +62,10 @@ async function RecipeList() {
           <h2 className="font-serif text-2xl font-semibold text-foreground">
             Keep Building This List
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Explore more recipes and tap the heart to grow this list into your
-            go-to lineup.
+          <p className="mx-auto mbs-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Explore more recipes and tap the heart to grow this list into your go-to lineup.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+          <div className="mbs-4 flex flex-wrap justify-center gap-2.5">
             <ButtonLink href="/recipes" variant="outline">
               Browse All Recipes
             </ButtonLink>
@@ -83,7 +81,7 @@ async function RecipeList() {
   return <RecipeGrid recipes={recipes} />;
 }
 
-export default async function FavoritesPage() {
+export default function FavoritesPage() {
   return (
     <AppLayout
       contentType="cards"

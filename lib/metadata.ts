@@ -1,17 +1,20 @@
 import type { Metadata } from "next";
 
 const SITE_NAME = "Janella Cookbook";
+
 const DEFAULT_TITLE = "Cookbook - Your Personal Recipe Collection";
+
 const DEFAULT_DESCRIPTION =
   "A modern cookbook app to collect, organize, and discover recipes with intelligent semantic search.";
+
 const DEFAULT_OG_IMAGE = "/opengraph-image";
 
 interface CreatePageMetadataOptions {
-  title?: string;
-  description?: string;
-  path?: string;
-  image?: string;
-  noIndex?: boolean;
+  readonly title?: string;
+  readonly description?: string;
+  readonly path?: string;
+  readonly image?: string;
+  readonly noIndex?: boolean;
 }
 
 function toAbsoluteUrl(value: string): string {
@@ -28,6 +31,7 @@ function toAbsoluteUrl(value: string): string {
 
 function normalizeSiteUrl(url: string): string {
   const trimmed = url.trim();
+
   if (!trimmed) {
     return "http://localhost:3000";
   }
@@ -53,9 +57,7 @@ function getSiteUrl(): string {
 
 const metadataBase = new URL(getSiteUrl());
 
-export function createPageMetadata(
-  options: CreatePageMetadataOptions = {},
-): Metadata {
+export function createPageMetadata(options: CreatePageMetadataOptions = {}): Metadata {
   const title = options.title ?? DEFAULT_TITLE;
   const description = options.description ?? DEFAULT_DESCRIPTION;
   const image = toAbsoluteUrl(options.image ?? DEFAULT_OG_IMAGE);

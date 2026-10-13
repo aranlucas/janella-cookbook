@@ -46,13 +46,16 @@ const floatingFoods = [
 
 export function FloatingEmojis() {
   const shouldReduce = useReducedMotion();
-  if (shouldReduce) return null;
+
+  if (shouldReduce) {
+    return null;
+  }
 
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {floatingFoods.map((item, i) => (
         <motion.div
-          key={i}
+          key={item.emoji}
           className={`absolute select-none ${item.size}`}
           style={{ left: item.x, top: item.y, opacity: 0 }}
           animate={{
@@ -86,13 +89,12 @@ export function FloatingEmojis() {
 }
 
 // Animated heading text with a wave/bounce entrance
-export function AnimatedHeading({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+interface AnimatedContentProps {
+  readonly children: ReactNode;
+  readonly className?: string;
+}
+
+export function AnimatedHeading({ children, className }: AnimatedContentProps) {
   return (
     <motion.h1
       className={className}
@@ -112,7 +114,7 @@ export function AnimatedHeading({
 export function AnimatedUnderline() {
   return (
     <motion.svg
-      className="absolute -right-3 -bottom-1.5 h-2.5 w-10 text-[var(--highlight)] sm:-right-4 sm:-bottom-2 sm:h-3 sm:w-12"
+      className="absolute -inset-e-3 -inset-be-1.5 h-2.5 w-10 text-highlight sm:-inset-e-4 sm:-inset-be-2 sm:h-3 sm:w-12"
       viewBox="0 0 48 12"
       fill="none"
       style={{ opacity: 0 }}
@@ -133,13 +135,7 @@ export function AnimatedUnderline() {
 }
 
 // Subtitle with stagger entrance
-export function AnimatedSubtitle({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function AnimatedSubtitle({ children, className }: AnimatedContentProps) {
   return (
     <motion.p
       className={className}
@@ -157,13 +153,7 @@ export function AnimatedSubtitle({
 }
 
 // Animated badge with pop-in
-export function AnimatedBadge({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function AnimatedBadge({ children, className }: AnimatedContentProps) {
   return (
     <motion.span
       className={className}
@@ -182,13 +172,7 @@ export function AnimatedBadge({
 }
 
 // Animated search area entrance
-export function AnimatedSearchArea({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function AnimatedSearchArea({ children, className }: AnimatedContentProps) {
   return (
     <motion.div
       className={className}
@@ -206,17 +190,14 @@ export function AnimatedSearchArea({
 }
 
 // Bouncy tag pill with individual spring animation
-export function AnimatedTagPill({
-  children,
-  index,
-  href,
-  className,
-}: {
-  children: ReactNode;
-  index: number;
-  href: string;
-  className?: string;
-}) {
+interface AnimatedTagPillProps {
+  readonly children: ReactNode;
+  readonly index: number;
+  readonly href: string;
+  readonly className?: string;
+}
+
+export function AnimatedTagPill({ children, index, href, className }: AnimatedTagPillProps) {
   return (
     <motion.div
       className="inline-block"
@@ -247,15 +228,13 @@ export function AnimatedTagPill({
 }
 
 // Section reveal animation
-export function AnimatedSection({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-}) {
+interface AnimatedSectionProps {
+  readonly children: ReactNode;
+  readonly className?: string;
+  readonly delay?: number;
+}
+
+export function AnimatedSection({ children, className, delay = 0 }: AnimatedSectionProps) {
   return (
     <motion.section
       className={className}

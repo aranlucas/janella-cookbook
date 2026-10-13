@@ -5,20 +5,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 interface NavLinkProps {
-  href: string;
-  children: React.ReactNode;
-  onClick?: () => void;
-  variant?: "desktop" | "mobile";
-  className?: string;
+  readonly href: string;
+  readonly children: React.ReactNode;
+  readonly onClick?: () => void;
+  readonly variant?: "desktop" | "mobile";
+  readonly className?: string;
 }
 
-export function NavLink({
-  href,
-  children,
-  onClick,
-  variant = "desktop",
-  className,
-}: NavLinkProps) {
+export function NavLink({ href, children, onClick, variant = "desktop", className }: NavLinkProps) {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -45,9 +39,7 @@ export function NavLink({
       href={href}
       className={cn(
         "relative text-sm font-medium tracking-wide transition-colors duration-300 hover:text-primary",
-        isActive
-          ? "squiggle-underline font-semibold text-primary"
-          : "text-muted-foreground/95",
+        isActive ? "squiggle-underline font-semibold text-primary" : "text-muted-foreground/95",
         !isActive && "hover-squish squiggle-underline",
         className,
       )}

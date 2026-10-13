@@ -1,28 +1,27 @@
 import Link from "next/link";
 
+const currentYear = new Date().getFullYear();
+
 export function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-muted/55 pt-10 pb-8">
+    <footer className="border-bs border-border/40 bg-muted/55 pbs-10 pbe-8">
       <div className="container">
         <div className="grid gap-8 md:grid-cols-4 md:gap-10 lg:gap-12">
           {/* Brand Column */}
-          <div className="space-y-4 md:col-span-2">
+          <div className="flex flex-col gap-4 md:col-span-2">
             <h3 className="font-serif text-2xl font-bold tracking-tight text-foreground">
-              Janella&apos;s{" "}
-              <span className="text-primary italic">Kitchen</span>
+              Janella&apos;s <span className="text-primary italic">Kitchen</span>
             </h3>
             <p className="max-w-xs leading-relaxed text-muted-foreground/95">
-              A personal collection of cherished recipes, built with love for
-              home cooks everywhere. Good food, simply found.
+              A personal collection of cherished recipes, built with love for home cooks everywhere.
+              Good food, simply found.
             </p>
           </div>
 
           {/* Links Column */}
-          <div className="space-y-4">
-            <h4 className="font-serif text-lg font-semibold text-foreground">
-              Explore
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground/95">
+          <div className="flex flex-col gap-4">
+            <h4 className="font-serif text-lg font-semibold text-foreground">Explore</h4>
+            <ul className="flex flex-col gap-2 text-sm text-muted-foreground/95">
               <li>
                 <Link
                   href="/recipes"
@@ -51,11 +50,9 @@ export function Footer() {
           </div>
 
           {/* Connect Column */}
-          <div className="space-y-4">
-            <h4 className="font-serif text-lg font-semibold text-foreground">
-              Connect
-            </h4>
-            <ul className="space-y-2 text-sm text-muted-foreground/95">
+          <div className="flex flex-col gap-4">
+            <h4 className="font-serif text-lg font-semibold text-foreground">Connect</h4>
+            <ul className="flex flex-col gap-2 text-sm text-muted-foreground/95">
               <li>
                 <Link
                   href="/about"
@@ -68,7 +65,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border/40 pt-8 text-xs text-muted-foreground/95 md:flex-row">
+        <div className="mbs-10 flex flex-col items-center justify-between gap-4 border-bs border-border/40 pbs-8 text-xs text-muted-foreground/95 md:flex-row">
           <p>
             Made with{" "}
             <span
@@ -80,19 +77,13 @@ export function Footer() {
             >
               ❤️
             </span>{" "}
-            &copy; {new Date().getFullYear()} Janella&apos;s Kitchen
+            &copy; {currentYear} Janella&apos;s Kitchen
           </p>
           <div className="flex gap-4">
-            <Link
-              href="/privacy"
-              className="transition-colors hover:text-foreground"
-            >
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
               Privacy Policy
             </Link>
-            <Link
-              href="/terms"
-              className="transition-colors hover:text-foreground"
-            >
+            <Link href="/terms" className="transition-colors hover:text-foreground">
               Terms of Service
             </Link>
           </div>

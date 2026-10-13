@@ -27,10 +27,10 @@
 import { ResultAsync } from "neverthrow";
 import { prisma } from "@/lib/prisma";
 import { apiSuccess, apiError } from "@/lib/api-response";
-import { toAppError } from "@/lib/errors";
+import { thrownValueSchema, toAppError } from "@/lib/errors";
 import type { Course, Difficulty } from "@prisma/client";
 
-export async function GET() {
+export function GET() {
   return ResultAsync.fromPromise(
     Promise.all([
       // Get distinct cuisines
@@ -41,9 +41,7 @@ export async function GET() {
           distinct: ["cuisine"],
           orderBy: { cuisine: "asc" },
         })
-        .then((results) =>
-          results.map((r) => r.cuisine).filter((c): c is string => c !== null),
-        ),
+        .then((results) => results.map((r) => r.cuisine).filter((c): c is string => c !== null)),
 
       // Get courses with recipes
       prisma.recipe
@@ -51,9 +49,7 @@ export async function GET() {
           select: { course: true },
           distinct: ["course"],
         })
-        .then((results) =>
-          results.map((r) => r.course).filter((c): c is Course => c !== null),
-        ),
+        .then((results) => results.map((r) => r.course).filter((c): c is Course => c !== null)),
 
       // Get difficulties with recipes
       prisma.recipe
@@ -62,9 +58,7 @@ export async function GET() {
           distinct: ["difficulty"],
         })
         .then((results) =>
-          results
-            .map((r) => r.difficulty)
-            .filter((d): d is Difficulty => d !== null),
+          results.map((r) => r.difficulty).filter((d): d is Difficulty => d !== null),
         ),
 
       // Get all tags with usage count
@@ -103,7 +97,7 @@ export async function GET() {
         _count: { difficulty: true },
       }),
     ]),
-    (error) => toAppError(error),
+    (error) => toAppError(thrownValueSchema.parse(error)),
   )
     .map(
       ([
@@ -119,33 +113,43 @@ export async function GET() {
       ]) => {
         // Transform course counts to record
         const byCourse: Partial<Record<Course, number>> = {};
+
         for (const item of courseCounts) {
           if (item.course) {
-            byCourse[item.course] = item._count.course;
+            const { _count: count } = item;
+            byCourse[item.course] = count.course;
           }
         }
 
         // Transform difficulty counts to record
         const byDifficulty: Partial<Record<Difficulty, number>> = {};
+
         for (const item of difficultyCounts) {
           if (item.difficulty) {
-            byDifficulty[item.difficulty] = item._count.difficulty;
+            const { _count: count } = item;
+            byDifficulty[item.difficulty] = count.difficulty;
           }
         }
+
+        const { _min: minimum, _max: maximum } = timeRange;
 
         return {
           cuisines,
           courses,
           difficulties,
-          tags: tags.map((tag) => ({
-            id: tag.id,
-            name: tag.name,
-            slug: tag.slug,
-            recipeCount: tag._count.recipes,
-          })),
+          tags: tags.map((tag) => {
+            const { _count: count } = tag;
+
+            return {
+              id: tag.id,
+              name: tag.name,
+              slug: tag.slug,
+              recipeCount: count.recipes,
+            };
+          }),
           timeRange: {
-            min: timeRange._min.totalTime ?? 0,
-            max: timeRange._max.totalTime ?? 0,
+            min: minimum.totalTime ?? 0,
+            max: maximum.totalTime ?? 0,
           },
           counts: {
             total: totalCount,
@@ -158,6 +162,6 @@ export async function GET() {
     )
     .match(
       (data) => apiSuccess(data),
-      (error) => apiError(error),
+      (error) => apiError(thrownValueSchema.parse(error)),
     );
 }

@@ -1,23 +1,29 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { ShoppingListItem, SessionState } from "@/lib/session-store";
 import { getSessionState, setSessionState } from "@/lib/session-store";
+import type { SessionContextValue } from "@/components/providers/session-context";
+import { SessionContext } from "@/components/providers/session-context";
 
 // ---------------------------------------------------------------------------
 // External store for sessionStorage — lets React re-render on changes
 // ---------------------------------------------------------------------------
 
 type Listener = () => void;
+
 const listeners = new Set<Listener>();
 
 function subscribe(listener: Listener) {
   listeners.add(listener);
+
   return () => listeners.delete(listener);
 }
 
 function emitChange() {
-  for (const l of listeners) l();
+  for (const l of listeners) {
+    l();
+  }
 }
 
 function getSnapshot(): SessionState {
@@ -25,6 +31,7 @@ function getSnapshot(): SessionState {
 }
 
 const serverSnapshot: SessionState = { shoppingList: [] };
+
 function getServerSnapshot(): SessionState {
   return serverSnapshot;
 }
@@ -36,35 +43,24 @@ function updateStore(updater: (prev: SessionState) => SessionState) {
 }
 
 // ---------------------------------------------------------------------------
-// Context value
-// ---------------------------------------------------------------------------
-
-interface SessionContextValue {
-  shoppingList: ShoppingListItem[];
-  addToShoppingList: (items: Omit<ShoppingListItem, "id" | "checked" | "addedAt">[]) => void;
-  removeFromShoppingList: (id: string) => void;
-  toggleShoppingItem: (id: string) => void;
-  clearShoppingList: () => void;
-  clearCheckedItems: () => void;
-  shoppingListCount: number;
-}
-
-const SessionContext = createContext<SessionContextValue | null>(null);
-
-// ---------------------------------------------------------------------------
 // Provider
 // ---------------------------------------------------------------------------
 
 let idCounter = 0;
+
 function nextId() {
   return `sl_${Date.now()}_${++idCounter}`;
 }
 
-export function SessionProvider({ children }: { children: React.ReactNode }) {
+interface SessionProviderProps {
+  readonly children: React.ReactNode;
+}
+
+export function SessionProvider({ children }: SessionProviderProps) {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const addToShoppingList = useCallback(
-    (items: Omit<ShoppingListItem, "id" | "checked" | "addedAt">[]) => {
+    (items: readonly Omit<ShoppingListItem, "id" | "checked" | "addedAt">[]) => {
       updateStore((prev) => ({
         ...prev,
         shoppingList: [
@@ -127,38 +123,4 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
-}
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-
-export function useSession(): SessionContextValue {
-  const ctx = useContext(SessionContext);
-  if (!ctx) {
-    throw new Error("useSession must be used within a <SessionProvider>");
-  }
-  return ctx;
-}
-
-export function useShoppingList() {
-  const {
-    shoppingList,
-    addToShoppingList,
-    removeFromShoppingList,
-    toggleShoppingItem,
-    clearShoppingList,
-    clearCheckedItems,
-    shoppingListCount,
-  } = useSession();
-
-  return {
-    items: shoppingList,
-    add: addToShoppingList,
-    remove: removeFromShoppingList,
-    toggle: toggleShoppingItem,
-    clear: clearShoppingList,
-    clearChecked: clearCheckedItems,
-    count: shoppingListCount,
-  };
 }

@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import type { TProps as JsxParserProps } from "react-jsx-parser";
 
 import { cn } from "@/lib/utils";
+import { z } from "zod";
 import { AlertCircle } from "lucide-react";
 import {
   createContext,
@@ -31,11 +32,13 @@ const JSXPreviewContext = createContext<JSXPreviewContextValue | null>(null);
 
 const TAG_REGEX = /<\/?([a-zA-Z][a-zA-Z0-9]*)\s*([^>]*?)(\/)?>/;
 
-export const useJSXPreview = () => {
+const useJSXPreview = () => {
   const context = useContext(JSXPreviewContext);
+
   if (!context) {
     throw new Error("JSXPreview components must be used within JSXPreview");
   }
+
   return context;
 };
 
@@ -46,13 +49,14 @@ const matchJsxTag = (code: string) => {
 
   const match = code.match(TAG_REGEX);
 
-  if (!match || match.index === undefined) {
+  if (match?.index === undefined) {
     return null;
   }
 
   const [fullMatch, tagName, attributes, selfClosing] = match;
 
   let type: "self-closing" | "closing" | "opening";
+
   if (selfClosing) {
     type = "self-closing";
   } else if (fullMatch.startsWith("</")) {
@@ -78,11 +82,13 @@ const completeJsxTag = (code: string) => {
 
   while (currentPosition < code.length) {
     const match = matchJsxTag(code.slice(currentPosition));
+
     if (!match) {
       // No more tags found, append remaining content
       result += code.slice(currentPosition);
       break;
     }
+
     const { tagName, type, endIndex } = match;
 
     // Include any text content before this tag
@@ -107,11 +113,11 @@ const completeJsxTag = (code: string) => {
 };
 
 export type JSXPreviewProps = ComponentProps<"div"> & {
-  jsx: string;
-  isStreaming?: boolean;
-  components?: JsxParserProps["components"];
-  bindings?: JsxParserProps["bindings"];
-  onError?: (error: Error) => void;
+  readonly jsx: string;
+  readonly isStreaming?: boolean;
+  readonly components?: JsxParserProps["components"];
+  readonly bindings?: JsxParserProps["bindings"];
+  readonly onError?: (error: Error) => void;
 };
 
 export const JSXPreview = memo(
@@ -164,9 +170,8 @@ JSXPreview.displayName = "JSXPreview";
 export type JSXPreviewContentProps = Omit<ComponentProps<"div">, "children">;
 
 export const JSXPreviewContent = memo(
-  ({ className, ...props }: JSXPreviewContentProps) => {
-    const { processedJsx, components, bindings, setError, onErrorProp } =
-      useJSXPreview();
+  ({ className, ...props }: Readonly<Omit<ComponentProps<"div">, "children">>) => {
+    const { processedJsx, components, bindings, setError, onErrorProp } = useJSXPreview();
     const errorReportedRef = useRef<string | null>(null);
 
     // Reset error tracking when jsx changes
@@ -181,6 +186,7 @@ export const JSXPreviewContent = memo(
         if (errorReportedRef.current === processedJsx) {
           return;
         }
+
         errorReportedRef.current = processedJsx;
         setError(err);
         onErrorProp?.(err);
@@ -189,7 +195,7 @@ export const JSXPreviewContent = memo(
     );
 
     return (
-      <div className={cn("jsx-preview-content", className)} {...props}>
+      <div className={cn(className)} {...props}>
         <JsxParser
           bindings={bindings}
           components={components}
@@ -205,46 +211,51 @@ export const JSXPreviewContent = memo(
 JSXPreviewContent.displayName = "JSXPreviewContent";
 
 export type JSXPreviewErrorProps = ComponentProps<"div"> & {
-  children?: ReactNode | ((error: Error) => ReactNode);
+  readonly children?: ReactNode | ((error: Error) => ReactNode);
 };
 
 const renderChildren = (
   children: ReactNode | ((error: Error) => ReactNode),
-  error: Error,
+  error: Readonly<Error>,
 ): ReactNode => {
-  if (typeof children === "function") {
-    return children(error);
+  const renderer = z
+    .function({ input: [z.instanceof(Error)], output: z.unknown() })
+    .safeParse(children);
+
+  if (renderer.success) {
+    // SAFETY: JSXPreviewError's callback prop is declared to return ReactNode.
+    return renderer.data(error) as ReactNode;
   }
-  return children;
+
+  // SAFETY: The renderer schema rejected functions, so the remaining value is the ReactNode branch.
+  return children as ReactNode;
 };
 
-export const JSXPreviewError = memo(
-  ({ className, children, ...props }: JSXPreviewErrorProps) => {
-    const { error } = useJSXPreview();
+export const JSXPreviewError = memo(({ className, children, ...props }: JSXPreviewErrorProps) => {
+  const { error } = useJSXPreview();
 
-    if (!error) {
-      return null;
-    }
+  if (!error) {
+    return null;
+  }
 
-    return (
-      <div
-        className={cn(
-          "flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive",
-          className,
-        )}
-        {...props}
-      >
-        {children ? (
-          renderChildren(children, error)
-        ) : (
-          <>
-            <AlertCircle className="size-4 shrink-0" />
-            <span>{error.message}</span>
-          </>
-        )}
-      </div>
-    );
-  },
-);
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive",
+        className,
+      )}
+      {...props}
+    >
+      {children ? (
+        renderChildren(children, error)
+      ) : (
+        <>
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{error.message}</span>
+        </>
+      )}
+    </div>
+  );
+});
 
 JSXPreviewError.displayName = "JSXPreviewError";

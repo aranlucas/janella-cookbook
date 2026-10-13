@@ -39,42 +39,42 @@ const maxWidthClasses: Record<ContentMaxWidth, string> = {
  */
 interface PageHeaderConfig {
   /** Page title */
-  title: string;
+  readonly title: string;
   /** Optional description below the title */
-  description?: string;
+  readonly description?: string;
   /** Optional actions to render in the header (e.g., buttons) */
-  actions?: React.ReactNode;
+  readonly actions?: React.ReactNode;
   /** Whether to center the header content */
-  centered?: boolean;
+  readonly centered?: boolean;
   /** Background style */
-  background?: "muted" | "plain";
+  readonly background?: "muted" | "plain";
   /** Additional content below title/description (e.g., search bar) */
-  children?: React.ReactNode;
+  readonly children?: React.ReactNode;
 }
 
 interface AppLayoutProps {
   /** Breadcrumb navigation items */
-  breadcrumbs?: BreadcrumbNavItem[];
+  readonly breadcrumbs?: readonly BreadcrumbNavItem[];
   /** Page header configuration for hero-style headers */
-  pageHeader?: PageHeaderConfig;
+  readonly pageHeader?: PageHeaderConfig;
   /** Main content */
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
   /** Max width for the main content area */
-  contentMaxWidth?: ContentMaxWidth;
+  readonly contentMaxWidth?: ContentMaxWidth;
   /** Custom className for the content section */
-  contentClassName?: string;
+  readonly contentClassName?: string;
   /** Whether to skip the standard content wrapper (for custom layouts like home page) */
-  customContent?: boolean;
+  readonly customContent?: boolean;
   /** Title for the form layout */
-  title?: string;
+  readonly title?: string;
   /** Description for the form layout */
-  description?: string;
+  readonly description?: string;
   /** Header children for the listing layout */
-  headerChildren?: React.ReactNode;
+  readonly headerChildren?: React.ReactNode;
   /** Optional navigation component (e.g., sidebar) */
-  navigation?: React.ReactNode;
+  readonly navigation?: React.ReactNode;
   /** The type of content being displayed */
-  contentType?: "default" | "form" | "table" | "dashboard" | "cards" | "wizard";
+  readonly contentType?: "default" | "form" | "table" | "dashboard" | "cards" | "wizard";
 }
 
 /**
@@ -92,12 +92,12 @@ function PageHeader({
     <section
       className={cn(
         "py-5 sm:py-7 md:py-10",
-        background === "muted" && "border-b border-border/30 bg-muted/35",
+        background === "muted" && "border-be border-border/30 bg-muted/35",
       )}
     >
       <div className="container">
         <div className={cn(centered && "text-center")}>
-          <h1 className="mb-2 font-serif text-3xl font-bold text-foreground sm:mb-3 sm:text-4xl md:text-5xl">
+          <h1 className="mbe-2 font-serif text-3xl font-bold text-foreground sm:mbe-3 sm:text-4xl md:text-5xl">
             {title}
           </h1>
           {description && (
@@ -106,11 +106,7 @@ function PageHeader({
             </p>
           )}
           {actions && (
-            <div
-              className={cn("mt-4 sm:mt-5", centered && "flex justify-center")}
-            >
-              {actions}
-            </div>
+            <div className={cn("mbs-4 sm:mbs-5", centered && "flex justify-center")}>{actions}</div>
           )}
           {children}
         </div>
@@ -135,7 +131,7 @@ export function AppLayout({
   headerChildren,
   navigation,
   contentType = "default",
-}: AppLayoutProps) {
+}: Readonly<AppLayoutProps>) {
   if ((contentType === "table" || contentType === "cards") && title) {
     pageHeader = {
       title,
@@ -151,9 +147,7 @@ export function AppLayout({
       <Header />
 
       <div className="flex flex-1">
-        {navigation && (
-          <aside className="w-64 bg-gray-100 p-4">{navigation}</aside>
-        )}
+        {navigation && <aside className="w-64 bg-gray-100 p-4">{navigation}</aside>}
         <main className="flex-1">
           {pageHeader ? (
             <div>
@@ -162,13 +156,13 @@ export function AppLayout({
                   className={cn(
                     "container",
                     pageHeader.background === "muted" && "bg-muted/30",
-                    "pt-4 pb-1",
+                    "pbs-4 pbe-1",
                   )}
                 >
                   <BreadcrumbNav
                     items={breadcrumbs}
                     container={false}
-                    className="mb-0 text-muted-foreground [&_[data-slot=breadcrumb-list]]:text-sm [&_[data-slot=breadcrumb-list]]:text-muted-foreground"
+                    className="mbe-0 text-muted-foreground [&_[data-slot=breadcrumb-list]]:text-sm [&_[data-slot=breadcrumb-list]]:text-muted-foreground"
                   />
                 </div>
               )}
@@ -198,18 +192,17 @@ export function AppLayout({
               <div
                 className={cn(
                   "container",
-                  contentMaxWidth !== "full" &&
-                    maxWidthClasses[contentMaxWidth],
+                  contentMaxWidth !== "full" && maxWidthClasses[contentMaxWidth],
                   contentMaxWidth !== "full" && "mx-auto",
                 )}
               >
                 {contentType === "form" && title && (
                   <>
-                    <h1 className="mb-2 font-serif text-2xl font-bold text-foreground sm:text-3xl">
+                    <h1 className="mbe-2 font-serif text-2xl font-bold text-foreground sm:text-3xl">
                       {title}
                     </h1>
                     {description && (
-                      <p className="mb-6 text-sm text-muted-foreground sm:mb-8 sm:text-base">
+                      <p className="mbe-6 text-sm text-muted-foreground sm:mbe-8 sm:text-base">
                         {description}
                       </p>
                     )}

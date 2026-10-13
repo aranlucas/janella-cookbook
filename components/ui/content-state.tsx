@@ -12,13 +12,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ContentEmptyStateProps {
-  icon?: ReactNode;
-  title: string;
-  description: string;
-  actionHref?: string;
-  actionLabel?: string;
-  action?: ReactNode;
-  className?: string;
+  readonly icon?: ReactNode;
+  readonly title: string;
+  readonly description: string;
+  readonly actionHref?: string;
+  readonly actionLabel?: string;
+  readonly action?: ReactNode;
+  readonly className?: string;
 }
 
 export function ContentEmptyState({
@@ -41,7 +41,7 @@ export function ContentEmptyState({
         <EmptyTitle>{title}</EmptyTitle>
         <EmptyDescription>{description}</EmptyDescription>
       </EmptyHeader>
-      {(action || hasLinkAction) && (
+      {(action ?? hasLinkAction) && (
         <EmptyContent>
           {action}
           {hasLinkAction && (
@@ -56,20 +56,17 @@ export function ContentEmptyState({
 }
 
 interface CardListSkeletonProps {
-  count?: number;
-  className?: string;
+  readonly count?: number;
+  readonly className?: string;
 }
 
-export function CardListSkeleton({
-  count = 6,
-  className,
-}: CardListSkeletonProps) {
+export function CardListSkeleton({ count = 6, className }: CardListSkeletonProps) {
   return (
-    <div className={cn("space-y-3 sm:space-y-4", className)}>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex gap-4 rounded-lg bg-card p-4 shadow-sm">
-          <Skeleton className="h-16 w-16 shrink-0 rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32" />
-          <div className="flex-1 space-y-2">
+    <div className={cn("flex flex-col gap-3 sm:gap-4", className)}>
+      {Array.from({ length: count }, (_, index) => `card-list-skeleton-${index}`).map((key) => (
+        <div key={key} className="flex gap-4 rounded-lg bg-card p-4 shadow-sm">
+          <Skeleton className="size-16 shrink-0 rounded-md sm:h-20 sm:w-24 md:h-24 md:w-32" />
+          <div className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-1/2" />
@@ -81,14 +78,11 @@ export function CardListSkeleton({
 }
 
 interface RecipeGridSkeletonProps {
-  count?: number;
-  className?: string;
+  readonly count?: number;
+  readonly className?: string;
 }
 
-export function RecipeGridSkeleton({
-  count = 8,
-  className,
-}: RecipeGridSkeletonProps) {
+export function RecipeGridSkeleton({ count = 8, className }: RecipeGridSkeletonProps) {
   return (
     <div
       className={cn(
@@ -96,9 +90,9 @@ export function RecipeGridSkeleton({
         className,
       )}
     >
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="space-y-2 sm:space-y-3">
-          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+      {Array.from({ length: count }, (_, index) => `recipe-grid-skeleton-${index}`).map((key) => (
+        <div key={key} className="flex flex-col gap-2 sm:gap-3">
+          <Skeleton className="aspect-4/3 w-full rounded-lg" />
           <Skeleton className="h-5 w-3/4 sm:h-6" />
           <Skeleton className="h-4 w-full" />
         </div>

@@ -6,7 +6,7 @@ import { MCPOAuthProvider, AuthRequiredError } from "@/lib/mcp-oauth";
 import { headers } from "next/headers";
 import { chatModel } from "@/lib/ai";
 import { apiError, apiValidationError } from "@/lib/api-response";
-import { toAppError, ValidationError } from "@/lib/errors";
+import { thrownValueSchema, toAppError, ValidationError } from "@/lib/errors";
 
 const MCP_SERVER_URL = "https://ai-meal-planner-mcp.aranlucas.workers.dev/mcp";
 
@@ -25,6 +25,7 @@ async function getBaseUrl(): Promise<string> {
   const headersList = await headers();
   const host = headersList.get("host") ?? "localhost:3000";
   const protocol = host.includes("localhost") ? "http" : "https";
+
   return `${protocol}://${host}`;
 }
 
@@ -39,11 +40,9 @@ export async function POST(request: Request) {
   }
 
   const parsed = chatBodySchema.safeParse(bodyResult.value);
+
   if (!parsed.success) {
-    return apiValidationError(
-      "Invalid request body",
-      parsed.error.flatten().fieldErrors as Record<string, string[]>,
-    );
+    return apiValidationError("Invalid request body", parsed.error.flatten().fieldErrors);
   }
 
   const { messages, location } = parsed.data;
@@ -58,6 +57,7 @@ export async function POST(request: Request) {
 
   if (authResult.isErr()) {
     const error = authResult.error;
+
     if (error instanceof AuthRequiredError) {
       return Response.json(
         {
@@ -67,7 +67,8 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
-    return apiError(toAppError(error));
+
+    return apiError(toAppError(thrownValueSchema.parse(error)));
   }
 
   const mcpResult = await ResultAsync.fromPromise(
@@ -86,13 +87,14 @@ export async function POST(request: Request) {
       const resourceContents = await Promise.all(
         (resourceList.resources ?? []).map(async (r) => {
           const data = await mcpClient.readResource({ uri: r.uri });
+
           return `## ${r.name}:\n${JSON.stringify(data.contents)}`;
         }),
       );
 
       return { tools, resourceContents };
     })(),
-    (error) => toAppError(error),
+    (error) => toAppError(thrownValueSchema.parse(error)),
   );
 
   if (mcpResult.isErr()) {
@@ -100,8 +102,7 @@ export async function POST(request: Request) {
   }
 
   const { tools, resourceContents } = mcpResult.value;
-  const resourceContext =
-    resourceContents.length > 0 ? `\n\n${resourceContents.join("\n\n")}` : "";
+  const resourceContext = resourceContents.length > 0 ? `\n\n${resourceContents.join("\n\n")}` : "";
 
   const agent = new ToolLoopAgent({
     model: chatModel,

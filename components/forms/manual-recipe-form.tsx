@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { z } from "zod";
 import { createRecipe, updateRecipe } from "@/lib/actions";
 import { recipeInputSchema, recipeDraftSchema, type RecipeInputSchema } from "@/lib/validations";
 import { cn } from "@/lib/utils";
@@ -37,16 +38,25 @@ import type {
   RecipeInput,
 } from "@/types/recipe";
 
+type RecipeSubmissionInput = Readonly<
+  Omit<RecipeInputSchema, "tags" | "ingredients" | "instructions">
+> & {
+  readonly tags?: readonly string[];
+  readonly ingredients: readonly Readonly<RecipeInputSchema["ingredients"][number]>[];
+  readonly instructions: readonly Readonly<RecipeInputSchema["instructions"][number]>[];
+};
+
 interface ManualRecipeFormProps {
-  initialData?: RecipeWithRelations;
-  draft?: RecipeInputSchema;
-  draftKey?: string;
-  onSuccess?: (recipe: RecipeWithRelations) => void;
+  readonly initialData?: RecipeWithRelations;
+  readonly draft?: RecipeInputSchema;
+  readonly draftKey?: string;
+  readonly onSuccess?: (recipe: RecipeWithRelations) => void;
 }
 
 type FormSection = "basic" | "ingredients" | "instructions" | "additional";
 
 const difficulties: Difficulty[] = ["EASY", "MEDIUM", "HARD", "EXPERT"];
+
 const courses: Course[] = [
   "BREAKFAST",
   "LUNCH",
@@ -71,11 +81,12 @@ function parseIngredientLine(line: string): IngredientInput | null {
   let unit = "";
   let name = mainPart;
 
-  const quantityMatch = mainPart.match(/^([\d¼½¾⅓⅔⅛⅜⅝⅞\/.\-]+)\s+(.+)$/);
+  const quantityMatch = mainPart.match(/^([\d¼½¾⅓⅔⅛⅜⅝⅞/.-]+)\s+(.+)$/);
 
   if (quantityMatch) {
     quantity = quantityMatch[1] ?? "";
     const remainder = quantityMatch[2] ?? "";
+
     const unitMatch = remainder.match(
       /^(cups?|tbsp|tsp|tablespoons?|teaspoons?|g|kg|ml|l|oz|lb|lbs|pounds?|ounces?|cloves?|pinch)\s+(.+)$/i,
     );
@@ -89,6 +100,7 @@ function parseIngredientLine(line: string): IngredientInput | null {
   }
 
   const normalizedName = name.trim();
+
   if (!normalizedName) {
     return null;
   }
@@ -107,16 +119,18 @@ export function ManualRecipeForm({
   draft,
   draftKey = "manual",
   onSuccess,
-}: ManualRecipeFormProps) {
+}: Readonly<ManualRecipeFormProps>) {
   const router = useRouter();
   const isEditing = !!initialData;
   const [isPending, startTransition] = useTransition();
+
   const [sectionOpen, setSectionOpen] = useState<Record<FormSection, boolean>>({
     basic: true,
     ingredients: true,
     instructions: true,
     additional: false,
   });
+
   const [bulkIngredients, setBulkIngredients] = useState("");
   const [bulkInstructions, setBulkInstructions] = useState("");
 
@@ -125,57 +139,60 @@ export function ManualRecipeForm({
   const storageKey = `recipe-draft:${draft ? draftKey : (initialData?.id ?? draftKey)}`;
   const saveKey = useRef("");
   const saved = useRef(false);
+
   const expectedUpdatedAt = useRef(
     initialData ? new Date(initialData.updatedAt).toISOString() : undefined,
   );
+
   const [saveError, setSaveError] = useState("");
 
   const form = useForm<RecipeInputSchema>({
     resolver: zodResolver(recipeInputSchema),
     defaultValues: {
-      title: initialData?.title || importDraft?.title || "",
-      description: initialData?.description || importDraft?.description || "",
-      prepTime: initialData?.prepTime || importDraft?.prepTime || undefined,
-      cookTime: initialData?.cookTime || importDraft?.cookTime || undefined,
-      servings: initialData?.servings || importDraft?.servings || "",
-      difficulty: initialData?.difficulty || undefined,
-      cuisine: initialData?.cuisine || importDraft?.cuisine || "",
-      course: (initialData?.course as Course) || (importDraft?.course as Course) || undefined,
-      imageUrl: initialData?.imageUrl || importDraft?.imageUrl || "",
-      notes: initialData?.notes || "",
-      tags: initialData?.tags?.map((t) => t.name) || [],
+      title: initialData?.title ?? importDraft?.title ?? "",
+      description: initialData?.description ?? importDraft?.description ?? "",
+      prepTime: initialData?.prepTime ?? importDraft?.prepTime ?? undefined,
+      cookTime: initialData?.cookTime ?? importDraft?.cookTime ?? undefined,
+      servings: initialData?.servings ?? importDraft?.servings ?? "",
+      difficulty: initialData?.difficulty ?? undefined,
+      cuisine: initialData?.cuisine ?? importDraft?.cuisine ?? "",
+      // SAFETY: stored recipes use the Prisma Course enum and importDraft is validated by recipeInputSchema.
+      course: (initialData?.course as Course) || importDraft?.course || undefined,
+      imageUrl: initialData?.imageUrl ?? importDraft?.imageUrl ?? "",
+      notes: initialData?.notes ?? "",
+      tags: initialData?.tags?.map((t) => t.name) ?? [],
       ingredients: initialData?.ingredients?.length
         ? initialData.ingredients.map((i) => ({
-            quantity: i.quantity || "",
-            unit: i.unit || "",
+            quantity: i.quantity ?? "",
+            unit: i.unit ?? "",
             name: i.name,
-            notes: i.notes || "",
-            group: i.group || "",
+            notes: i.notes ?? "",
+            group: i.group ?? "",
           }))
         : importDraft?.ingredients?.length
           ? importDraft.ingredients.map((i: IngredientInput) => ({
-              quantity: i.quantity || "",
-              unit: i.unit || "",
+              quantity: i.quantity ?? "",
+              unit: i.unit ?? "",
               name: i.name || "",
-              notes: i.notes || "",
-              group: i.group || "",
+              notes: i.notes ?? "",
+              group: i.group ?? "",
             }))
           : [{ quantity: "", unit: "", name: "", notes: "", group: "" }],
       instructions: initialData?.instructions?.length
         ? initialData.instructions.map((i) => ({
             text: i.text,
-            group: i.group || "",
-            duration: i.duration || undefined,
+            group: i.group ?? "",
+            duration: i.duration ?? undefined,
           }))
         : importDraft?.instructions?.length
           ? importDraft.instructions.map((inst: InstructionInput) => ({
               text: inst.text || "",
-              group: inst.group || "",
-              duration: inst.duration || undefined,
+              group: inst.group ?? "",
+              duration: inst.duration ?? undefined,
             }))
           : [{ text: "", group: "" }],
-      sourceType: initialData?.sourceType || "MANUAL",
-      sourceUrl: initialData?.sourceUrl || "",
+      sourceType: initialData?.sourceType ?? "MANUAL",
+      sourceUrl: initialData?.sourceUrl ?? "",
       ...draft,
     },
   });
@@ -183,24 +200,44 @@ export function ManualRecipeForm({
   const { handleSubmit, register } = form;
   useEffect(() => {
     saveKey.current = crypto.randomUUID();
+
     try {
       const raw = localStorage.getItem(storageKey);
+
       if (raw) {
-        const stored: unknown = JSON.parse(raw);
-        if (stored && typeof stored === "object" && "values" in stored) {
-          const parsed = recipeDraftSchema.safeParse(stored.values);
-          if (parsed.success) form.reset(parsed.data);
-          if ("expectedUpdatedAt" in stored && typeof stored.expectedUpdatedAt === "string")
-            expectedUpdatedAt.current = stored.expectedUpdatedAt;
-          if ("saveKey" in stored && typeof stored.saveKey === "string")
-            saveKey.current = stored.saveKey;
+        const stored = z
+          .object({
+            values: z.unknown().optional(),
+            expectedUpdatedAt: z.string().optional(),
+            saveKey: z.string().optional(),
+          })
+          .safeParse(JSON.parse(raw));
+
+        if (stored.success) {
+          const parsed = recipeDraftSchema.safeParse(stored.data.values);
+
+          if (parsed.success) {
+            form.reset(parsed.data);
+          }
+
+          if (stored.data.expectedUpdatedAt) {
+            expectedUpdatedAt.current = stored.data.expectedUpdatedAt;
+          }
+
+          if (stored.data.saveKey) {
+            saveKey.current = stored.data.saveKey;
+          }
         }
       }
     } catch {
       /* The editor also works without local storage. */
     }
+
     const persistDraft = () => {
-      if (saved.current) return;
+      if (saved.current) {
+        return;
+      }
+
       try {
         localStorage.setItem(
           storageKey,
@@ -214,9 +251,15 @@ export function ManualRecipeForm({
         /* Keep the in-memory draft. */
       }
     };
+
     persistDraft();
-    const subscription = form.watch(persistDraft);
-    return () => subscription.unsubscribe();
+
+    const unsubscribe = form.subscribe({
+      formState: { values: true },
+      callback: () => persistDraft(),
+    });
+
+    return unsubscribe;
   }, [form, storageKey]);
 
   const {
@@ -254,17 +297,20 @@ export function ManualRecipeForm({
       return;
     }
 
-    if (ingredientFields.length === 1 && !form.getValues("ingredients.0.name").trim())
+    if (ingredientFields.length === 1 && !form.getValues("ingredients.0.name").trim()) {
       removeIngredient(0);
-    parsed.forEach((ingredient) => {
+    }
+
+    for (const ingredient of parsed) {
       appendIngredient({
-        quantity: ingredient.quantity || "",
-        unit: ingredient.unit || "",
+        quantity: ingredient.quantity ?? "",
+        unit: ingredient.unit ?? "",
         name: ingredient.name,
-        notes: ingredient.notes || "",
-        group: ingredient.group || "",
+        notes: ingredient.notes ?? "",
+        group: ingredient.group ?? "",
       });
-    });
+    }
+
     setBulkIngredients("");
     toast.success(`Added ${parsed.length} ingredient${parsed.length === 1 ? "" : "s"}`);
   };
@@ -279,19 +325,27 @@ export function ManualRecipeForm({
       return;
     }
 
-    if (instructionFields.length === 1 && !form.getValues("instructions.0.text").trim())
+    if (instructionFields.length === 1 && !form.getValues("instructions.0.text").trim()) {
       removeInstruction(0);
-    parsed.forEach((text) => {
+    }
+
+    for (const text of parsed) {
       appendInstruction({ text, group: "" });
-    });
+    }
+
     setBulkInstructions("");
     toast.success(`Added ${parsed.length} step${parsed.length === 1 ? "" : "s"}`);
   };
 
-  const onSubmit = async (data: RecipeInputSchema) => {
+  const onSubmit = (data: RecipeSubmissionInput) => {
     // Add sortOrder to ingredients and instructions
-    const recipeData: RecipeInputSchema = {
+    const recipeData: RecipeInput = {
       ...data,
+      prepTime: data.prepTime ?? undefined,
+      cookTime: data.cookTime ?? undefined,
+      totalTime: data.totalTime ?? undefined,
+      rating: data.rating ?? undefined,
+      tags: data.tags ? [...data.tags] : undefined,
       ingredients: data.ingredients.map((ing, idx) => ({
         ...ing,
         sortOrder: idx,
@@ -306,31 +360,30 @@ export function ManualRecipeForm({
     startTransition(async () => {
       try {
         const result = isEditing
-          ? await updateRecipe(
-              initialData.id,
-              recipeData as unknown as Partial<RecipeInput>,
-              expectedUpdatedAt.current,
-            )
-          : await createRecipe(recipeData as unknown as RecipeInput, saveKey.current);
+          ? await updateRecipe(initialData.id, recipeData, expectedUpdatedAt.current)
+          : await createRecipe(recipeData, saveKey.current);
 
         if (!result.success) {
           setSaveError(result.error);
           toast.error(result.error);
+
           return;
         }
 
         saved.current = true;
+
         try {
           localStorage.removeItem(storageKey);
         } catch {
           /* Storage is optional. */
         }
+
         toast.success(`Recipe ${isEditing ? "updated" : "created"} successfully!`);
 
         if (onSuccess) {
-          onSuccess(result.data as RecipeWithRelations);
+          onSuccess(result.data);
         } else {
-          const slug = result.slug || (result.data as RecipeWithRelations).slug;
+          const slug = result.slug ?? result.data.slug;
           router.push(`/recipe/${slug}`);
           router.refresh();
         }
@@ -344,33 +397,37 @@ export function ManualRecipeForm({
     control: form.control,
     name: "difficulty",
   });
+
   const courseValue = useWatch({ control: form.control, name: "course" });
-  const tagsValue = useWatch({ control: form.control, name: "tags" }) || [];
+  const tagsValue = useWatch({ control: form.control, name: "tags" }) ?? [];
   const submitLabel = isEditing ? "Update Recipe" : "Save recipe";
   const isDirty = form.formState.isDirty;
 
+  const handleInvalid = () => {
+    setSectionOpen({
+      basic: true,
+      ingredients: true,
+      instructions: true,
+      additional: true,
+    });
+    setSaveError("Check the highlighted fields before saving.");
+    requestAnimationFrame(() => {
+      const first = document.querySelector<HTMLElement>(
+        '[aria-invalid="true"], input[name="title"]',
+      );
+
+      first?.focus();
+      first?.scrollIntoView({ block: "center" });
+    });
+  };
+
   return (
     <Card className="border-border/45 bg-card">
-      <CardContent className="pt-6 pb-28 md:pb-28">
+      <CardContent className="pbs-6 pbe-28 md:pbe-28">
         <Form {...form}>
           <form
-            onSubmit={handleSubmit(onSubmit, () => {
-              setSectionOpen({
-                basic: true,
-                ingredients: true,
-                instructions: true,
-                additional: true,
-              });
-              setSaveError("Check the highlighted fields before saving.");
-              requestAnimationFrame(() => {
-                const first = document.querySelector<HTMLElement>(
-                  '[aria-invalid="true"], input[name="title"]',
-                );
-                first?.focus();
-                first?.scrollIntoView({ block: "center" });
-              });
-            })}
-            className="space-y-5"
+            onSubmit={(event) => void handleSubmit(onSubmit, handleInvalid)(event)}
+            className="flex flex-col gap-5"
           >
             <div className="rounded-lg border border-border/45 bg-background/65 px-3 py-2 text-sm text-muted-foreground">
               {isDirty ? "Unsaved changes in this form" : "No unsaved changes"}
@@ -386,11 +443,11 @@ export function ManualRecipeForm({
             )}
             <fieldset disabled={isPending} className="contents">
               {/* Basic Info */}
-              <section className="space-y-4 rounded-xl border border-border/45 bg-background/45 p-4">
+              <section className="flex flex-col gap-4 rounded-xl border border-border/45 bg-background/45 p-4">
                 <button
                   type="button"
                   onClick={() => toggleSection("basic")}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-start"
                 >
                   <h3 className="font-serif text-lg font-semibold">Basic Info</h3>
                   <span className="text-sm text-muted-foreground">
@@ -399,7 +456,7 @@ export function ManualRecipeForm({
                 </button>
 
                 {sectionOpen.basic && (
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-4">
                     <FormField
                       control={form.control}
                       name="title"
@@ -437,7 +494,7 @@ export function ManualRecipeForm({
                     />
 
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="prepTime">Prep Time (min)</Label>
                         <Input
                           id="prepTime"
@@ -450,7 +507,7 @@ export function ManualRecipeForm({
                           className="border-border bg-background"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="cookTime">Cook Time (min)</Label>
                         <Input
                           id="cookTime"
@@ -463,7 +520,7 @@ export function ManualRecipeForm({
                           className="border-border bg-background"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="servings">Servings</Label>
                         <Input
                           id="servings"
@@ -472,15 +529,14 @@ export function ManualRecipeForm({
                           className="border-border bg-background"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="difficulty">Difficulty</Label>
                         <Select
                           value={difficultyValue}
-                          onValueChange={(v) =>
-                            form.setValue("difficulty", v as Difficulty, {
-                              shouldDirty: true,
-                            })
-                          }
+                          onValueChange={(v) => {
+                            // SAFETY: Select emits only the Difficulty values rendered from difficulties below.
+                            form.setValue("difficulty", v as Difficulty, { shouldDirty: true });
+                          }}
                         >
                           <SelectTrigger className="border-border bg-background">
                             <SelectValue>
@@ -501,7 +557,7 @@ export function ManualRecipeForm({
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="cuisine">Cuisine</Label>
                         <Input
                           id="cuisine"
@@ -510,15 +566,14 @@ export function ManualRecipeForm({
                           className="border-border bg-background"
                         />
                       </div>
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-2">
                         <Label htmlFor="course">Course</Label>
                         <Select
                           value={courseValue}
-                          onValueChange={(v) =>
-                            form.setValue("course", v as Course, {
-                              shouldDirty: true,
-                            })
-                          }
+                          onValueChange={(v) => {
+                            // SAFETY: Select emits only the Course values rendered from courses below.
+                            form.setValue("course", v as Course, { shouldDirty: true });
+                          }}
                         >
                           <SelectTrigger className="border-border bg-background">
                             <SelectValue>
@@ -542,11 +597,11 @@ export function ManualRecipeForm({
               </section>
 
               {/* Ingredients */}
-              <section className="space-y-4 rounded-xl border border-border/45 bg-background/45 p-4">
+              <section className="flex flex-col gap-4 rounded-xl border border-border/45 bg-background/45 p-4">
                 <button
                   type="button"
                   onClick={() => toggleSection("ingredients")}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-start"
                 >
                   <h3 className="font-serif text-lg font-semibold">
                     Ingredients * ({ingredientFields.length})
@@ -601,9 +656,9 @@ export function ManualRecipeForm({
                         placeholder={
                           "1 cup sugar\n2 tbsp olive oil | optional\n1 lb chicken thighs | trim fat | Marinade"
                         }
-                        className="mt-2 min-h-[96px] border-border bg-background"
+                        className="mbs-2 min-h-24 border-border bg-background"
                       />
-                      <div className="mt-2 flex items-center justify-between gap-2">
+                      <div className="mbs-2 flex items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">
                           Use &quot;|&quot; separators for optional notes and group.
                         </p>
@@ -619,11 +674,11 @@ export function ManualRecipeForm({
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="flex flex-col gap-4">
                       {ingredientFields.map((field, index) => (
                         <div
                           key={field.id}
-                          className="space-y-2 rounded-lg border border-border bg-background/35 p-3"
+                          className="flex flex-col gap-2 rounded-lg border border-border bg-background/35 p-3"
                         >
                           <div className="flex items-start gap-2">
                             <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
@@ -639,7 +694,7 @@ export function ManualRecipeForm({
                                 placeholder="Unit"
                                 className="border-border bg-background"
                               />
-                              <div className="col-span-2 space-y-1 sm:col-span-2">
+                              <div className="col-span-2 flex flex-col gap-1">
                                 <Input
                                   {...register(`ingredients.${index}.name`)}
                                   aria-label={`Ingredient ${index + 1} name`}
@@ -690,11 +745,11 @@ export function ManualRecipeForm({
               </section>
 
               {/* Instructions */}
-              <section className="space-y-4 rounded-xl border border-border/45 bg-background/45 p-4">
+              <section className="flex flex-col gap-4 rounded-xl border border-border/45 bg-background/45 p-4">
                 <button
                   type="button"
                   onClick={() => toggleSection("instructions")}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-start"
                 >
                   <h3 className="font-serif text-lg font-semibold">
                     Instructions * ({instructionFields.length})
@@ -741,9 +796,9 @@ export function ManualRecipeForm({
                         placeholder={
                           "Preheat oven to 375°F\nMix dry ingredients\nBake for 25 minutes"
                         }
-                        className="mt-2 min-h-[96px] border-border bg-background"
+                        className="mbs-2 min-h-24 border-border bg-background"
                       />
-                      <div className="mt-2 flex justify-end">
+                      <div className="mbs-2 flex justify-end">
                         <Button
                           type="button"
                           variant="outline"
@@ -756,14 +811,14 @@ export function ManualRecipeForm({
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="flex flex-col gap-3">
                       {instructionFields.map((field, index) => (
                         <div
                           key={field.id}
-                          className="space-y-2 rounded-lg border border-border bg-background/35 p-3"
+                          className="flex flex-col gap-2 rounded-lg border border-border bg-background/35 p-3"
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted font-serif text-sm font-bold">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted font-serif text-sm font-bold">
                               {index + 1}
                             </div>
                             <Button
@@ -782,7 +837,7 @@ export function ManualRecipeForm({
                             {...register(`instructions.${index}.text`)}
                             aria-label={`Step ${index + 1} text`}
                             placeholder={`Step ${index + 1}...`}
-                            className="min-h-[120px] border-border bg-background sm:min-h-[96px]"
+                            className="min-h-30 border-border bg-background sm:min-h-24"
                           />
                           <Input
                             {...register(`instructions.${index}.group`)}
@@ -808,11 +863,11 @@ export function ManualRecipeForm({
               </section>
 
               {/* Additional Info */}
-              <section className="space-y-4 rounded-xl border border-border/45 bg-background/45 p-4">
+              <section className="flex flex-col gap-4 rounded-xl border border-border/45 bg-background/45 p-4">
                 <button
                   type="button"
                   onClick={() => toggleSection("additional")}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-start"
                 >
                   <h3 className="font-serif text-lg font-semibold">Additional Info</h3>
                   <span className="text-sm text-muted-foreground">
@@ -821,8 +876,8 @@ export function ManualRecipeForm({
                 </button>
 
                 {sectionOpen.additional && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
                       <Label htmlFor="imageUrl">Image URL</Label>
                       <Input
                         id="imageUrl"
@@ -832,7 +887,7 @@ export function ManualRecipeForm({
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label htmlFor="tags">Tags (comma-separated)</Label>
                       <Input
                         id="tags"
@@ -852,7 +907,7 @@ export function ManualRecipeForm({
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label htmlFor="notes">Personal Notes</Label>
                       <Textarea
                         id="notes"
@@ -865,7 +920,7 @@ export function ManualRecipeForm({
                 )}
               </section>
             </fieldset>
-            <div className="sticky bottom-0 z-40 border-t border-border/50 bg-background/95 px-3 py-3 backdrop-blur">
+            <div className="sticky inset-be-0 z-40 border-bs border-border/50 bg-background/95 p-3 backdrop-blur">
               <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
                 <p className={cn("text-sm", isDirty ? "text-foreground" : "text-muted-foreground")}>
                   {isPending
@@ -883,7 +938,7 @@ export function ManualRecipeForm({
                 >
                   {isPending ? (
                     <>
-                      <span className="mr-2 animate-spin">⏳</span>
+                      <span className="me-2 animate-spin">⏳</span>
                       {isEditing ? "Updating..." : "Creating..."}
                     </>
                   ) : (

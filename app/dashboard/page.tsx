@@ -166,6 +166,13 @@ async function getDashboardStats(): Promise<DashboardStats> {
       ...cuisines.map((entry) => entry.cuisine),
     ]).size;
 
+    const favoriteCuisineSummary = favoriteCuisine.map(({ cuisine, _count: count }) => ({
+      cuisine,
+      count: count.cuisine,
+    }))[0];
+
+    const { _sum: sums } = momentumScore;
+
     return {
       totalRecipes,
       favorites,
@@ -177,20 +184,18 @@ async function getDashboardStats(): Promise<DashboardStats> {
       favoritesLast30Days,
       latestRecipes,
       challengeRecipe,
-      favoriteCuisine:
-        favoriteCuisine.length > 0 && favoriteCuisine[0].cuisine
-          ? {
-              name: favoriteCuisine[0].cuisine,
-              count: favoriteCuisine[0]._count.cuisine,
-            }
-          : null,
+      favoriteCuisine: favoriteCuisineSummary?.cuisine
+        ? {
+            name: favoriteCuisineSummary.cuisine,
+            count: favoriteCuisineSummary.count,
+          }
+        : null,
       fastestCount,
-      momentumScore:
-        (momentumScore._sum.cookCount ?? 0) +
-        statsBonus(recentlyUpdated, favorites),
+      momentumScore: (sums.cookCount ?? 0) + statsBonus(recentlyUpdated, favorites),
     };
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
+
     return {
       totalRecipes: 0,
       favorites: 0,
@@ -246,9 +251,7 @@ export default async function DashboardPage() {
       tone: "from-amber-400/20 to-amber-300/5",
       emoji: "🏷️",
       trend:
-        stats.categories > 0
-          ? "Across courses and cuisines"
-          : "Add recipes to build categories",
+        stats.categories > 0 ? "Across courses and cuisines" : "Add recipes to build categories",
     },
     {
       label: "Added (7 days)",
@@ -280,17 +283,17 @@ export default async function DashboardPage() {
       title="Dashboard"
       description="A live overview of your cookbook collection."
     >
-      <div className="space-y-8">
-        <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm">
+      <div className="flex flex-col gap-8">
+        <Card className="overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 shadow-sm">
           <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs tracking-[0.2em] text-muted-foreground uppercase">
+              <p className="text-xs tracking-eyebrow-wide text-muted-foreground uppercase">
                 Weekly Pulse
               </p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-tight">
+              <h2 className="mbs-2 font-serif text-3xl font-semibold tracking-tight">
                 {stats.recentlyUpdated} recipes tuned this week
               </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mbs-2 text-sm text-muted-foreground">
                 Keep the streak alive: update or cook one recipe today.
               </p>
             </div>
@@ -304,19 +307,20 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {cards.map((card) => {
             const Icon = card.icon;
+
             return (
               <Card
                 key={card.label}
                 className="group relative overflow-hidden border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div
-                  className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${card.tone}`}
+                  className={`absolute inset-x-0 inset-bs-0 h-1.5 bg-linear-to-r ${card.tone}`}
                 />
-                <CardHeader className="pb-3">
+                <CardHeader className="pbe-3">
                   <CardTitle className="flex items-center justify-between text-sm font-medium text-muted-foreground">
                     {card.label}
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-foreground transition-transform duration-300 group-hover:scale-110">
-                      <Icon className="h-4 w-4" />
+                    <span className="inline-flex size-8 items-center justify-center rounded-full bg-muted/60 text-foreground transition-transform duration-300 group-hover:scale-110">
+                      <Icon className="size-4" />
                     </span>
                   </CardTitle>
                 </CardHeader>
@@ -324,22 +328,18 @@ export default async function DashboardPage() {
                   <p className="font-serif text-3xl font-bold transition-transform duration-200 group-hover:scale-105">
                     {card.value}
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {card.trend}
-                  </p>
-                  <p className="mt-3 text-sm">{card.emoji}</p>
+                  <p className="mbs-2 text-xs text-muted-foreground">{card.trend}</p>
+                  <p className="mbs-3 text-sm">{card.emoji}</p>
                 </CardContent>
               </Card>
             );
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-dashboard">
           <Card className="border-border/60 bg-card shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-serif text-xl">
-                Recently Updated
-              </CardTitle>
+              <CardTitle className="font-serif text-xl">Recently Updated</CardTitle>
               <ButtonLink href="/recipes" variant="outline" size="sm">
                 View all
               </ButtonLink>
@@ -355,7 +355,7 @@ export default async function DashboardPage() {
                   className="py-10"
                 />
               ) : (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   {stats.latestRecipes.map((recipe) => (
                     <Link
                       key={recipe.id}
@@ -379,7 +379,7 @@ export default async function DashboardPage() {
                             ❤️ Favorite
                           </Badge>
                         )}
-                        <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                       </div>
                     </Link>
                   ))}
@@ -391,21 +391,19 @@ export default async function DashboardPage() {
           <Card className="border-border/60 bg-card shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 font-serif text-xl">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Sparkles className="size-5 text-primary" />
                 Chef DNA
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3 rounded-lg border border-border/70 bg-muted/25 p-4">
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/25 p-4">
                 <div className="flex items-start justify-between">
                   <p className="text-xs tracking-wide text-muted-foreground uppercase">
                     Momentum score
                   </p>
                   <Badge variant="outline">{momentumLevel}</Badge>
                 </div>
-                <p className="font-serif text-4xl font-bold">
-                  {stats.momentumScore}
-                </p>
+                <p className="font-serif text-4xl font-bold">{stats.momentumScore}</p>
                 <p className="text-xs text-muted-foreground">
                   Weighted from cook counts, favorites, and weekly updates.
                 </p>
@@ -414,15 +412,13 @@ export default async function DashboardPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-border/70 p-3">
                   <p className="text-xs text-muted-foreground">Comfort zone</p>
-                  <p className="mt-1 text-sm font-semibold">
+                  <p className="mbs-1 text-sm font-semibold">
                     {stats.favoriteCuisine?.name ?? "Not enough data"}
                   </p>
                 </div>
                 <div className="rounded-lg border border-border/70 p-3">
                   <p className="text-xs text-muted-foreground">Quick wins</p>
-                  <p className="mt-1 text-sm font-semibold">
-                    {stats.fastestCount} recipes
-                  </p>
+                  <p className="mbs-1 text-sm font-semibold">{stats.fastestCount} recipes</p>
                 </div>
               </div>
 
@@ -434,7 +430,7 @@ export default async function DashboardPage() {
                   <p className="text-xs tracking-wide text-muted-foreground uppercase">
                     Today&apos;s adventure pick
                   </p>
-                  <p className="mt-1 font-medium group-hover:text-primary">
+                  <p className="mbs-1 font-medium group-hover:text-primary">
                     {stats.challengeRecipe.title}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -449,8 +445,8 @@ export default async function DashboardPage() {
                 </Link>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  You&apos;ve cooked everything recently. Add a new recipe to
-                  unlock your next challenge.
+                  You&apos;ve cooked everything recently. Add a new recipe to unlock your next
+                  challenge.
                 </p>
               )}
             </CardContent>

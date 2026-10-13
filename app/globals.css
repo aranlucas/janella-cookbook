@@ -67,6 +67,14 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
+  /* Fine-grained type scale for micro labels (below --text-xs) */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-3xs: 0.625rem; /* 10px */
+
+  /* Editorial letter-spacing for eyebrow labels */
+  --tracking-eyebrow: 0.18em;
+  --tracking-eyebrow-wide: 0.2em;
+
   /* Bold Earthy Modern Palette */
   --color-rustic-cream: #faf5ed;
   --color-rustic-paper: #f7e9d4;
@@ -239,6 +247,97 @@
   p {
     @apply leading-relaxed;
   }
+}
+
+/* Custom layout, shadow and background utilities
+   (one-off values that have no Tailwind design-token equivalent) */
+@utility min-h-10vh {
+  min-height: 10vh;
+}
+
+@utility min-h-42vh {
+  min-height: 42vh;
+}
+
+@utility min-h-50vh {
+  min-height: 50vh;
+}
+
+@utility min-h-56vh {
+  min-height: 56vh;
+}
+
+@utility min-h-60vh {
+  min-height: 60vh;
+}
+
+@utility grid-cols-doc {
+  grid-template-columns: 15rem 1fr;
+}
+
+@utility grid-cols-dashboard {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+@utility grid-cols-recipe {
+  grid-template-columns: 1fr 2fr;
+}
+
+@utility intake-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+@utility max-w-chat-user {
+  max-width: min(78%, 44rem);
+}
+
+@utility max-w-chat-assistant {
+  max-width: min(92%, 52rem);
+}
+
+@utility shadow-bubble {
+  box-shadow: 0 14px 28px -20px rgb(45 41 38 / 0.45);
+}
+
+@utility shadow-chip {
+  box-shadow: 0 8px 18px -14px rgb(45 41 38 / 0.35);
+}
+
+@utility shadow-chip-strong {
+  box-shadow: 0 8px 18px -14px rgb(45 41 38 / 0.4);
+}
+
+@utility shadow-composer {
+  box-shadow: 0 12px 28px -18px rgb(45 41 38 / 0.35);
+}
+
+@utility shadow-composer-focus {
+  box-shadow: 0 20px 34px -20px rgb(224 78 57 / 0.32);
+}
+
+@utility bg-about-hero {
+  background-image:
+    radial-gradient(
+      circle at 20% 20%,
+      color-mix(in srgb, var(--primary) 12%, transparent),
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 78% 30%,
+      color-mix(in srgb, var(--highlight) 12%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent);
+}
+
+@utility bg-chat-surface {
+  background-image:
+    radial-gradient(
+      1200px 520px at 50% -12%,
+      color-mix(in srgb, var(--primary) 9%, transparent),
+      transparent 60%
+    ),
+    linear-gradient(180deg, var(--background) 0%, var(--muted) 100%);
 }
 
 /* ═══════════════════════════════════════════════════════════

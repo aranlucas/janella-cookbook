@@ -3,18 +3,17 @@ import { AppLayout } from "@/components/layout/app-layout";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 
+type AddRecipePageProps = { readonly searchParams: Promise<{ source?: string }> };
+
 export const metadata: Metadata = createPageMetadata({
   title: "Add Recipe | Cookbook",
   description: "Add a new recipe to your cookbook collection.",
   path: "/recipes/new",
 });
 
-export default async function AddRecipePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ source?: string }>;
-}) {
+export default async function AddRecipePage({ searchParams }: AddRecipePageProps) {
   const { source } = await searchParams;
+
   return (
     <AppLayout
       contentType="form"

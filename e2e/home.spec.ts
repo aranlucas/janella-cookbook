@@ -1,9 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Home page", () => {
-  test("renders the hero section with branding and search", async ({
-    page,
-  }) => {
+  test("renders the hero section with branding and search", async ({ page }) => {
     await page.goto("/");
 
     const main = page.locator("main");
@@ -23,12 +21,14 @@ test.describe("Home page", () => {
     await page.goto("/");
 
     const tags = ["Breakfast", "Pasta", "Dessert", "Vegan", "Quick & Easy"];
-    for (const tag of tags) {
-      const href = `/recipes?q=${encodeURIComponent(tag)}`;
-      const link = page.locator(`a[href="${href}"]`).first();
-      await expect(link).toBeVisible();
-      await expect(link).toHaveAttribute("href", href);
-    }
+    await Promise.all(
+      tags.map(async (tag) => {
+        const href = `/recipes?q=${encodeURIComponent(tag)}`;
+        const link = page.locator(`a[href="${href}"]`).first();
+        await expect(link).toBeVisible();
+        await expect(link).toHaveAttribute("href", href);
+      }),
+    );
   });
 
   test("displays the Recent Recipes section", async ({ page }) => {
@@ -45,10 +45,7 @@ test.describe("Home page", () => {
     await expect(header).toBeVisible();
 
     // Desktop nav links
-    await expect(header.getByRole("link", { name: "Recipes" })).toHaveAttribute(
-      "href",
-      "/recipes",
-    );
+    await expect(header.getByRole("link", { name: "Recipes" })).toHaveAttribute("href", "/recipes");
   });
 
   test("footer has navigation links and copyright", async ({ page }) => {
@@ -56,21 +53,23 @@ test.describe("Home page", () => {
 
     const footer = page.locator("footer");
     await expect(footer).toBeVisible();
-    await expect(
-      footer.getByRole("heading", { name: /Janella's/ }),
-    ).toBeVisible();
-    await expect(
-      footer.getByRole("link", { name: "All Recipes" }),
-    ).toHaveAttribute("href", "/recipes");
-    await expect(
-      footer.getByRole("link", { name: "By Category" }),
-    ).toHaveAttribute("href", "/categories");
-    await expect(
-      footer.getByRole("link", { name: "Favorites" }),
-    ).toHaveAttribute("href", "/favorites");
-    await expect(
-      footer.getByRole("link", { name: "Privacy Policy" }),
-    ).toHaveAttribute("href", "/privacy");
+    await expect(footer.getByRole("heading", { name: /Janella's/ })).toBeVisible();
+    await expect(footer.getByRole("link", { name: "All Recipes" })).toHaveAttribute(
+      "href",
+      "/recipes",
+    );
+    await expect(footer.getByRole("link", { name: "By Category" })).toHaveAttribute(
+      "href",
+      "/categories",
+    );
+    await expect(footer.getByRole("link", { name: "Favorites" })).toHaveAttribute(
+      "href",
+      "/favorites",
+    );
+    await expect(footer.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
 
     // Copyright with current year
     const year = new Date().getFullYear().toString();
@@ -80,9 +79,7 @@ test.describe("Home page", () => {
   test("search from home navigates to search page", async ({ page }) => {
     await page.goto("/");
 
-    const searchInput = page.getByPlaceholder(
-      "Search by ingredient, craving, or season...",
-    );
+    const searchInput = page.getByPlaceholder("Search by ingredient, craving, or season...");
     await searchInput.fill("pasta");
     await searchInput.press("Enter");
 

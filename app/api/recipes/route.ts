@@ -30,12 +30,12 @@
  * }
  */
 
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 import { ResultAsync } from "neverthrow";
 import { listRecipes } from "@/lib/recipe-queries";
 import { apiPaginated, apiError, apiValidationError } from "@/lib/api-response";
-import { toAppError } from "@/lib/errors";
+import { thrownValueSchema, toAppError } from "@/lib/errors";
 import { recipeListSchema } from "@/lib/validations";
 
 const SORT_FIELDS = [
@@ -62,16 +62,13 @@ const recipesQuerySchema = recipeListSchema.omit({ isFavorite: true }).extend({
   maxTime: z.coerce.number().positive().optional(),
 });
 
-export async function GET(request: NextRequest) {
+export function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
   const parsed = recipesQuerySchema.safeParse(Object.fromEntries(searchParams));
 
   if (!parsed.success) {
-    return apiValidationError(
-      "Invalid query parameters",
-      parsed.error.flatten().fieldErrors as Record<string, string[]>,
-    );
+    return apiValidationError("Invalid query parameters", parsed.error.flatten().fieldErrors);
   }
 
   const { limit, offset, sort, order, cuisine, course, difficulty, tag, favorite, maxTime } =
@@ -90,9 +87,9 @@ export async function GET(request: NextRequest) {
       offset,
       orderBy: { [sort]: order },
     }),
-    (error) => toAppError(error),
+    (error) => toAppError(thrownValueSchema.parse(error)),
   ).match(
     ({ recipes, total }) => apiPaginated(recipes, { total, limit, offset }),
-    (error) => apiError(error),
+    (error) => apiError(thrownValueSchema.parse(error)),
   );
 }

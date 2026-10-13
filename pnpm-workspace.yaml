@@ -8,29 +8,36 @@ overrides:
   "ansi-to-react>linkify-it": "5.0.2"
   "next>postcss": "8.5.25"
   "next>sharp": "0.35.4"
-  '@prisma/config>deepmerge-ts': '8.0.0'
-  'mysql2@>=3.0.0 <3.23.1': '3.23.1'
-  'undici@>=7.0.0 <7.29.1': '7.29.1'
-  'fast-uri@>=3.0.0 <3.1.8': '3.1.8'
-  'dompurify@>=3.0.0 <3.4.16': '3.4.16'
+  "@prisma/config>deepmerge-ts": "8.0.0"
+  "mysql2@>=3.0.0 <3.23.1": "3.23.1"
+  "undici@>=7.0.0 <7.29.1": "7.29.1"
+  "fast-uri@>=3.0.0 <3.1.8": "3.1.8"
+  "dompurify@>=3.0.0 <3.4.16": "3.4.16"
 minimumReleaseAgeExclude:
   - zod@4.6.7
+  - "@aranlucas/oxforge@0.1.2"
+  - "@aranlucas/oxlint-plugin-anti-slop@0.1.0"
+  - "@oxlint/plugins@1.88.0"
+  - "@oxlint/binding-*"
+  - "@oxfmt/binding-*"
+  - oxlint@1.88.0
+  - oxfmt@0.73.0
   - "@alloc/quick-lru@5.3.0"
   - "@bufbuild/protobuf@2.14.1"
-  - '@ai-sdk/gateway@4.0.70'
-  - '@ai-sdk/google@4.0.59'
-  - '@ai-sdk/openai@4.0.53'
-  - '@ai-sdk/react@4.0.90'
+  - "@ai-sdk/gateway@4.0.70"
+  - "@ai-sdk/google@4.0.59"
+  - "@ai-sdk/openai@4.0.53"
+  - "@ai-sdk/react@4.0.90"
   - ai@7.0.87
   - lucide-react@1.38.0
-  - '@next/env@16.3.4'
-  - '@next/swc-darwin-arm64@16.3.4'
-  - '@next/swc-darwin-x64@16.3.4'
-  - '@next/swc-linux-arm64-gnu@16.3.4'
-  - '@next/swc-linux-arm64-musl@16.3.4'
-  - '@next/swc-linux-x64-gnu@16.3.4'
-  - '@next/swc-linux-x64-musl@16.3.4'
-  - '@next/swc-win32-arm64-msvc@16.3.4'
-  - '@next/swc-win32-x64-msvc@16.3.4'
+  - "@next/env@16.3.4"
+  - "@next/swc-darwin-arm64@16.3.4"
+  - "@next/swc-darwin-x64@16.3.4"
+  - "@next/swc-linux-arm64-gnu@16.3.4"
+  - "@next/swc-linux-arm64-musl@16.3.4"
+  - "@next/swc-linux-x64-gnu@16.3.4"
+  - "@next/swc-linux-x64-musl@16.3.4"
+  - "@next/swc-win32-arm64-msvc@16.3.4"
+  - "@next/swc-win32-x64-msvc@16.3.4"
   - next@16.3.4
 pmOnFail: ignore

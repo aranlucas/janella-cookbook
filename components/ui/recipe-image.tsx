@@ -9,17 +9,17 @@ const BLUR_DATA_URL =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Crect width='16' height='12' fill='%23e8ddd4'/%3E%3C/svg%3E";
 
 interface RecipeImageProps {
-  src: string | null | undefined;
-  alt: string;
-  fill?: boolean;
-  width?: number;
-  height?: number;
-  sizes?: string;
-  priority?: boolean;
-  className?: string;
-  containerClassName?: string;
-  fallback?: string;
-  fallbackEmoji?: string;
+  readonly src: string | null | undefined;
+  readonly alt: string;
+  readonly fill?: boolean;
+  readonly width?: number;
+  readonly height?: number;
+  readonly sizes?: string;
+  readonly priority?: boolean;
+  readonly className?: string;
+  readonly containerClassName?: string;
+  readonly fallback?: string;
+  readonly fallbackEmoji?: string;
 }
 
 export function RecipeImage({
@@ -37,9 +37,7 @@ export function RecipeImage({
 }: RecipeImageProps) {
   const imageCandidates = useMemo(() => {
     const primaryCandidates = buildRecipeImageCandidates(src);
-    const fallbackCandidates = fallback
-      ? buildRecipeImageCandidates(fallback)
-      : [];
+    const fallbackCandidates = fallback ? buildRecipeImageCandidates(fallback) : [];
 
     return [...new Set([...primaryCandidates, ...fallbackCandidates])];
   }, [src, fallback]);
@@ -64,16 +62,16 @@ export function RecipeImage({
 }
 
 interface RecipeImageRendererProps {
-  imageCandidates: string[];
-  alt: string;
-  fill: boolean;
-  width?: number;
-  height?: number;
-  sizes: string;
-  priority: boolean;
-  className?: string;
-  containerClassName?: string;
-  fallbackEmoji: string;
+  readonly imageCandidates: readonly string[];
+  readonly alt: string;
+  readonly fill: boolean;
+  readonly width?: number;
+  readonly height?: number;
+  readonly sizes: string;
+  readonly priority: boolean;
+  readonly className?: string;
+  readonly containerClassName?: string;
+  readonly fallbackEmoji: string;
 }
 
 function RecipeImageRenderer({
@@ -96,19 +94,24 @@ function RecipeImageRenderer({
   const tryNextCandidate = useCallback(() => {
     setCandidateIndex((currentIndex) => {
       const nextIndex = currentIndex + 1;
+
       if (nextIndex < imageCandidates.length) {
         setIsLoading(true);
+
         return nextIndex;
       }
 
       setShowEmojiFallback(true);
       setIsLoading(false);
+
       return currentIndex;
     });
   }, [imageCandidates.length]);
 
   useEffect(() => {
-    if (!currentSrc || showEmojiFallback || !isLoading) return;
+    if (!currentSrc || showEmojiFallback || !isLoading) {
+      return () => {};
+    }
 
     const timeout = window.setTimeout(() => {
       tryNextCandidate();
@@ -143,9 +146,7 @@ function RecipeImageRenderer({
 
   if (fill) {
     return (
-      <div
-        className={cn("absolute inset-0 overflow-hidden", containerClassName)}
-      >
+      <div className={cn("absolute inset-0 overflow-hidden", containerClassName)}>
         <Image
           src={currentSrc}
           alt={alt}
@@ -159,9 +160,7 @@ function RecipeImageRenderer({
           onLoad={handleLoad}
           onError={handleError}
         />
-        {isLoading && (
-          <div className="absolute inset-0 animate-pulse bg-muted/30" />
-        )}
+        {isLoading && <div className="absolute inset-0 animate-pulse bg-muted/30" />}
       </div>
     );
   }
@@ -171,20 +170,18 @@ function RecipeImageRenderer({
       <Image
         src={currentSrc}
         alt={alt}
-        width={width || 400}
-        height={height || 300}
+        width={width ?? 400}
+        height={height ?? 300}
         sizes={sizes}
         priority={priority}
         placeholder="blur"
         blurDataURL={BLUR_DATA_URL}
         referrerPolicy="no-referrer"
-        className={cn("h-full w-full", baseImageClass)}
+        className={cn("size-full", baseImageClass)}
         onLoad={handleLoad}
         onError={handleError}
       />
-      {isLoading && (
-        <div className="absolute inset-0 animate-pulse bg-muted/30" />
-      )}
+      {isLoading && <div className="absolute inset-0 animate-pulse bg-muted/30" />}
     </div>
   );
 }

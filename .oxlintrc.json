@@ -1,25 +1,51 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [
+    "./node_modules/@aranlucas/oxforge/configs/recommended.json",
+    "./node_modules/@aranlucas/oxforge/configs/nextjs.json",
+    "./node_modules/@aranlucas/oxforge/configs/vitest.json",
+    "./node_modules/@aranlucas/oxforge/configs/tailwind.json"
+  ],
   "plugins": ["import", "jsx-a11y", "nextjs", "react", "typescript", "unicorn"],
   "env": {
     "browser": true,
     "node": true,
     "es2026": true
   },
-  "ignorePatterns": [".next/**", "out/**", "build/**", "next-env.d.ts"],
-  "overrides": [
-    {
-      "files": ["components/ai-elements/**/*.{js,jsx,ts,tsx}"],
-      "rules": {
-        "nextjs/no-img-element": "off",
-        "eslint/no-unused-vars": "off",
-        "jsx-a11y/role-has-required-aria-props": "off",
-        "react-hooks/exhaustive-deps": "off",
-        "react/immutability": "off",
-        "react/purity": "off",
-        "react/set-state-in-effect": "off",
-        "react/static-components": "off"
-      }
+  "options": {
+    "typeAware": true
+  },
+  "settings": {
+    "tailwindcss": {
+      "entryPoint": "app/globals.css"
     }
-  ]
+  },
+  "ignorePatterns": [".next/**", "out/**", "build/**", "next-env.d.ts"],
+  "rules": {
+    "react/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true,
+        "allowExportNames": [
+          "metadata",
+          "viewport",
+          "generateMetadata",
+          "generateStaticParams",
+          "dynamic",
+          "revalidate",
+          "alt",
+          "size",
+          "contentType",
+          "runtime"
+        ]
+      }
+    ],
+    "typescript/prefer-readonly-parameter-types": "off",
+    "eslint/no-console": [
+      "error",
+      {
+        "allow": ["error", "warn"]
+      }
+    ]
+  }
 }

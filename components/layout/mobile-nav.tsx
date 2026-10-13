@@ -8,12 +8,12 @@ import { NavLink } from "./nav-link";
 import { AddRecipeButton } from "./add-recipe-button";
 
 interface NavItem {
-  href: string;
-  label: string;
+  readonly href: string;
+  readonly label: string;
 }
 
 interface MobileNavProps {
-  navItems: NavItem[];
+  readonly navItems: readonly NavItem[];
 }
 
 export function MobileNav({ navItems }: MobileNavProps) {
@@ -33,21 +33,16 @@ export function MobileNav({ navItems }: MobileNavProps) {
           />
         }
       >
-        <Menu className="h-6 w-6" />
+        <Menu className="size-6" />
       </SheetTrigger>
-      <SheetContent side="right" className="w-[280px] bg-background">
-        <nav className="mt-8 flex flex-col gap-2">
+      <SheetContent side="right" className="w-70 bg-background">
+        <nav className="mbs-8 flex flex-col gap-2">
           {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              variant="mobile"
-              onClick={closeMenu}
-            >
+            <NavLink key={item.href} href={item.href} variant="mobile" onClick={closeMenu}>
               {item.label}
             </NavLink>
           ))}
-          <div className="mt-6 px-4">
+          <div className="mbs-6 px-4">
             <AddRecipeButton variant="mobile" onClick={closeMenu} />
           </div>
         </nav>

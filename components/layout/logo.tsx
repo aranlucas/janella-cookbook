@@ -5,7 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export function Logo({ className }: LogoProps) {
@@ -17,7 +17,7 @@ export function Logo({ className }: LogoProps) {
         className,
       )}
     >
-      <div className="relative h-10 w-10 transition-transform duration-300 hover:scale-110">
+      <div className="relative size-10 transition-transform duration-300 hover:scale-110">
         <Image
           src="/logo-bg.png"
           alt="Janella's Cookbook"

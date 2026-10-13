@@ -17,39 +17,35 @@ export function generateUniqueSlug(
     trim: true,
   });
 
-  return ResultAsync.fromPromise(
-    (async () => {
-      let slug = baseSlug;
-      let counter = 1;
+  const findAvailable = async (slug: string, counter: number): Promise<string> => {
+    const existing = await prisma.recipe.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
 
-      while (true) {
-        const existing = await prisma.recipe.findUnique({
-          where: { slug },
-          select: { id: true },
-        });
+    // If no recipe exists with this slug, or it's the same recipe we're updating
+    if (!existing || existing.id === existingId) {
+      return slug;
+    }
 
-        // If no recipe exists with this slug, or it's the same recipe we're updating
-        if (!existing || existing.id === existingId) {
-          return slug;
-        }
+    // Try with counter suffix
+    const nextCounter = counter + 1;
 
-        // Try with counter suffix
-        slug = `${baseSlug}-${counter}`;
-        counter++;
+    // Safety limit
+    if (nextCounter > 100) {
+      throw new AppError("Could not generate unique slug", "SLUG_ERROR");
+    }
 
-        // Safety limit
-        if (counter > 100) {
-          throw new AppError("Could not generate unique slug", "SLUG_ERROR");
-        }
-      }
-    })(),
-    (error) =>
-      error instanceof AppError
-        ? error
-        : new AppError(
-            error instanceof Error ? error.message : "Slug generation failed",
-            "SLUG_ERROR",
-          ),
+    return findAvailable(`${baseSlug}-${counter}`, nextCounter);
+  };
+
+  return ResultAsync.fromPromise(findAvailable(baseSlug, 1), (error) =>
+    error instanceof AppError
+      ? error
+      : new AppError(
+          error instanceof Error ? error.message : "Slug generation failed",
+          "SLUG_ERROR",
+        ),
   );
 }
 

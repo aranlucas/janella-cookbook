@@ -3,15 +3,15 @@
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useShoppingList } from "@/components/providers/session-provider";
+import { useShoppingList } from "@/components/providers/session-context";
 import type { Ingredient } from "@/types/recipe";
 import { cn } from "@/lib/utils";
 
 interface AddToShoppingListButtonProps {
-  ingredients: Ingredient[];
-  recipeTitle: string;
-  recipeSlug: string;
-  className?: string;
+  readonly ingredients: readonly Ingredient[];
+  readonly recipeTitle: string;
+  readonly recipeSlug: string;
+  readonly className?: string;
 }
 
 export function AddToShoppingListButton({
@@ -26,9 +26,9 @@ export function AddToShoppingListButton({
     add(
       ingredients.map((ing) => ({
         name: ing.name,
-        quantity: ing.quantity || undefined,
-        unit: ing.unit || undefined,
-        notes: ing.notes || undefined,
+        quantity: ing.quantity ?? undefined,
+        unit: ing.unit ?? undefined,
+        notes: ing.notes ?? undefined,
         recipeTitle,
         recipeSlug,
       })),
@@ -46,10 +46,8 @@ export function AddToShoppingListButton({
         className,
       )}
     >
-      <ShoppingCart className="mr-1.5 h-4 w-4 transition-transform duration-300 group-hover:scale-110 sm:mr-2 sm:h-5 sm:w-5" />
-      <span className="text-sm font-medium sm:text-base">
-        Add to Shopping List
-      </span>
+      <ShoppingCart className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 sm:me-2 sm:size-5" />
+      <span className="text-sm font-medium sm:text-base">Add to Shopping List</span>
     </Button>
   );
 }

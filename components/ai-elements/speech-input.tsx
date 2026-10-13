@@ -14,13 +14,11 @@ interface WebSpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
-  onstart: ((this: WebSpeechRecognition, ev: Event) => void) | null;
-  onend: ((this: WebSpeechRecognition, ev: Event) => void) | null;
-  onresult:
-    | ((this: WebSpeechRecognition, ev: WebSpeechRecognitionEvent) => void)
-    | null;
+  onstart: ((this: WebSpeechRecognition, ev: Readonly<Event>) => void) | null;
+  onend: ((this: WebSpeechRecognition, ev: Readonly<Event>) => void) | null;
+  onresult: ((this: WebSpeechRecognition, ev: Readonly<WebSpeechRecognitionEvent>) => void) | null;
   onerror:
-    | ((this: WebSpeechRecognition, ev: WebSpeechRecognitionErrorEvent) => void)
+    | ((this: WebSpeechRecognition, ev: Readonly<WebSpeechRecognitionErrorEvent>) => void)
     | null;
 }
 
@@ -63,30 +61,29 @@ const getSpeechRecognitionCtor = (): SpeechRecognitionCtor | null => {
     return null;
   }
 
+  // SAFETY: the browser guard above proves window exists; this adds optional Web Speech API fields.
   const speechWindow = window as SpeechRecognitionWindow;
-  return (
-    speechWindow.SpeechRecognition ??
-    speechWindow.webkitSpeechRecognition ??
-    null
-  );
+
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
 };
 
 type SpeechInputMode = "speech-recognition" | "media-recorder" | "none";
 
 export type SpeechInputProps = ComponentProps<typeof Button> & {
-  onTranscriptionChange?: (text: string) => void;
+  readonly onTranscriptionChange?: (text: string) => void;
   /**
    * Callback for when audio is recorded using MediaRecorder fallback.
    * This is called in browsers that don't support the Web Speech API (Firefox, Safari).
    * The callback receives an audio Blob that should be sent to a transcription service.
    * Return the transcribed text, which will be passed to onTranscriptionChange.
    */
-  onAudioRecorded?: (audioBlob: Blob) => Promise<string>;
-  lang?: string;
+  readonly onAudioRecorded?: (audioBlob: Blob) => Promise<string>;
+  readonly lang?: string;
 };
 
 const detectSpeechInputMode = (): SpeechInputMode => {
   const speechRecognitionCtor = getSpeechRecognitionCtor();
+
   if (speechRecognitionCtor) {
     return "speech-recognition";
   }
@@ -112,30 +109,32 @@ export const SpeechInput = ({
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mode] = useState<SpeechInputMode>(detectSpeechInputMode);
-  const [isRecognitionReady, setIsRecognitionReady] = useState(false);
+  const isRecognitionReady = mode === "speech-recognition";
   const recognitionRef = useRef<WebSpeechRecognition | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const onTranscriptionChangeRef = useRef<
-    SpeechInputProps["onTranscriptionChange"]
-  >(onTranscriptionChange);
-  const onAudioRecordedRef =
-    useRef<SpeechInputProps["onAudioRecorded"]>(onAudioRecorded);
 
-  // Keep refs in sync
-  onTranscriptionChangeRef.current = onTranscriptionChange;
-  onAudioRecordedRef.current = onAudioRecorded;
+  const onTranscriptionChangeRef =
+    useRef<SpeechInputProps["onTranscriptionChange"]>(onTranscriptionChange);
+
+  const onAudioRecordedRef = useRef<SpeechInputProps["onAudioRecorded"]>(onAudioRecorded);
+
+  useEffect(() => {
+    onTranscriptionChangeRef.current = onTranscriptionChange;
+    onAudioRecordedRef.current = onAudioRecorded;
+  }, [onTranscriptionChange, onAudioRecorded]);
 
   // Initialize Speech Recognition when mode is speech-recognition
   useEffect(() => {
     if (mode !== "speech-recognition") {
-      return;
+      return () => {};
     }
 
     const SpeechRecognition = getSpeechRecognitionCtor();
+
     if (!SpeechRecognition) {
-      return;
+      return () => {};
     }
 
     const speechRecognition = new SpeechRecognition();
@@ -153,15 +152,13 @@ export const SpeechInput = ({
     };
 
     const handleResult = (event: Event) => {
+      // SAFETY: this handler receives the Web Speech result event with results and resultIndex.
       const speechEvent = event as WebSpeechRecognitionEvent;
       let finalTranscript = "";
 
-      for (
-        let i = speechEvent.resultIndex;
-        i < speechEvent.results.length;
-        i += 1
-      ) {
+      for (let i = speechEvent.resultIndex; i < speechEvent.results.length; i += 1) {
         const result = speechEvent.results[i];
+
         if (result.isFinal) {
           finalTranscript += result[0]?.transcript ?? "";
         }
@@ -182,7 +179,6 @@ export const SpeechInput = ({
     speechRecognition.addEventListener("error", handleError);
 
     recognitionRef.current = speechRecognition;
-    setIsRecognitionReady(true);
 
     return () => {
       speechRecognition.removeEventListener("start", handleStart);
@@ -191,7 +187,6 @@ export const SpeechInput = ({
       speechRecognition.removeEventListener("error", handleError);
       speechRecognition.stop();
       recognitionRef.current = null;
-      setIsRecognitionReady(false);
     };
   }, [mode, lang]);
 
@@ -201,6 +196,7 @@ export const SpeechInput = ({
       if (mediaRecorderRef.current?.state === "recording") {
         mediaRecorderRef.current.stop();
       }
+
       if (streamRef.current) {
         for (const track of streamRef.current.getTracks()) {
           track.stop();
@@ -222,42 +218,52 @@ export const SpeechInput = ({
       const mediaRecorder = new MediaRecorder(stream);
       audioChunksRef.current = [];
 
-      const handleDataAvailable = (event: BlobEvent) => {
+      const handleDataAvailable = (event: Readonly<BlobEvent>) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
-      const handleStop = async () => {
-        for (const track of stream.getTracks()) {
-          track.stop();
-        }
-        streamRef.current = null;
-
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
-
-        if (audioBlob.size > 0 && onAudioRecordedRef.current) {
-          setIsProcessing(true);
-          try {
-            const transcript = await onAudioRecordedRef.current(audioBlob);
-            if (transcript) {
-              onTranscriptionChangeRef.current?.(transcript);
-            }
-          } catch {
-            // Error handling delegated to the onAudioRecorded caller
-          } finally {
-            setIsProcessing(false);
+      const handleStop = () => {
+        void (async () => {
+          for (const track of stream.getTracks()) {
+            track.stop();
           }
-        }
+
+          streamRef.current = null;
+
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+          });
+
+          if (audioBlob.size > 0 && onAudioRecordedRef.current) {
+            setIsProcessing(true);
+
+            try {
+              const transcript = await onAudioRecordedRef.current(audioBlob);
+
+              if (transcript) {
+                onTranscriptionChangeRef.current?.(transcript);
+              }
+            } catch {
+              // Error handling delegated to the onAudioRecorded caller
+            } finally {
+              setIsProcessing(false);
+            }
+          }
+        })().catch(() => {
+          console.error("Could not process recorded audio");
+          setIsProcessing(false);
+        });
       };
 
       const handleError = () => {
         setIsListening(false);
+
         for (const track of stream.getTracks()) {
           track.stop();
         }
+
         streamRef.current = null;
       };
 
@@ -278,6 +284,7 @@ export const SpeechInput = ({
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
     }
+
     setIsListening(false);
   }, []);
 
@@ -292,7 +299,7 @@ export const SpeechInput = ({
       if (isListening) {
         stopMediaRecorder();
       } else {
-        startMediaRecorder();
+        startMediaRecorder().catch(() => {});
       }
     }
   }, [mode, isListening, startMediaRecorder, stopMediaRecorder]);

@@ -9,22 +9,16 @@ import { useCallback } from "react";
 
 export type SuggestionsProps = ComponentProps<typeof ScrollArea>;
 
-export const Suggestions = ({
-  className,
-  children,
-  ...props
-}: SuggestionsProps) => (
+export const Suggestions = ({ className, children, ...props }: SuggestionsProps) => (
   <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
-    <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
-      {children}
-    </div>
+    <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>{children}</div>
     <ScrollBar className="hidden" orientation="horizontal" />
   </ScrollArea>
 );
 
 export type SuggestionProps = Omit<ComponentProps<typeof Button>, "onClick"> & {
-  suggestion: string;
-  onClick?: (suggestion: string) => void;
+  readonly suggestion: string;
+  readonly onClick?: (suggestion: string) => void;
 };
 
 export const Suggestion = ({
@@ -35,7 +29,7 @@ export const Suggestion = ({
   size = "sm",
   children,
   ...props
-}: SuggestionProps) => {
+}: Readonly<SuggestionProps>) => {
   const handleClick = useCallback(() => {
     onClick?.(suggestion);
   }, [onClick, suggestion]);
@@ -49,7 +43,7 @@ export const Suggestion = ({
       variant={variant}
       {...props}
     >
-      {children || suggestion}
+      {children ?? suggestion}
     </Button>
   );
 };

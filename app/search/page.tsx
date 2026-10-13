@@ -1,10 +1,7 @@
 import { Suspense } from "react";
 import { SearchBar } from "@/components/search/search-bar";
 import { AppLayout } from "@/components/layout/app-layout";
-import {
-  CardListSkeleton,
-  ContentEmptyState,
-} from "@/components/ui/content-state";
+import { CardListSkeleton, ContentEmptyState } from "@/components/ui/content-state";
 import { SearchResults } from "./search-results";
 import { SearchDiscovery } from "@/components/search/search-discovery";
 import type { Metadata } from "next";
@@ -13,12 +10,10 @@ import { createPageMetadata } from "@/lib/metadata";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  searchParams: Promise<{ q?: string }>;
+  readonly searchParams: Promise<{ readonly q?: string }>;
 }
 
-export async function generateMetadata({
-  searchParams,
-}: PageProps): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const params = await searchParams;
   const query = params.q;
   const querySuffix = query ? `?q=${encodeURIComponent(query)}` : "";
@@ -36,7 +31,7 @@ function SearchResultsSkeleton() {
 
 export default async function SearchPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const query = params.q || "";
+  const query = params.q ?? "";
 
   return (
     <AppLayout
@@ -47,22 +42,22 @@ export default async function SearchPage({ searchParams }: PageProps) {
       contentMaxWidth="4xl"
       contentClassName="py-5 sm:py-7"
     >
-      <h1 className="mb-4 font-serif text-2xl font-bold text-foreground sm:mb-6 sm:text-3xl">
+      <h1 className="mbe-4 font-serif text-2xl font-bold text-foreground sm:mbe-6 sm:text-3xl">
         Search Recipes
       </h1>
 
-      <Suspense fallback={<div className="mb-6 h-12 sm:mb-8 sm:h-14" />}>
+      <Suspense fallback={<div className="mbe-6 h-12 sm:mbe-8 sm:h-14" />}>
         <SearchBar
           size="large"
           placeholder="Search for recipes..."
-          autoFocus
-          className="mb-6 sm:mb-8"
+
+          className="mbe-6 sm:mbe-8"
         />
       </Suspense>
 
       {query ? (
         <div>
-          <p className="mb-6 text-sm text-muted-foreground">
+          <p className="mbe-6 text-sm text-muted-foreground">
             Showing results for &quot;{query}&quot;
           </p>
           <Suspense fallback={<SearchResultsSkeleton />}>
@@ -70,7 +65,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </Suspense>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           <ContentEmptyState
             icon="🔍"
             title="Start searching"
