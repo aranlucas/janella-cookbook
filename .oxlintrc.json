@@ -63,7 +63,6 @@
         ]
       }
     ],
-    "typescript/prefer-readonly-parameter-types": "off",
     "eslint/no-console": [
       "error",
       {
