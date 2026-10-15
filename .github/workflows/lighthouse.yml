@@ -31,7 +31,7 @@ jobs:
       NODE_ENV: production
 
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
@@ -60,7 +60,7 @@ jobs:
           exit 1
 
       - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@12.6.2
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # 12.6.2
         with:
           urls: |
             http://127.0.0.1:3000/
@@ -70,7 +70,7 @@ jobs:
           temporaryPublicStorage: true
 
       - name: Upload app logs
-        uses: actions/upload-artifact@v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: next-start-log
