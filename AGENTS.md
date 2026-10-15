@@ -290,7 +290,6 @@ type ActionResult<T> =
 | `slug.ts`          | Unique slug generation with collision detection                       |
 | `errors.ts`        | Custom error classes (AppError, ValidationError, DatabaseError, etc.) |
 | `api-response.ts`  | Standardized API response helpers (success, error, paginated)         |
-| `mcp-client.ts`    | MCP server connection for AI chat                                     |
 | `mcp-oauth.ts`     | OAuth authentication for MCP                                          |
 | `haptics.ts`       | Mobile vibration feedback patterns                                    |
 | `utils.ts`         | `cn()` helper combining clsx and tailwind-merge                       |
