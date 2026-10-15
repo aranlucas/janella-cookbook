@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
-      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
           cache: true
           require-lockfile: true
@@ -65,7 +65,7 @@ jobs:
         run: pnpm exec playwright test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: playwright-results
@@ -106,7 +106,7 @@ jobs:
           ref: ${{ steps.source.outputs.ref }}
           persist-credentials: false
 
-      - uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
           cache: true
           require-lockfile: true
@@ -125,7 +125,7 @@ jobs:
         run: rm -f playwright/.cache/deployment.json
 
       - name: Upload deployment results
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         if: ${{ !cancelled() }}
         with:
           name: playwright-deployment-results
