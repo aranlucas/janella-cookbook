@@ -1,0 +1,60 @@
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+export const env = createEnv({
+  server: {
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    DATABASE_URL: z.url(),
+    DATABASE_POOL_MAX: z.coerce.number().int().positive().default(5),
+    FREELLM_API_KEY: z.string().min(1).optional(),
+    FREELLM_BASE_URL: z.url().default("https://freellmapi-production-1175.up.railway.app/v1"),
+    FREELLM_MODEL: z.string().min(1).default("auto"),
+    FREELLM_RECIPE_MODEL: z.string().min(1).default("auto"),
+    // Keep existing vectors in the same model space; other families require reindexing.
+    FREELLM_EMBEDDING_MODEL: z.literal("embeddinggemma-300m").default("embeddinggemma-300m"),
+    ENABLE_HOSTED_EMBEDDINGS: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    MCP_API_TOKEN: z.string().min(1).optional(),
+    R2_ACCOUNT_ID: z.string().min(1).optional(),
+    R2_ACCESS_KEY_ID: z.string().min(1).optional(),
+    R2_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    R2_BUCKET_NAME: z.string().min(1).default("cookbook-images"),
+    NEXTAUTH_SECRET: z.string().min(1).optional(),
+    NEXTAUTH_URL: z.url().optional(),
+    SITE_URL: z.string().trim().min(1).optional(),
+    APP_URL: z.string().trim().min(1).optional(),
+    RAILWAY_PUBLIC_DOMAIN: z.string().trim().min(1).optional(),
+    VERCEL_URL: z.string().trim().min(1).optional(),
+  },
+  client: {
+    NEXT_PUBLIC_SITE_URL: z.string().trim().min(1).optional(),
+    NEXT_PUBLIC_APP_URL: z.string().trim().min(1).optional(),
+  },
+  runtimeEnv: {
+    NODE_ENV: process.env.NODE_ENV,
+    DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_POOL_MAX: process.env.DATABASE_POOL_MAX,
+    FREELLM_API_KEY: process.env.FREELLM_API_KEY,
+    FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
+    FREELLM_MODEL: process.env.FREELLM_MODEL,
+    FREELLM_RECIPE_MODEL: process.env.FREELLM_RECIPE_MODEL,
+    FREELLM_EMBEDDING_MODEL: process.env.FREELLM_EMBEDDING_MODEL,
+    ENABLE_HOSTED_EMBEDDINGS: process.env.ENABLE_HOSTED_EMBEDDINGS,
+    MCP_API_TOKEN: process.env.MCP_API_TOKEN,
+    R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
+    R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    SITE_URL: process.env.SITE_URL,
+    APP_URL: process.env.APP_URL,
+    RAILWAY_PUBLIC_DOMAIN: process.env.RAILWAY_PUBLIC_DOMAIN,
+    VERCEL_URL: process.env.VERCEL_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  },
+  emptyStringAsUndefined: true,
+});

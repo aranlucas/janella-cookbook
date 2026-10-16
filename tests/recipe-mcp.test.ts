@@ -7,21 +7,10 @@ import type { RecipeWithRelations } from "@/types/recipe";
 import type { JsonObject } from "@/types/json";
 import { z } from "zod";
 
-const originalDatabaseUrl = process.env.DATABASE_URL;
-
-process.env.DATABASE_URL ??= "postgresql://postgres:postgres@localhost:5432/janella?schema=public";
-
-const [{ createRecipeTools }, { POST, GET }, { GET: protectedResource }] = await Promise.all([
+const [{ createRecipeTools }, { GET: protectedResource }] = await Promise.all([
   import("@/lib/recipe-mcp"),
-  import("@/app/api/mcp/route"),
   import("@/app/.well-known/oauth-protected-resource/route"),
 ]);
-
-if (originalDatabaseUrl === undefined) {
-  delete process.env.DATABASE_URL;
-} else {
-  process.env.DATABASE_URL = originalDatabaseUrl;
-}
 
 const token = "synthetic-mcp-token";
 
@@ -292,6 +281,9 @@ function request(
 
 test("the HTTP endpoint rejects missing and invalid credentials before recipe access", async () => {
   vi.stubEnv("MCP_API_TOKEN", token);
+  vi.resetModules();
+
+  const { POST } = await import("@/app/api/mcp/route");
 
   const responses = await Promise.all(
     [null, "Bearer incorrect-token", "Basic synthetic-mcp-token"].map((authorization) =>
@@ -312,6 +304,10 @@ test("the HTTP endpoint rejects missing and invalid credentials before recipe ac
 
 test("the endpoint fails closed when its token is missing and advertises proxy metadata", async () => {
   vi.stubEnv("MCP_API_TOKEN", "");
+  vi.resetModules();
+
+  const { POST } = await import("@/app/api/mcp/route");
+
   expect((await POST(request("tools/list", {}))).status).toBe(503);
 
   const response = protectedResource(
@@ -329,6 +325,9 @@ test("the endpoint fails closed when its token is missing and advertises proxy m
 
 test("stateless GET returns 405 after authentication", async () => {
   vi.stubEnv("MCP_API_TOKEN", token);
+  vi.resetModules();
+
+  const { GET } = await import("@/app/api/mcp/route");
 
   const response = await GET(
     new Request("https://cookbook.example/api/mcp", {

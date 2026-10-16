@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { isTransientDatabaseError, thrownValueSchema } from "./errors";
+import { env } from "./env";
 
 type PrismaGlobal = typeof globalThis & {
   prisma: PrismaClient | undefined;
@@ -24,17 +25,9 @@ function sleep(ms: number): Promise<void> {
 const globalForPrisma = globalThis as PrismaGlobal;
 
 function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
-
-  if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is required");
-  }
-
-  const poolMax = parseInt(process.env.DATABASE_POOL_MAX ?? "5", 10);
-
   const pool = new Pool({
-    connectionString,
-    max: poolMax,
+    connectionString: env.DATABASE_URL,
+    max: env.DATABASE_POOL_MAX,
     idleTimeoutMillis: 30_000,
     // Railway cold start can take 5-10s, so give it a bit more headroom than the default
     connectionTimeoutMillis: 10_000,
@@ -50,13 +43,13 @@ function createPrismaClient() {
 
   return new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
-if (process.env.NODE_ENV !== "production") {
+if (env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 

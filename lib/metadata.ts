@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { env } from "./env";
 
 const SITE_NAME = "Janella Cookbook";
 
@@ -45,12 +46,12 @@ function normalizeSiteUrl(url: string): string {
 
 function getSiteUrl(): string {
   const envSiteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.SITE_URL ??
-    process.env.APP_URL ??
-    process.env.RAILWAY_PUBLIC_DOMAIN ??
-    process.env.VERCEL_URL;
+    env.NEXT_PUBLIC_SITE_URL ??
+    env.NEXT_PUBLIC_APP_URL ??
+    env.SITE_URL ??
+    env.APP_URL ??
+    env.RAILWAY_PUBLIC_DOMAIN ??
+    env.VERCEL_URL;
 
   return normalizeSiteUrl(envSiteUrl ?? "http://localhost:3000");
 }

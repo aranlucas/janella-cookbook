@@ -1,50 +1,44 @@
-import { InferenceClient } from "@huggingface/inference";
+import { embed } from "ai";
 import { ok, err, errAsync, ResultAsync } from "neverthrow";
 import { z } from "zod";
 import { ExternalApiError, thrownValueSchema } from "./errors";
-
-const hf = new InferenceClient(process.env.HUGGINGFACE_API_KEY);
+import { env } from "./env";
+import { embeddingModel } from "./ai";
 
 const embeddingSchema = z.array(z.number().finite()).length(768);
 
 /**
- * Generate an embedding vector for the given text using Hugging Face's embedding model
- * Model: google/embeddinggemma-300m (768 dimensions)
- * Hosted inference is opt-in because provider billing is separate from OpenRouter.
+ * Generate a 768-dimensional EmbeddingGemma vector through the Railway router.
+ * Pin the model family so provider routing cannot change the vector space.
  *
  * Returns Result instead of throwing.
  */
 export function generateEmbedding(text: string): ResultAsync<number[], ExternalApiError> {
-  if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) {
-    return errAsync(
-      new ExternalApiError("Hugging Face", "HUGGINGFACE_API_KEY environment variable is not set"),
-    );
+  if (!env.ENABLE_HOSTED_EMBEDDINGS) {
+    return errAsync(new ExternalApiError("FreeLLMAPI", "Hosted embeddings are disabled"));
   }
 
   if (!text || text.trim().length === 0) {
-    return errAsync(
-      new ExternalApiError("Hugging Face", "Cannot generate embedding for empty text"),
-    );
+    return errAsync(new ExternalApiError("FreeLLMAPI", "Cannot generate embedding for empty text"));
   }
 
   return ResultAsync.fromPromise(
-    hf.featureExtraction(
-      {
-        model: "google/embeddinggemma-300m",
-        inputs: text.slice(0, 8000), // Limit input length to avoid token limits
-      },
-      { signal: AbortSignal.timeout(5000) },
-    ),
+    embed({
+      model: embeddingModel,
+      value: text.slice(0, 8000),
+      maxRetries: 0,
+      abortSignal: AbortSignal.timeout(5000),
+    }).then(({ embedding }) => embedding),
     (error) => {
       const message = error instanceof Error ? error.message : "Unknown embedding error";
 
-      return new ExternalApiError("Hugging Face", message, thrownValueSchema.parse(error));
+      return new ExternalApiError("FreeLLMAPI", message, thrownValueSchema.parse(error));
     },
   ).andThen((result) => {
     const parsed = embeddingSchema.safeParse(result);
 
     if (!parsed.success) {
-      return err(new ExternalApiError("Hugging Face", "Invalid embedding dimensions or values"));
+      return err(new ExternalApiError("FreeLLMAPI", "Invalid embedding dimensions or values"));
     }
 
     return ok(parsed.data);

@@ -7,6 +7,7 @@ import type {
 } from "@ai-sdk/mcp";
 import { z } from "zod";
 import { AuthRequiredError } from "./mcp-auth-error";
+import { env } from "./env";
 
 export { AuthRequiredError } from "./mcp-auth-error";
 
@@ -73,7 +74,7 @@ export class MCPOAuthProvider implements OAuthClientProvider {
     const maxAge = Math.max((tokens.expires_in ?? 3600) - 60, 60);
     cookieStore.set(COOKIES.TOKENS, JSON.stringify(tokens), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge,
@@ -89,7 +90,7 @@ export class MCPOAuthProvider implements OAuthClientProvider {
     const cookieStore = await cookies();
     cookieStore.set(COOKIES.CODE_VERIFIER, codeVerifier, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 600,
@@ -124,7 +125,7 @@ export class MCPOAuthProvider implements OAuthClientProvider {
     const cookieStore = await cookies();
     cookieStore.set(COOKIES.CLIENT_INFO, JSON.stringify(info), {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
