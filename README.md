@@ -23,7 +23,7 @@ Use cookbook filters and search, or ask the recipe assistant to help explore the
 - Use keyword search without hosted embeddings; turn on semantic search with optional Hugging Face embeddings.
 - Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through its OpenAI-compatible Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings are optional and disabled by default.
+AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through the `@ai-sdk/openai-compatible` adapter and its Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings are optional and disabled by default.
 
 ## Start cooking locally
 

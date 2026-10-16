@@ -35,7 +35,7 @@
   "dependencies": {
     "@ai-sdk/google": "^4.0.94",
     "@ai-sdk/mcp": "^2.0.74",
-    "@ai-sdk/openai": "^4.0.92",
+    "@ai-sdk/openai-compatible": "^3.0.70",
     "@ai-sdk/react": "^4.0.141",
     "@base-ui/react": "^1.9.0",
     "@hookform/resolvers": "^5.9.1",
