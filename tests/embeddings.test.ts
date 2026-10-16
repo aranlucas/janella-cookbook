@@ -18,7 +18,6 @@ describe("FreeLLMAPI embeddings", () => {
     vi.stubEnv("FREELLM_API_KEY", "synthetic-router-key");
     vi.stubEnv("FREELLM_BASE_URL", "https://router.example/v1");
     vi.stubEnv("FREELLM_EMBEDDING_MODEL", "embeddinggemma-300m");
-    vi.stubEnv("ENABLE_HOSTED_EMBEDDINGS", "true");
   });
 
   afterEach(() => {
@@ -26,7 +25,7 @@ describe("FreeLLMAPI embeddings", () => {
     vi.unstubAllGlobals();
   });
 
-  test("uses the shared router key and a pinned model for 768-dimensional vectors", async () => {
+  test("uses the shared router key and a pinned model without an opt-in flag", async () => {
     const vector = Array.from({ length: 768 }, () => 0.25);
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(embeddingResponse(vector));
 
@@ -60,17 +59,12 @@ describe("FreeLLMAPI embeddings", () => {
     expect(result._unsafeUnwrapErr().message).toContain("Invalid embedding dimensions or values");
   });
 
-  test("does not call hosted inference when disabled or when the input is blank", async () => {
+  test("does not call hosted inference when the input is blank", async () => {
     const fetchMock = vi.fn<typeof fetch>();
 
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("ENABLE_HOSTED_EMBEDDINGS", "false");
-    const disabled = await import("@/lib/embeddings");
-    expect((await disabled.generateEmbedding("tomato toast")).isErr()).toBe(true);
-    vi.resetModules();
-    vi.stubEnv("ENABLE_HOSTED_EMBEDDINGS", "true");
-    const enabled = await import("@/lib/embeddings");
-    expect((await enabled.generateEmbedding("  ")).isErr()).toBe(true);
+    const { generateEmbedding } = await import("@/lib/embeddings");
+    expect((await generateEmbedding("  ")).isErr()).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

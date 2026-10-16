@@ -22,7 +22,6 @@ import type {
 } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
-import { env } from "./env";
 
 const sourceTypeSchema = z.enum(["URL_IMPORT", "MANUAL", "NATURAL_LANGUAGE", "PHOTO", "API"]);
 
@@ -477,11 +476,6 @@ export function hybridSearch(
   // If query is empty or whitespace-only, fall back to keyword search
   // which handles empty queries by returning all recipes with filters
   if (!query || query.trim().length === 0) {
-    return keywordSearch(query, filters, limit, offset);
-  }
-
-  // Check if we have embeddings capability
-  if (!env.ENABLE_HOSTED_EMBEDDINGS) {
     return keywordSearch(query, filters, limit, offset);
   }
 

@@ -20,10 +20,10 @@ Use cookbook filters and search, or ask the recipe assistant to help explore the
 - Add a recipe by hand or import it from a URL, YouTube transcript, text, or photo.
 - Keep ingredients, instructions, servings, images, notes, ratings, and cooking history together.
 - Filter by cuisine, course, difficulty, time, and favorites.
-- Use keyword search without hosted embeddings; turn on semantic search with optional FreeLLMAPI embeddings.
+- Search with combined semantic and keyword results using FreeLLMAPI embeddings.
 - Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through the `@ai-sdk/openai-compatible` adapter and its Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings are optional and disabled by default.
+AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through the `@ai-sdk/openai-compatible` adapter and its Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings run automatically for recipe indexing and semantic search, with keyword search available if the provider fails.
 
 ## Start cooking locally
 
@@ -36,7 +36,7 @@ cp .env.example .env
 
 Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; optional `FREELLM_MODEL` and `FREELLM_RECIPE_MODEL` override `auto` for chat and recipe extraction/nutrition respectively. Existing OpenRouter environment variables are no longer used.
 
-For semantic search, set `ENABLE_HOSTED_EMBEDDINGS=true`; embeddings use the same `FREELLM_API_KEY` and endpoint as chat. `FREELLM_EMBEDDING_MODEL` is pinned to `embeddinggemma-300m`, matching the existing 768-dimensional index. The router may fail over between providers of this model, but changing model families requires reindexing and a schema update. The cookbook no longer needs a separate Hugging Face key; manage provider keys in FreeLLMAPI.
+Embeddings always use FreeLLMAPI with the same `FREELLM_API_KEY` and base URL as chat, through `/v1/embeddings`. `FREELLM_EMBEDDING_MODEL` is pinned to `embeddinggemma-300m`, matching the existing 768-dimensional index. The router may fail over between providers of this model, but changing model families requires reindexing and a schema update. The cookbook no longer needs a separate Hugging Face key; manage provider keys in FreeLLMAPI.
 
 Optional Cloudflare R2 credentials enable managed recipe-image storage.
 
@@ -111,7 +111,7 @@ For example, call `add_recipe` with:
 }
 ```
 
-Generate a new `saveKey` UUID for each recipe and reuse it only when retrying that same save. Times and instruction durations are in minutes, and array order determines ingredient and step order. Recipes added through MCP have source type `API`. Adding structured recipes and keyword browsing work without AI API keys; optional hosted embeddings follow the existing app settings.
+Generate a new `saveKey` UUID for each recipe and reuse it only when retrying that same save. Times and instruction durations are in minutes, and array order determines ingredient and step order. Recipes added through MCP have source type `API`. Adding structured recipes and keyword browsing work without AI API keys; embedding generation runs in the background through FreeLLMAPI and provider failures do not block saving.
 
 Run the MCP protocol and tool tests with `pnpm exec vitest run tests/recipe-mcp.test.mjs`.
 

@@ -14,7 +14,6 @@ describe("application environment", () => {
       "FREELLM_MODEL",
       "FREELLM_RECIPE_MODEL",
       "FREELLM_EMBEDDING_MODEL",
-      "ENABLE_HOSTED_EMBEDDINGS",
       "MCP_API_TOKEN",
     ]) {
       vi.stubEnv(name, "");
@@ -37,22 +36,16 @@ describe("application environment", () => {
     expect(env.FREELLM_MODEL).toBe("auto");
     expect(env.FREELLM_RECIPE_MODEL).toBe("auto");
     expect(env.FREELLM_EMBEDDING_MODEL).toBe("embeddinggemma-300m");
-    expect(env.ENABLE_HOSTED_EMBEDDINGS).toBe(false);
     expect(env.FREELLM_API_KEY).toBeUndefined();
     expect(env.MCP_API_TOKEN).toBeUndefined();
   });
 
-  test("parses pool size and embedding opt-in without treating false as truthy", async () => {
+  test("parses pool size", async () => {
     vi.stubEnv("DATABASE_POOL_MAX", "3");
-    vi.stubEnv("ENABLE_HOSTED_EMBEDDINGS", "false");
 
     const { env } = await import("@/lib/env");
 
     expect(env.DATABASE_POOL_MAX).toBe(3);
-    expect(env.ENABLE_HOSTED_EMBEDDINGS).toBe(false);
-    vi.resetModules();
-    vi.stubEnv("ENABLE_HOSTED_EMBEDDINGS", "true");
-    expect((await import("@/lib/env")).env.ENABLE_HOSTED_EMBEDDINGS).toBe(true);
   });
 
   test.each([
@@ -63,7 +56,6 @@ describe("application environment", () => {
     ["DATABASE_POOL_MAX", "invalid-number"],
     ["FREELLM_BASE_URL", "invalid-url"],
     ["FREELLM_EMBEDDING_MODEL", "auto"],
-    ["ENABLE_HOSTED_EMBEDDINGS", "yes"],
   ])("rejects invalid %s configuration (%s)", async (name, value) => {
     vi.stubEnv(name, value);
 
