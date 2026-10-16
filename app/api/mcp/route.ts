@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import type { AuthInfo } from "@modelcontextprotocol/server";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { registerRecipeTools } from "@/lib/recipe-mcp";
+import { env } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -19,7 +20,7 @@ const mcpHandler = createMcpHandler(registerRecipeTools, {
 });
 
 function verifyToken(_request: Request, token?: string): AuthInfo | undefined {
-  const expected = process.env.MCP_API_TOKEN;
+  const expected = env.MCP_API_TOKEN;
 
   if (!token || !expected) {
     return undefined;
@@ -36,7 +37,7 @@ const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, { required: tr
 
 function handler(request: Request) {
   // Never expose a writable public endpoint when deployment configuration is missing.
-  if (!process.env.MCP_API_TOKEN) {
+  if (!env.MCP_API_TOKEN) {
     return Response.json({ error: "Recipe MCP is not configured." }, { status: 503 });
   }
 

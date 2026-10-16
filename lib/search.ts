@@ -22,6 +22,7 @@ import type {
 } from "@/types/recipe";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { env } from "./env";
 
 const sourceTypeSchema = z.enum(["URL_IMPORT", "MANUAL", "NATURAL_LANGUAGE", "PHOTO", "API"]);
 
@@ -480,7 +481,7 @@ export function hybridSearch(
   }
 
   // Check if we have embeddings capability
-  if (process.env.ENABLE_HOSTED_EMBEDDINGS !== "true" || !process.env.HUGGINGFACE_API_KEY) {
+  if (!env.ENABLE_HOSTED_EMBEDDINGS) {
     return keywordSearch(query, filters, limit, offset);
   }
 

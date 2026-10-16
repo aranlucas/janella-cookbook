@@ -20,10 +20,10 @@ Use cookbook filters and search, or ask the recipe assistant to help explore the
 - Add a recipe by hand or import it from a URL, YouTube transcript, text, or photo.
 - Keep ingredients, instructions, servings, images, notes, ratings, and cooking history together.
 - Filter by cuisine, course, difficulty, time, and favorites.
-- Use keyword search without hosted embeddings; turn on semantic search with optional Hugging Face embeddings.
+- Use keyword search without hosted embeddings; turn on semantic search with optional FreeLLMAPI embeddings.
 - Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-AI recipe parsing and chat use OpenRouter. Hosted embeddings are optional and disabled by default.
+AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through the `@ai-sdk/openai-compatible` adapter and its Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings are optional and disabled by default.
 
 ## Start cooking locally
 
@@ -34,7 +34,13 @@ pnpm install
 cp .env.example .env
 ```
 
-Set DATABASE_URL to your PostgreSQL database. Add OPENROUTER_API_KEY for AI imports and chat. For semantic search, set ENABLE_HOSTED_EMBEDDINGS=true and provide HUGGINGFACE_API_KEY. Optional Cloudflare R2 credentials enable managed recipe-image storage.
+Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; optional `FREELLM_MODEL` and `FREELLM_RECIPE_MODEL` override `auto` for chat and recipe extraction/nutrition respectively. Existing OpenRouter environment variables are no longer used.
+
+For semantic search, set `ENABLE_HOSTED_EMBEDDINGS=true`; embeddings use the same `FREELLM_API_KEY` and endpoint as chat. `FREELLM_EMBEDDING_MODEL` is pinned to `embeddinggemma-300m`, matching the existing 768-dimensional index. The router may fail over between providers of this model, but changing model families requires reindexing and a schema update. The cookbook no longer needs a separate Hugging Face key; manage provider keys in FreeLLMAPI.
+
+Optional Cloudflare R2 credentials enable managed recipe-image storage.
+
+Application configuration is centralized in `lib/env.ts` using [t3-env](https://env.t3.gg/docs/nextjs). Next.js validates it when loading its config. Empty optional values are treated as unset; provider keys remain optional, while `DATABASE_URL` must be a valid URL and `DATABASE_POOL_MAX` must be a positive integer (default 5). Only declared `NEXT_PUBLIC_*` values are accessible on the client. Prisma and test-runner configuration retain their own environment loading so dependency installation and client generation work without application credentials.
 
 Create or update the database schema, then launch Next.js:
 
@@ -43,15 +49,15 @@ pnpm db:push
 pnpm dev
 ```
 
-Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). `pnpm dev` runs through [Portless](https://github.com/vercel-labs/portless) (a dev dependency); its first run may ask for `sudo` to bind port 443 and trust a local certificate. In production, the app runs on Railway; use the Railway service environment when working with the deployed database.
+Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). `pnpm dev` runs through [Portless](https://github.com/vercel-labs/portless) (a dev dependency); its first run may ask for `sudo` to bind port 443 and trust a local certificate. The production website runs on Vercel, with its database and FreeLLMAPI service on Railway. Set runtime application variables in the Vercel project environment.
 
 ## Connect an MCP client
 
-The cookbook exposes recipe tools at `/api/mcp`, using [Vercel's mcp-handler](https://github.com/vercel-labs/mcp-handler). It runs in the existing Next.js app on Railway. The handler uses stateless Streamable HTTP and does not need Redis or a separate server.
+The cookbook exposes recipe tools at `/api/mcp`, using [Vercel's mcp-handler](https://github.com/vercel-labs/mcp-handler). It runs in the existing Next.js app. The handler uses stateless Streamable HTTP and does not need Redis or a separate server.
 
 MCP and the app share recipe queries in `lib/recipe-queries.ts`: listing, filters, pagination, and recipe lookup are reused by the tools, REST endpoints, and recipe browsing, detail, and edit pages. Saving uses the same `createRecipe` action as the app's recipe form. MCP keeps its own protocol response formatting and returns compact summaries when browsing.
 
-Set `MCP_API_TOKEN` to a random secret in your local environment or Railway's `surprising-growth` service. Generate one with:
+Set `MCP_API_TOKEN` to a random secret in your local environment or the Vercel production environment. Generate one with:
 
 ```sh
 openssl rand -hex 32
@@ -74,7 +80,7 @@ For clients that accept a remote MCP URL and headers, add this entry to their `m
 }
 ```
 
-Replace the URL with your Railway domain plus `/api/mcp` when connecting to the deployed app. Keep the real token out of committed configuration files.
+Replace the URL with `https://janella-cookbook.vercel.app/api/mcp` when connecting to the deployed app. Keep the real token out of committed configuration files.
 
 | Tool           | What it does                                                                                                                                                                                                                                                |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
