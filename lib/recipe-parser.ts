@@ -14,7 +14,7 @@ import {
   toAppError,
   type AppError,
 } from "./errors";
-import { isAIConfigured, model } from "./ai";
+import { model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
 import type { ParsedRecipe } from "@/types/recipe";
 import {
@@ -310,12 +310,6 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
 
     if (structured) {
       return { ...structured, imageUrl };
-    }
-
-    if (!isAIConfigured()) {
-      throw new RecipeParseError(
-        "This website needs AI extraction, which is not configured. Paste the text or enter the recipe manually.",
-      );
     }
 
     return await extractRecipeWithAI(html, href, imageUrl);
@@ -638,12 +632,6 @@ CRITICAL INSTRUCTIONS:
 export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecipe, AppError> {
   return ResultAsync.fromPromise(
     (async () => {
-      if (!isAIConfigured()) {
-        throw new RecipeParseError(
-          "Photo import is not configured. Paste the recipe text or enter it manually.",
-        );
-      }
-
       const { output } = await generateText({
         model,
         output: Output.object({ schema: recipeSchema }),

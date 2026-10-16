@@ -8,10 +8,6 @@ const freellm = createOpenAICompatible({
   supportsStructuredOutputs: true,
 });
 
-export function isAIConfigured(): boolean {
-  return Boolean(process.env.FREELLM_API_KEY?.trim());
-}
-
 export const chatModel = freellm.chatModel(process.env.FREELLM_MODEL ?? "auto");
 
 export const model = freellm.chatModel(process.env.FREELLM_RECIPE_MODEL ?? "auto");

@@ -88,14 +88,4 @@ describe("Railway FreeLLMAPI integration", () => {
       response_format: { type: "json_schema" },
     });
   });
-
-  test("requires the new key for AI extraction even when an old key exists", async () => {
-    vi.stubEnv("FREELLM_API_KEY", "");
-    const { isAIConfigured } = await import("@/lib/ai");
-    expect(isAIConfigured()).toBe(false);
-    vi.stubEnv("FREELLM_API_KEY", "  ");
-    expect(isAIConfigured()).toBe(false);
-    vi.stubEnv("FREELLM_API_KEY", "test-cookbook-key");
-    expect(isAIConfigured()).toBe(true);
-  });
 });
