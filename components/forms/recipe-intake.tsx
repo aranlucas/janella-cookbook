@@ -50,7 +50,6 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
   const [photoUrl, setPhotoUrl] = useState("");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [review, setReview] = useState(false);
-  const [updateExisting, setUpdateExisting] = useState(false);
   const [error, setError] = useState("");
   const [pending, startTransition] = useTransition();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -73,7 +72,6 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
               }
 
               setPreview(result.data);
-              setUpdateExisting(!!result.data.existing);
               setReview(true);
 
               return result;
@@ -180,12 +178,8 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
 
         setPreview(result.data);
 
-        if (!result.data.existing) {
-          rememberRecipePreview(result.data);
-        }
-
-        setUpdateExisting(false);
-        setReview(!result.data.existing);
+        rememberRecipePreview(result.data);
+        setReview(true);
       } catch {
         setError("The connection was interrupted. Your input is still here; try again.");
       }
@@ -379,26 +373,6 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
             </fieldset>
           </form>
         )}
-        {preview?.existing && !review && (
-          <div className="flex flex-col gap-3 rounded-xl border border-primary/40 bg-primary/5 p-5">
-            <h2 className="font-serif text-xl">This recipe is already in your cookbook</h2>
-            <p>{preview.existing.title}. Your saved recipe has not been changed.</p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Link href={`/recipe/${preview.existing.slug}`} className="underline">
-                Open existing recipe
-              </Link>
-              <Button
-                onClick={() => {
-                  setUpdateExisting(true);
-                  rememberRecipePreview(preview);
-                  setReview(true);
-                }}
-              >
-                Review an update
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
       {preview && review && (
         <div hidden={!review} className="flex flex-col gap-5">
@@ -407,11 +381,21 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
           </Button>
           <div>
             <h2 ref={heading} tabIndex={-1} className="font-serif text-2xl">
-              Make it yours
+              {preview.existing ? "Review your re-import" : "Make it yours"}
             </h2>
             <p className="mbs-2 text-sm text-muted-foreground">
-              Check quantities and steps before saving. Nothing has been saved yet.
+              {preview.existing
+                ? "Check the freshly imported quantities and steps. Saving will update your existing recipe."
+                : "Check quantities and steps before saving. Nothing has been saved yet."}
             </p>
+            {preview.existing && (
+              <Link
+                href={`/recipe/${preview.existing.slug}`}
+                className="mbs-2 inline-block text-sm underline"
+              >
+                Open saved recipe
+              </Link>
+            )}
           </div>
           <div className={photoUrl ? "grid items-start gap-6 lg:intake-grid" : ""}>
             {photoUrl && (
@@ -430,7 +414,7 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
               </aside>
             )}
             <ManualRecipeForm
-              key={`${preview.id}:${String(updateExisting)}`}
+              key={preview.id}
               draftKey={`import:${preview.id}`}
               draft={preview.draft}
               onSuccess={(recipe) => {
@@ -443,7 +427,7 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
                 router.push(`/recipe/${recipe.slug}`);
                 router.refresh();
               }}
-              initialData={updateExisting ? (preview.existing ?? undefined) : undefined}
+              initialData={preview.existing ?? undefined}
             />
           </div>
         </div>

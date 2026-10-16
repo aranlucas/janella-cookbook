@@ -2,7 +2,6 @@ import { embed } from "ai";
 import { ok, err, errAsync, ResultAsync } from "neverthrow";
 import { z } from "zod";
 import { ExternalApiError, thrownValueSchema } from "./errors";
-import { env } from "./env";
 import { embeddingModel } from "./ai";
 
 const embeddingSchema = z.array(z.number().finite()).length(768);
@@ -14,10 +13,6 @@ const embeddingSchema = z.array(z.number().finite()).length(768);
  * Returns Result instead of throwing.
  */
 export function generateEmbedding(text: string): ResultAsync<number[], ExternalApiError> {
-  if (!env.ENABLE_HOSTED_EMBEDDINGS) {
-    return errAsync(new ExternalApiError("FreeLLMAPI", "Hosted embeddings are disabled"));
-  }
-
   if (!text || text.trim().length === 0) {
     return errAsync(new ExternalApiError("FreeLLMAPI", "Cannot generate embedding for empty text"));
   }

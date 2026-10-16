@@ -12,10 +12,6 @@ export const env = createEnv({
     FREELLM_RECIPE_MODEL: z.string().min(1).default("auto"),
     // Keep existing vectors in the same model space; other families require reindexing.
     FREELLM_EMBEDDING_MODEL: z.literal("embeddinggemma-300m").default("embeddinggemma-300m"),
-    ENABLE_HOSTED_EMBEDDINGS: z
-      .enum(["true", "false"])
-      .default("false")
-      .transform((value) => value === "true"),
     MCP_API_TOKEN: z.string().min(1).optional(),
     R2_ACCOUNT_ID: z.string().min(1).optional(),
     R2_ACCESS_KEY_ID: z.string().min(1).optional(),
@@ -41,7 +37,6 @@ export const env = createEnv({
     FREELLM_MODEL: process.env.FREELLM_MODEL,
     FREELLM_RECIPE_MODEL: process.env.FREELLM_RECIPE_MODEL,
     FREELLM_EMBEDDING_MODEL: process.env.FREELLM_EMBEDDING_MODEL,
-    ENABLE_HOSTED_EMBEDDINGS: process.env.ENABLE_HOSTED_EMBEDDINGS,
     MCP_API_TOKEN: process.env.MCP_API_TOKEN,
     R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
     R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,

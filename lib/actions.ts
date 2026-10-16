@@ -13,7 +13,6 @@ import type { Prisma } from "@prisma/client";
 import { AppError, ValidationError, thrownValueSchema, toAppError } from "@/lib/errors";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
 import { createRecipeSearchProjection } from "@/lib/search-projection";
-import { env } from "@/lib/env";
 
 export type ActionResult<T = RecipeWithRelations> =
   | { success: true; data: T; slug?: string }
@@ -129,10 +128,6 @@ const searchProjection = createRecipeSearchProjection<Prisma.TransactionClient>(
 });
 
 function deferEmbeddingGeneration(recipeId: string, searchText: string) {
-  if (!env.ENABLE_HOSTED_EMBEDDINGS) {
-    return;
-  }
-
   after(searchProjection.embeddingJob(recipeId, searchText));
 }
 
