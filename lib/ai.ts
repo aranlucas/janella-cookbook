@@ -1,18 +1,16 @@
 import { createOpenAI } from "@ai-sdk/openai";
 
-// Stay on free endpoints even if an older deployment still specifies a paid model.
-function freeModel(value: string | undefined, fallback = "openrouter/free"): string {
-  return value === "openrouter/free" || value?.endsWith(":free") ? value : fallback;
-}
-
-// Chat Completions is required for OpenRouter; do not use the Responses API.
-const openrouter = createOpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
+// Use the Railway router's Chat Completions endpoint for chat and structured output.
+const freellm = createOpenAI({
+  name: "freellmapi",
+  apiKey: process.env.FREELLM_API_KEY,
+  baseURL: process.env.FREELLM_BASE_URL ?? "https://freellmapi-production-1175.up.railway.app/v1",
 });
 
-export const chatModel = openrouter.chat(freeModel(process.env.OPENROUTER_MODEL));
+export function isAIConfigured(): boolean {
+  return Boolean(process.env.FREELLM_API_KEY?.trim());
+}
 
-export const model = openrouter.chat(
-  freeModel(process.env.OPENROUTER_RECIPE_MODEL, "dots-studio/dots-3-note-preview:free"),
-);
+export const chatModel = freellm.chat(process.env.FREELLM_MODEL ?? "auto");
+
+export const model = freellm.chat(process.env.FREELLM_RECIPE_MODEL ?? "auto");

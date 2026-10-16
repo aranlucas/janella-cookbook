@@ -14,7 +14,7 @@ import {
   toAppError,
   type AppError,
 } from "./errors";
-import { model } from "./ai";
+import { isAIConfigured, model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
 import type { ParsedRecipe } from "@/types/recipe";
 import {
@@ -312,7 +312,7 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
       return { ...structured, imageUrl };
     }
 
-    if (!process.env.OPENROUTER_API_KEY) {
+    if (!isAIConfigured()) {
       throw new RecipeParseError(
         "This website needs AI extraction, which is not configured. Paste the text or enter the recipe manually.",
       );
@@ -418,7 +418,7 @@ CRITICAL INSTRUCTIONS:
     const thrownValue = thrownValueSchema.parse(error);
 
     throw new ExternalApiError(
-      "OpenRouter",
+      "FreeLLMAPI",
       `Failed to parse recipe with AI: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
       thrownValue,
     );
@@ -489,7 +489,7 @@ Be accurate and organized. Extract all ingredients and instructions even if form
     const thrownValue = thrownValueSchema.parse(error);
 
     throw new ExternalApiError(
-      "OpenRouter",
+      "FreeLLMAPI",
       `Failed to parse recipe text: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
       thrownValue,
     );
@@ -627,7 +627,7 @@ CRITICAL INSTRUCTIONS:
     const thrownValue = thrownValueSchema.parse(error);
 
     throw new ExternalApiError(
-      "OpenRouter",
+      "FreeLLMAPI",
       `Failed to parse recipe from YouTube video: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
       thrownValue,
     );
@@ -638,7 +638,7 @@ CRITICAL INSTRUCTIONS:
 export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecipe, AppError> {
   return ResultAsync.fromPromise(
     (async () => {
-      if (!process.env.OPENROUTER_API_KEY) {
+      if (!isAIConfigured()) {
         throw new RecipeParseError(
           "Photo import is not configured. Paste the recipe text or enter it manually.",
         );

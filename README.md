@@ -23,7 +23,7 @@ Use cookbook filters and search, or ask the recipe assistant to help explore the
 - Use keyword search without hosted embeddings; turn on semantic search with optional Hugging Face embeddings.
 - Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-AI recipe parsing and chat use OpenRouter. Hosted embeddings are optional and disabled by default.
+AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through its OpenAI-compatible Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings are optional and disabled by default.
 
 ## Start cooking locally
 
@@ -34,7 +34,7 @@ pnpm install
 cp .env.example .env
 ```
 
-Set DATABASE_URL to your PostgreSQL database. Add OPENROUTER_API_KEY for AI imports and chat. For semantic search, set ENABLE_HOSTED_EMBEDDINGS=true and provide HUGGINGFACE_API_KEY. Optional Cloudflare R2 credentials enable managed recipe-image storage.
+Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; optional `FREELLM_MODEL` and `FREELLM_RECIPE_MODEL` override `auto` for chat and recipe extraction/nutrition respectively. Existing OpenRouter environment variables are no longer used. For semantic search, set ENABLE_HOSTED_EMBEDDINGS=true and provide HUGGINGFACE_API_KEY. Optional Cloudflare R2 credentials enable managed recipe-image storage.
 
 Create or update the database schema, then launch Next.js:
 
