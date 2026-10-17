@@ -3,11 +3,14 @@ import { Innertube } from "youtubei.js/web";
 import { ok, err, ResultAsync, type Result } from "neverthrow";
 import { z } from "zod";
 import { RecipeParseError, ExternalApiError, thrownValueSchema, type AppError } from "./errors";
+import { cleanText } from "./imports/text";
 
 export type TranscriptResult = {
   readonly text: string;
   readonly title?: string;
   readonly source?: "transcript" | "description";
+  /** Video description, kept alongside a transcript because it often lists exact amounts. */
+  readonly description?: string;
 };
 
 const transcriptDataSchema = z.object({
@@ -163,6 +166,7 @@ async function getYouTubeTranscriptImpl(videoId: string): Promise<TranscriptResu
       text,
       title: videoTitle,
       source: "transcript",
+      description: videoDescription,
     };
   } catch (primaryError) {
     // Log the primary error for debugging
@@ -179,10 +183,10 @@ async function getYouTubeTranscriptImpl(videoId: string): Promise<TranscriptResu
         throw new ExternalApiError("YouTube", "No transcript available");
       }
 
-      // Combine all transcript segments into a single text
-      const text = transcript.map((segment) => segment.text).join(" ");
+      // Combine all transcript segments into a single text; this library returns HTML-encoded text.
+      const text = cleanText(transcript.map((segment) => segment.text).join(" "));
 
-      return { text, title: videoTitle, source: "transcript" };
+      return { text, title: videoTitle, source: "transcript", description: videoDescription };
     } catch (fallbackError) {
       // Both transcript methods failed - try using video description as last resort
       if (videoDescription && videoDescription.trim().length >= 50) {
