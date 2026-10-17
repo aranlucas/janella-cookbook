@@ -1,16 +1,16 @@
 import { z } from "zod";
 import { courseValues, difficultyValues } from "@/lib/validations";
-import { cleanText, clip } from "./text";
+import { cleanText } from "./text";
 
 /** Plain text, or undefined when blank; clipped to fit `recipeInputSchema` limits. */
-function optionalText(max?: number) {
+function optionalText(max = Infinity) {
   return z
     .string()
     .optional()
     .transform((value) => {
       const text = value ? cleanText(value) : "";
 
-      return text ? (max ? clip(text, max) : text) : undefined;
+      return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text || undefined;
     });
 }
 

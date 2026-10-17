@@ -11,54 +11,23 @@ interface StructuredStep {
   group?: string;
 }
 
-function isRecipe(object: JsonObject): boolean {
-  const type = object["@type"];
-
-  return type === "Recipe" || (isJsonArray(type) && type.includes("Recipe"));
-}
-
-function find(value: JsonValue): JsonObject | undefined {
+/** Recipe objects anywhere in a JSON-LD value, including inside `@graph`. */
+function findRecipes(value: JsonValue): JsonObject[] {
   if (isJsonArray(value)) {
-    for (const item of value) {
-      const result = find(item);
-
-      if (result) {
-        return result;
-      }
-    }
+    return value.flatMap(findRecipes);
   }
 
   const object = readJsonObject(value);
 
   if (!object) {
-    return undefined;
+    return [];
   }
 
-  if (isRecipe(object)) {
-    return object;
-  }
+  const type = object["@type"] ?? null;
 
-  return find(object["@graph"] ?? null);
-}
-
-/** Every schema.org Recipe object in the page's JSON-LD blocks, in document order. */
-export function findStructuredRecipes(html: string): JsonObject[] {
-  const $ = cheerio.load(html);
-  const recipes: JsonObject[] = [];
-
-  for (const element of $('script[type="application/ld+json"]').toArray()) {
-    try {
-      const recipe = find(jsonValueSchema.parse(JSON.parse($(element).text())));
-
-      if (recipe) {
-        recipes.push(recipe);
-      }
-    } catch {
-      /* Try the next structured-data block. */
-    }
-  }
-
-  return recipes;
+  return type === "Recipe" || (isJsonArray(type) && type.includes("Recipe"))
+    ? [object]
+    : findRecipes(object["@graph"] ?? null);
 }
 
 function steps(value: JsonValue): StructuredStep[] {
@@ -175,46 +144,56 @@ const imageSchema = z
   .optional();
 
 /** The schema.org Recipe fields the cookbook stores. Malformed fields read as empty. */
-const schemaOrgRecipeSchema = z.object({
-  name: firstTextSchema,
-  description: firstTextSchema,
-  image: imageSchema,
-  recipeIngredient: textsSchema.transform((lines) => lines.map(parseIngredientLine)),
-  recipeInstructions: z.json().catch(null).transform(steps),
-  prepTime: durationSchema,
-  cookTime: durationSchema,
-  totalTime: durationSchema,
-  recipeYield: servingsSchema,
-  recipeCuisine: firstTextSchema,
-  recipeCategory: courseSchema,
-});
+const schemaOrgRecipeSchema = z
+  .object({
+    name: firstTextSchema,
+    description: firstTextSchema,
+    image: imageSchema,
+    recipeIngredient: textsSchema.transform((lines) => lines.map(parseIngredientLine)),
+    recipeInstructions: z.json().catch(null).transform(steps),
+    prepTime: durationSchema,
+    cookTime: durationSchema,
+    totalTime: durationSchema,
+    recipeYield: servingsSchema,
+    recipeCuisine: firstTextSchema,
+    recipeCategory: courseSchema,
+  })
+  .transform((recipe): ParsedRecipe => ({
+    title: recipe.name ?? "",
+    description: recipe.description,
+    imageUrl: recipe.image,
+    ingredients: recipe.recipeIngredient,
+    instructions: recipe.recipeInstructions,
+    prepTime: recipe.prepTime,
+    cookTime: recipe.cookTime,
+    totalTime: recipe.totalTime,
+    servings: recipe.recipeYield,
+    cuisine: recipe.recipeCuisine,
+    course: recipe.recipeCategory,
+  }));
 
-export function structuredImage(recipe: JsonObject): string | undefined {
-  return imageSchema.parse(recipe.image);
+/** Every schema.org Recipe in the page's JSON-LD blocks, complete or not. */
+export function readStructuredRecipes(html: string): ParsedRecipe[] {
+  const $ = cheerio.load(html);
+
+  return $('script[type="application/ld+json"]')
+    .toArray()
+    .flatMap((element) => {
+      try {
+        return findRecipes(jsonValueSchema.parse(JSON.parse($(element).text())));
+      } catch {
+        return []; // Skip malformed blocks.
+      }
+    })
+    .map((recipe) => schemaOrgRecipeSchema.parse(recipe));
 }
 
-/** Convert complete schema.org Recipe data without calling a model. */
+/** Complete enough to save without calling a model. */
+export function isCompleteRecipe(recipe: ParsedRecipe): boolean {
+  return Boolean(recipe.title && recipe.ingredients.length && recipe.instructions.length);
+}
+
+/** The first schema.org Recipe complete enough to save without calling a model. */
 export function extractStructuredRecipe(html: string): ParsedRecipe | undefined {
-  for (const object of findStructuredRecipes(html)) {
-    const recipe = schemaOrgRecipeSchema.parse(object);
-
-    if (!recipe.name || !recipe.recipeIngredient.length || !recipe.recipeInstructions.length) {
-      continue;
-    }
-
-    return {
-      title: recipe.name,
-      description: recipe.description,
-      ingredients: recipe.recipeIngredient,
-      instructions: recipe.recipeInstructions,
-      prepTime: recipe.prepTime,
-      cookTime: recipe.cookTime,
-      totalTime: recipe.totalTime,
-      servings: recipe.recipeYield,
-      cuisine: recipe.recipeCuisine,
-      course: recipe.recipeCategory,
-    };
-  }
-
-  return undefined;
+  return readStructuredRecipes(html).find(isCompleteRecipe);
 }
