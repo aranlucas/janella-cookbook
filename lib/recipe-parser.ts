@@ -1,22 +1,24 @@
+import { generateText, NoObjectGeneratedError, Output, type UserContent } from "ai";
+import { load, type CheerioAPI } from "cheerio";
+import { errAsync, ResultAsync } from "neverthrow";
 import { fetchRecipeSource } from "@/lib/imports/fetch-source";
-import { extractStructuredRecipe } from "@/lib/imports/structured-recipe";
-import { generateText, Output } from "ai";
-import { z } from "zod";
-import { isJsonArray, jsonValueSchema, readJsonObject, readJsonString } from "@/lib/json";
-import type { JsonObject, JsonValue } from "@/types/json";
-import { load } from "cheerio";
-import { encode } from "gpt-tokenizer";
-import { ResultAsync } from "neverthrow";
 import {
-  RecipeParseError,
+  modelRecipeSchema,
+  parsedRecipeSchema,
+  type CleanParsedRecipe,
+} from "@/lib/imports/recipe-schema";
+import { isCompleteRecipe, readStructuredRecipes } from "@/lib/imports/structured-recipe";
+import { cleanText } from "@/lib/imports/text";
+import type { ParsedRecipe } from "@/types/recipe";
+import { model } from "./ai";
+import {
   ExternalApiError,
+  RecipeParseError,
   thrownValueSchema,
   toAppError,
   type AppError,
 } from "./errors";
-import { model } from "./ai";
 import { normalizeRecipeImageUrl } from "./image-url";
-import type { ParsedRecipe } from "@/types/recipe";
 import {
   extractYouTubeVideoId,
   getYouTubeTranscript,
@@ -24,300 +26,179 @@ import {
   type TranscriptResult,
 } from "./youtube";
 
-// Model context window configuration
-const MAX_CONTEXT_TOKENS = 256000; // Devstral 2512 supports 256K tokens
+/**
+ * The router picks the model ("auto"), so assume a modest context window:
+ * roughly 20K tokens, plenty for a cleaned recipe page or a long transcript.
+ */
+const MAX_INPUT_CHARS = 80_000;
 
-const SYSTEM_PROMPT_TOKENS = 500; // Estimate for system prompt
+/** Free routed models can be slow; this covers the request and its retries. */
+const AI_TIMEOUT_MS = 90_000;
 
-const RESPONSE_TOKENS = 2000; // Estimate for structured recipe response
+const EXTRACTION_RULES = `You convert recipe sources into structured data for a home cookbook.
 
-const SAFETY_BUFFER = 3500; // Safety buffer
+Rules:
+- Use only what the source says. Never invent ingredients, amounts, times or steps.
+- List every ingredient and every step, in the order they appear.
+- Split each ingredient into quantity, unit, name and notes. Keep quantities as written (fractions, ranges).
+- Keep section headings (e.g. "For the sauce") in the group field of their ingredients or steps.
+- Write one instruction per step and drop step numbers.
+- Times are whole minutes: "1 hour 15 minutes" is 75. Use null when a time is not stated.
+- Use null for any field the source does not provide.
+- Ignore navigation, ads, comments, related recipes, sponsor messages and channel promotion.
+- If the source contains no recipe, return empty ingredient and instruction lists.`;
 
-const MAX_INPUT_TOKENS =
-  MAX_CONTEXT_TOKENS - SYSTEM_PROMPT_TOKENS - RESPONSE_TOKENS - SAFETY_BUFFER; // ~250K tokens
+interface RecipeSource {
+  /** Shown in error messages, e.g. "page", "video transcript". */
+  readonly label: string;
+  readonly url?: string;
+  /** Title to use when the source has none (pasted text, photos). */
+  readonly fallbackTitle?: string;
+}
 
 /**
- * Validate and truncate content to fit within token limits
- * @param content - The content to validate
- * @param maxTokens - Maximum allowed tokens (defaults to MAX_INPUT_TOKENS)
- * @returns Validated content truncated to fit within token limits
+ * Reject recipes that cleaned up to nothing usable. This stays outside the
+ * model schema so a source without a recipe gets a clear message instead of
+ * a structured-output failure.
  */
-function validateAndTruncateContent(content: string, maxTokens: number = MAX_INPUT_TOKENS): string {
-  const tokens = encode(content);
+function requireCompleteRecipe(recipe: CleanParsedRecipe, source: RecipeSource): ParsedRecipe {
+  const title = recipe.title ?? source.fallbackTitle;
 
-  if (tokens.length <= maxTokens) {
-    return content;
+  if (!title) {
+    throw new RecipeParseError(`Could not find a recipe title in the ${source.label}`, source.url);
   }
 
-  // Truncate by decoding only the allowed number of tokens
-  // Since we can't easily decode back to string, we'll estimate character-to-token ratio
-  const charToTokenRatio = content.length / tokens.length;
-  const maxChars = Math.floor(maxTokens * charToTokenRatio);
+  if (recipe.ingredients.length === 0) {
+    throw new RecipeParseError(`Could not find any ingredients in the ${source.label}`, source.url);
+  }
 
-  console.warn(
-    `Content exceeds token limit (${tokens.length} > ${maxTokens}). Truncating from ${content.length} to ~${maxChars} characters.`,
-  );
+  if (recipe.instructions.length === 0) {
+    throw new RecipeParseError(`Could not find any steps in the ${source.label}`, source.url);
+  }
 
-  return content.slice(0, maxChars);
+  return { ...recipe, title };
 }
 
-// Zod schema for recipe parsing
-const recipeSchema = z.object({
-  title: z.string(),
-  description: z.string().optional(),
-  ingredients: z.array(
-    z.object({
-      quantity: z.string().optional(),
-      unit: z.string().optional(),
-      name: z.string(),
-      notes: z.string().optional(),
-      group: z.string().optional(),
-    }),
-  ),
-  instructions: z.array(
-    z
-      .object({
-        text: z.string(),
-        group: z.string().optional(),
-      })
-      .optional(),
-  ),
-  prepTime: z.number().optional(),
-  cookTime: z.number().optional(),
-  totalTime: z.number().optional(),
-  servings: z.string().optional(),
-  cuisine: z.string().optional(),
-  course: z
-    .enum([
-      "BREAKFAST",
-      "LUNCH",
-      "DINNER",
-      "APPETIZER",
-      "SIDE",
-      "DESSERT",
-      "SNACK",
-      "DRINK",
-      "SAUCE",
-      "BREAD",
-    ])
-    .optional(),
-  difficulty: z.enum(["EASY", "MEDIUM", "HARD", "EXPERT"]).optional(),
-});
+/** Ask the recipe model for structured output; the schema cleans the result. */
+async function generateRecipe(
+  task: string,
+  content: UserContent,
+  source: RecipeSource,
+): Promise<ParsedRecipe> {
+  try {
+    const { output } = await generateText({
+      model,
+      temperature: 0,
+      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      output: Output.object({
+        name: "Recipe",
+        description: "A recipe extracted from the source, or empty lists if there is none.",
+        schema: modelRecipeSchema,
+      }),
+      instructions: `${EXTRACTION_RULES}\n\n${task}`,
+      messages: [{ role: "user", content }],
+    });
 
-type ParsedIngredient = z.infer<typeof recipeSchema>["ingredients"][number];
+    return requireCompleteRecipe(output, source);
+  } catch (error) {
+    if (error instanceof RecipeParseError) {
+      throw error;
+    }
 
-type ParsedInstruction = NonNullable<z.infer<typeof recipeSchema>["instructions"][number]>;
+    // For unusable output, the raw reply shows whether the model truncated, refused or ignored the schema.
+    console.error(
+      `Recipe model failed to read the ${source.label}:`,
+      NoObjectGeneratedError.isInstance(error)
+        ? { finishReason: error.finishReason, cause: error.cause, text: error.text?.slice(0, 2000) }
+        : error,
+    );
 
-type RecipeSchemaOutput = Readonly<
-  Omit<z.infer<typeof recipeSchema>, "ingredients" | "instructions">
-> & {
-  readonly ingredients: readonly Readonly<ParsedIngredient>[];
-  readonly instructions: readonly (Readonly<ParsedInstruction> | undefined)[];
-};
+    const thrownValue = thrownValueSchema.parse(error);
 
-interface JsonLdRecipe {
-  image?: JsonValue;
+    throw new ExternalApiError(
+      "FreeLLMAPI",
+      `Failed to read the recipe ${source.label}: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
+      thrownValue,
+    );
+  }
 }
 
-type ImageObject = JsonObject & { readonly url: string };
-
-function hasImageUrl(value: JsonValue): value is ImageObject {
-  const object = readJsonObject(value);
-  const url = object ? readJsonString(object.url ?? null) : undefined;
-
-  return object !== undefined && url !== undefined && url.length > 0;
+function attempt<T>(promise: Promise<T>): ResultAsync<T, AppError> {
+  return ResultAsync.fromPromise(promise, (error) => toAppError(thrownValueSchema.parse(error)));
 }
 
-function recipeImageValue(image: JsonValue): JsonValue | undefined {
-  const list = isJsonArray(image) ? image : undefined;
+/** Recipe image: schema.org data, then Open Graph, then Twitter Card. */
+function pageImage($: CheerioAPI, href: string, structured: readonly ParsedRecipe[]) {
+  const image =
+    structured.find((recipe) => recipe.imageUrl)?.imageUrl ??
+    $('meta[property="og:image"]').attr("content") ??
+    $('meta[name="twitter:image"]').attr("content");
 
-  return list ? list[0] : image;
+  return image && URL.canParse(image, href)
+    ? (normalizeRecipeImageUrl(new URL(image, href).href) ?? undefined)
+    : undefined;
 }
 
 /**
- * Extract the most important image from HTML content
- * Priority: JSON-LD schema > Open Graph > Twitter Card > Common selectors
+ * Reduce a page to readable text with line breaks between blocks. Raw HTML is
+ * mostly scripts and markup, which slows the model down and can overflow its context.
  */
-function extractImageFromHtml(html: string, baseUrl: string): string | undefined {
+function pageText($: CheerioAPI, structured: readonly ParsedRecipe[]): string {
+  const title = cleanText($("title").first().text());
+
+  $(
+    "script, style, noscript, template, svg, iframe, nav, footer, aside, form, button, " +
+      '[class*="comment"], [id*="comment"]',
+  ).remove();
+  $("br").replaceWith("\n");
+  $("p, li, tr, h1, h2, h3, h4, h5, h6, div, section").append("\n");
+
+  const body = $("body")
+    .text()
+    .split("\n")
+    .map((line) => line.replaceAll(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
+
+  return [
+    title && `Page title: ${title}`,
+    // Partial structured data (e.g. ingredients without steps) is still a strong hint.
+    structured.length > 0 && `Structured data:\n${JSON.stringify(structured)}`,
+    `Page text:\n${body}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, MAX_INPUT_CHARS);
+}
+
+/**
+ * Parse a fetched recipe page. Complete schema.org data is used directly;
+ * otherwise the page text goes to the recipe model.
+ */
+export async function parseRecipeFromHtml(html: string, href: string): Promise<ParsedRecipe> {
   const $ = load(html);
+  const structured = readStructuredRecipes(html);
+  const imageUrl = pageImage($, href, structured);
+  const source = { label: "page", url: href };
+  const complete = structured.find(isCompleteRecipe);
 
-  // Helper to resolve relative URLs
-  const resolveUrl = (imgUrl: string | undefined): string | undefined => {
-    if (!imgUrl) {
-      return undefined;
-    }
-
-    try {
-      return normalizeRecipeImageUrl(new URL(imgUrl, baseUrl).href) ?? undefined;
-    } catch {
-      return normalizeRecipeImageUrl(imgUrl) ?? undefined;
-    }
-  };
-
-  // 1. Try JSON-LD schema.org Recipe format (most reliable for recipe sites)
-  const jsonLdScripts = $('script[type="application/ld+json"]');
-
-  for (let i = 0; i < jsonLdScripts.length; i++) {
-    try {
-      const content = $(jsonLdScripts[i]).html();
-
-      if (!content) {
-        continue;
-      }
-
-      const data = jsonValueSchema.parse(JSON.parse(content));
-      const recipes = findRecipeInJsonLd(data);
-
-      for (const recipe of recipes) {
-        const img = recipeImageValue(recipe.image ?? null);
-
-        const imageUrl = img ? readJsonString(img) : undefined;
-
-        if (imageUrl !== undefined) {
-          return resolveUrl(imageUrl);
-        }
-
-        if (img && hasImageUrl(img)) {
-          return resolveUrl(img.url);
-        }
-      }
-    } catch {
-      // Invalid JSON, continue to next script
-    }
+  if (complete) {
+    return requireCompleteRecipe(parsedRecipeSchema.parse({ ...complete, imageUrl }), source);
   }
 
-  // 2. Try Open Graph meta tag (commonly used for social sharing)
-  const ogImage = $('meta[property="og:image"]').attr("content");
-
-  if (ogImage) {
-    return resolveUrl(ogImage);
-  }
-
-  // 3. Try Twitter Card image
-  const twitterImage = $('meta[name="twitter:image"]').attr("content");
-
-  if (twitterImage) {
-    return resolveUrl(twitterImage);
-  }
-
-  // 4. Try common recipe image selectors
-  const selectors = [
-    'img[itemprop="image"]',
-    ".recipe-image img",
-    '[class*="recipe-hero"] img',
-    '[class*="recipe-image"] img',
-    ".recipe-photo img",
-    ".hero-image img",
-    '[class*="hero-image"] img',
-    "article img",
-    ".post-content img",
-    "main img",
-  ];
-
-  for (const selector of selectors) {
-    const img = $(selector).first();
-    const src = img.attr("src") ?? img.attr("data-src") ?? img.attr("data-lazy-src");
-
-    if (src && !src.includes("placeholder") && !src.includes("avatar")) {
-      return resolveUrl(src);
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Find Recipe objects within JSON-LD data (handles @graph arrays)
- */
-function findRecipeInJsonLd(data: JsonValue): JsonLdRecipe[] {
-  const recipes: JsonLdRecipe[] = [];
-
-  if (isJsonArray(data)) {
-    for (const item of data) {
-      recipes.push(...findRecipeInJsonLd(item));
-    }
-  } else {
-    const obj = readJsonObject(data);
-
-    if (!obj) {
-      return recipes;
-    }
-
-    // Check if this is a Recipe
-    if (
-      obj["@type"] === "Recipe" ||
-      (isJsonArray(obj["@type"]) && obj["@type"].includes("Recipe"))
-    ) {
-      recipes.push(obj);
-    }
-
-    // Check @graph array
-    if (isJsonArray(obj["@graph"])) {
-      recipes.push(...findRecipeInJsonLd(obj["@graph"]));
-    }
-  }
-
-  return recipes;
-}
-
-/**
- * Validate and sanitize URL
- */
-function validateUrl(url: string): URL {
-  try {
-    const parsed = new URL(url);
-
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      throw new RecipeParseError("Only HTTP and HTTPS URLs are supported", url);
-    }
-
-    return parsed;
-  } catch (error) {
-    if (error instanceof RecipeParseError) {
-      throw error;
-    }
-
-    throw new RecipeParseError("Invalid URL format", url);
-  }
-}
-
-/**
- * Fetch markdown content for a URL via markdown.new
- * Returns null if the service is unavailable or returns an error
- */
-/**
- * Parse a recipe from a URL.
- * Uses markdown.new for cleaner content extraction, with HTML fallback.
- * Returns ResultAsync instead of throwing.
- */
-export function parseRecipeFromUrl(url: string): ResultAsync<ParsedRecipe, AppError> {
-  return ResultAsync.fromPromise(parseRecipeFromUrlImpl(url), (error) =>
-    error instanceof RecipeParseError || error instanceof ExternalApiError
-      ? error
-      : toAppError(thrownValueSchema.parse(error)),
+  const recipe = await generateRecipe(
+    "The source is the text of a recipe web page.",
+    `Extract the recipe from this page (${href}).\n\n${pageText($, structured)}`,
+    source,
   );
+
+  return { ...recipe, imageUrl };
 }
 
-/** Internal throwing implementation for parseRecipeFromUrl */
-async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
-  const validatedUrl = validateUrl(url);
-  const href = validatedUrl.href;
-
+async function fetchPage(url: string): Promise<string> {
   try {
-    const html = await fetchRecipeSource(href);
-    const imageUrl = extractImageFromHtml(html, href);
-    const structured = extractStructuredRecipe(html);
-
-    if (structured) {
-      return { ...structured, imageUrl };
-    }
-
-    return await extractRecipeWithAI(html, href, imageUrl);
+    return await fetchRecipeSource(url);
   } catch (error) {
-    if (error instanceof RecipeParseError) {
-      throw error;
-    }
-
     throw new RecipeParseError(
       `Failed to fetch recipe: ${error instanceof Error ? error.message : "Unknown error"}`,
       url,
@@ -325,332 +206,78 @@ async function parseRecipeFromUrlImpl(url: string): Promise<ParsedRecipe> {
   }
 }
 
-/**
- * Validate AI output and build a ParsedRecipe from the structured result
- */
-function buildParsedRecipe(
-  parsed: RecipeSchemaOutput,
-  sourceUrl: string,
-  imageUrl?: string,
-): ParsedRecipe {
-  if (!parsed.title || parsed.title === "Untitled Recipe") {
-    throw new RecipeParseError("Could not extract recipe title from the page", sourceUrl);
-  }
-
-  if (!parsed.ingredients || parsed.ingredients.length === 0) {
-    throw new RecipeParseError("Could not extract any ingredients from the page", sourceUrl);
-  }
-
-  return {
-    title: parsed.title,
-    description: parsed.description,
-    ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-      ...ing,
-      sortOrder: i,
-    })),
-    instructions: (parsed.instructions || []).map((inst, i: number) => ({
-      text: inst?.text ?? "",
-      group: inst?.group,
-      sortOrder: i,
-    })),
-    prepTime: parsed.prepTime,
-    cookTime: parsed.cookTime,
-    totalTime: parsed.totalTime,
-    servings: parsed.servings,
-    cuisine: parsed.cuisine,
-    course: parsed.course,
-    difficulty: parsed.difficulty,
-    imageUrl,
-  };
+/** Parse a recipe from a web page link. */
+export function parseRecipeFromUrl(url: string): ResultAsync<ParsedRecipe, AppError> {
+  return attempt(fetchPage(url).then((html) => parseRecipeFromHtml(html, url)));
 }
 
-/**
- * Extract recipe using AI from markdown content (preferred path via markdown.new)
- */
-async function extractRecipeWithAI(
-  html: string,
-  sourceUrl: string,
-  imageUrl: string | undefined,
-): Promise<ParsedRecipe> {
-  // Clean and validate HTML - send full page content to LLM
-  const cleanedHtml = html.replaceAll(/\s+/g, " ").trim();
-
-  // Validate and truncate to fit within model's context window
-  const validatedContent = validateAndTruncateContent(cleanedHtml);
-
-  try {
-    const { output: parsed } = await generateText({
-      model: model,
-      abortSignal: AbortSignal.timeout(60000),
-      output: Output.object({ schema: recipeSchema }),
-      instructions: `You are a recipe extraction expert. Extract recipe data from the provided webpage HTML.
-
-CRITICAL INSTRUCTIONS:
-- You will receive the FULL HTML of a webpage - ignore all irrelevant content like navigation menus, advertisements, footers, sidebars, social media widgets, and promotional content
-- Focus ONLY on the actual recipe content (ingredients, instructions, title, description, etc.)
-- Be accurate and only include information that is part of the recipe itself
-- Extract ALL ingredients with their exact quantities, units, and any preparation notes
-- Extract ALL instruction steps in order, preserving any groupings (e.g., "For the sauce", "For assembly")
-- If ingredients are grouped (e.g., "For the avocado topping"), preserve that group information
-- Include prep time, cook time, and total time if mentioned
-- Extract servings/yield information
-- Identify the cuisine type and meal course if evident
-- Pay special attention to ingredient details like "finely chopped", "divided", "optional" - include these as notes
-- For instructions, maintain the original step numbering and any substeps
-- Look for recipe variations, notes, or tips that are part of the recipe
-- Ignore any user comments, related recipes, or other non-recipe content
-- Output in structured JSON format`,
-      prompt: `Extract the complete recipe from this webpage HTML. Ignore navigation, ads, and other irrelevant content. Focus only on the recipe itself:\n\n${validatedContent}`,
-    });
-
-    return buildParsedRecipe(parsed, sourceUrl, imageUrl);
-  } catch (error) {
-    if (error instanceof RecipeParseError) {
-      throw error;
-    }
-
-    const thrownValue = thrownValueSchema.parse(error);
-
-    throw new ExternalApiError(
-      "FreeLLMAPI",
-      `Failed to parse recipe with AI: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
-      thrownValue,
-    );
-  }
-}
-
-/**
- * Parse a recipe from natural language text.
- * Returns ResultAsync instead of throwing.
- */
+/** Parse a recipe from pasted text. */
 export function parseRecipeFromText(text: string): ResultAsync<ParsedRecipe, AppError> {
-  return ResultAsync.fromPromise(parseRecipeFromTextImpl(text), (error) =>
-    error instanceof RecipeParseError || error instanceof ExternalApiError
-      ? error
-      : toAppError(thrownValueSchema.parse(error)),
+  if (text.trim().length < 20) {
+    return errAsync(new RecipeParseError("Please provide more recipe text to parse"));
+  }
+
+  return attempt(
+    generateRecipe(
+      "The source is recipe text pasted by the user. It may be messy or informally written.",
+      text.trim().slice(0, MAX_INPUT_CHARS),
+      { label: "text", fallbackTitle: "Untitled Recipe" },
+    ),
   );
 }
 
-/** Internal throwing implementation for parseRecipeFromText */
-async function parseRecipeFromTextImpl(text: string): Promise<ParsedRecipe> {
-  if (!text || text.trim().length < 20) {
-    throw new RecipeParseError("Please provide more recipe text to parse");
-  }
-
-  // Validate and truncate to fit within model's context window
-  const validatedText = validateAndTruncateContent(text.trim());
-
-  try {
-    const { output: parsed } = await generateText({
-      model: model,
-      abortSignal: AbortSignal.timeout(60000),
-      output: Output.object({ schema: recipeSchema }),
-      instructions: `You are a recipe parsing expert. Parse the provided recipe text into structured JSON.
-Be accurate and organized. Extract all ingredients and instructions even if formatting is messy.`,
-      prompt: validatedText,
-    });
-
-    // Validate we got a proper recipe
-    if (!parsed.ingredients || parsed.ingredients.length === 0) {
-      throw new RecipeParseError("Could not extract any ingredients from the text");
-    }
-
-    return {
-      title: parsed.title || "Untitled Recipe",
-      description: parsed.description,
-      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-        ...ing,
-        sortOrder: i,
-      })),
-      instructions: (parsed.instructions || []).map((inst, i: number) => ({
-        text: inst?.text ?? "",
-        group: inst?.group,
-        sortOrder: i,
-      })),
-      prepTime: parsed.prepTime,
-      cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime,
-      servings: parsed.servings,
-      cuisine: parsed.cuisine,
-      course: parsed.course,
-      difficulty: parsed.difficulty,
-    };
-  } catch (error) {
-    if (error instanceof RecipeParseError) {
-      throw error;
-    }
-
-    const thrownValue = thrownValueSchema.parse(error);
-
-    throw new ExternalApiError(
-      "FreeLLMAPI",
-      `Failed to parse recipe text: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
-      thrownValue,
-    );
-  }
-}
-
-/**
- * Parse a recipe from a YouTube video URL.
- * Extracts the transcript and parses it into structured recipe data.
- * Returns ResultAsync instead of throwing.
- */
-export function parseRecipeFromYouTube(url: string): ResultAsync<ParsedRecipe, AppError> {
-  // Chain: extract video ID (sync) → fetch transcript (async) → parse (async)
-  return new ResultAsync(Promise.resolve(extractYouTubeVideoId(url))).andThen((videoId) => {
-    const { thumbnailUrl } = getYouTubeVideoMetadata(videoId);
-
-    return getYouTubeTranscript(videoId).andThen((transcript) =>
-      ResultAsync.fromPromise(parseYouTubeTranscriptImpl(url, transcript, thumbnailUrl), (error) =>
-        error instanceof RecipeParseError || error instanceof ExternalApiError
-          ? error
-          : toAppError(thrownValueSchema.parse(error)),
-      ),
-    );
-  });
-}
-
-/** Internal throwing implementation for YouTube transcript parsing */
-async function parseYouTubeTranscriptImpl(
+/** Parse a fetched YouTube transcript, with the description when there is one. */
+export async function parseRecipeFromTranscript(
   url: string,
   transcript: TranscriptResult,
   thumbnailUrl: string,
 ): Promise<ParsedRecipe> {
-  const { text: content, title: videoTitle, source } = transcript;
+  const { text, title, source, description } = transcript;
+  const fromDescription = source === "description";
+  const label = fromDescription ? "video description" : "video transcript";
 
-  if (!content || content.trim().length < 50) {
-    throw new RecipeParseError(
-      source === "description"
-        ? "Video description is too short to extract a recipe"
-        : "Transcript is too short to extract a recipe",
-      url,
-    );
+  if (text.trim().length < 50) {
+    throw new RecipeParseError(`The ${label} is too short to extract a recipe`, url);
   }
 
-  // Validate and truncate to fit within model's context window
-  const validatedContent = validateAndTruncateContent(content.trim());
+  const content = [
+    title && `Video title: ${title}`,
+    !fromDescription && description && `Video description:\n${description}`,
+    `${fromDescription ? "Video description" : "Transcript"}:\n${text}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
-  try {
-    const videoContext = videoTitle ? `\n\nVideo Title: "${videoTitle}"\n\n` : "\n\n";
+  const recipe = await generateRecipe(
+    "The source is a YouTube cooking video. When both are present, the description often lists exact ingredient amounts and the transcript describes the method; combine them. Use the video title for the recipe name if the source names no dish.",
+    content.slice(0, MAX_INPUT_CHARS),
+    { label, url },
+  );
 
-    // Different system prompts for transcript vs description
-    const systemPrompt =
-      source === "description"
-        ? `You are a recipe extraction expert. Extract recipe data from a YouTube video description.
+  return { ...recipe, imageUrl: thumbnailUrl };
+}
 
-CRITICAL INSTRUCTIONS:
-- The text is from a video description, which may contain a written recipe
-- Look for ingredients listed with quantities (e.g., "2 cups of flour", "3 tablespoons butter")
-- Extract step-by-step cooking instructions if provided
-- Identify prep time, cook time, and servings if mentioned
-- Extract the recipe title (often in the video title or at the start of the description)
-- Identify the cuisine type and meal course if evident
-- Be thorough but only include information that's actually in the description
-- If ingredients are mentioned but quantities aren't specified, still include the ingredient
-- Ignore non-recipe content like social media links, channel promotions, or unrelated information
-- If the video title clearly indicates the recipe name, you can use it as the recipe title
-- Video descriptions may be less detailed than transcripts, so extract whatever information is available`
-        : `You are a recipe extraction expert. Extract recipe data from a YouTube video transcript.
-
-CRITICAL INSTRUCTIONS:
-- The transcript is from a cooking video, so extract the recipe being demonstrated
-- Look for ingredients mentioned with quantities (e.g., "2 cups of flour", "3 tablespoons butter")
-- Extract step-by-step cooking instructions in the order they're mentioned
-- Identify prep time, cook time, and servings if mentioned
-- Extract the recipe title (often mentioned at the start of the video or in the video title)
-- Identify the cuisine type and meal course if evident
-- Be thorough but only include information that's actually in the transcript
-- If ingredients are mentioned but quantities aren't specified, still include the ingredient
-- Ignore non-recipe content like intro/outro, channel promotions, or unrelated commentary
-- Extract all ingredients and instructions even if the transcript is messy or has typos
-- If the video title clearly indicates the recipe name, you can use it as the recipe title`;
-
-    const contentLabel = source === "description" ? "Description" : "Transcript";
-
-    const { output: parsed } = await generateText({
-      model: model,
-      abortSignal: AbortSignal.timeout(60000),
-      output: Output.object({ schema: recipeSchema }),
-      instructions: systemPrompt,
-      prompt: `Extract the complete recipe from this YouTube cooking video.${videoContext}${contentLabel}:\n${validatedContent}`,
-    });
-
-    // Validate we got a proper recipe
-    const sourceLabel = source === "description" ? "description" : "transcript";
-
-    if (!parsed.title || parsed.title === "Untitled Recipe") {
-      throw new RecipeParseError(
-        `Could not extract recipe title from the video ${sourceLabel}`,
-        url,
-      );
-    }
-
-    if (!parsed.ingredients || parsed.ingredients.length === 0) {
-      throw new RecipeParseError(
-        `Could not extract any ingredients from the video ${sourceLabel}. ${source === "description" ? "The description may not contain a complete recipe." : "Make sure the video has captions enabled and contains a recipe."}`,
-        url,
-      );
-    }
-
-    return {
-      title: parsed.title,
-      description: parsed.description,
-      ingredients: (parsed.ingredients || []).map((ing, i: number) => ({
-        ...ing,
-        sortOrder: i,
-      })),
-      instructions: (parsed.instructions || []).map((inst, i: number) => ({
-        text: inst?.text ?? "",
-        group: inst?.group,
-        sortOrder: i,
-      })),
-      prepTime: parsed.prepTime,
-      cookTime: parsed.cookTime,
-      totalTime: parsed.totalTime,
-      servings: parsed.servings,
-      cuisine: parsed.cuisine,
-      course: parsed.course,
-      difficulty: parsed.difficulty,
-      imageUrl: thumbnailUrl, // Use YouTube thumbnail as recipe image
-    };
-  } catch (error) {
-    if (error instanceof RecipeParseError) {
-      throw error;
-    }
-
-    const thrownValue = thrownValueSchema.parse(error);
-
-    throw new ExternalApiError(
-      "FreeLLMAPI",
-      `Failed to parse recipe from YouTube video: ${thrownValue instanceof Error ? thrownValue.message : "Unknown error"}`,
-      thrownValue,
-    );
-  }
+/** Parse a recipe from a YouTube video link. */
+export function parseRecipeFromYouTube(url: string): ResultAsync<ParsedRecipe, AppError> {
+  return extractYouTubeVideoId(url).asyncAndThen((videoId) =>
+    getYouTubeTranscript(videoId).andThen((transcript) =>
+      attempt(
+        parseRecipeFromTranscript(url, transcript, getYouTubeVideoMetadata(videoId).thumbnailUrl),
+      ),
+    ),
+  );
 }
 
 /** Read recipe text visible in an image; never infer a recipe from a dish photo. */
 export function parseRecipeFromPhoto(image: Uint8Array): ResultAsync<ParsedRecipe, AppError> {
-  return ResultAsync.fromPromise(
-    (async () => {
-      const { output } = await generateText({
-        model,
-        output: Output.object({ schema: recipeSchema }),
-        abortSignal: AbortSignal.timeout(60000),
-        instructions:
-          "Transcribe the recipe visible in this image. Never invent ingredients, amounts or steps. A photo of food without written recipe text is not a recipe: return empty ingredients and instructions. Preserve uncertainty by leaving missing amounts blank.",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: "Extract this written recipe for review." },
-              { type: "image", image, mediaType: "image/jpeg" },
-            ],
-          },
-        ],
-      });
-
-      return buildParsedRecipe(output, "");
-    })(),
-    (error) => toAppError(thrownValueSchema.parse(error)),
+  return attempt(
+    generateRecipe(
+      "The source is a photo of a written or printed recipe. Transcribe it. A photo of food without written recipe text is not a recipe. Leave unreadable amounts null rather than guessing.",
+      [
+        { type: "text", text: "Extract this written recipe for review." },
+        { type: "image", image, mediaType: "image/jpeg" },
+      ],
+      { label: "photo", fallbackTitle: "Untitled Recipe" },
+    ),
   );
 }

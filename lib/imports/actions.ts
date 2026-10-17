@@ -98,6 +98,8 @@ export async function previewRecipe(form: FormData): Promise<ActionResult<Import
     if (parsed.isErr()) {
       const message = parsed.error.message;
 
+      console.error(`Recipe import from ${source} failed:`, parsed.error);
+
       return {
         success: false,
         error: /timeout|aborted|No object|429|rate.limit/i.test(message)
