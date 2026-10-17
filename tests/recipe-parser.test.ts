@@ -173,7 +173,7 @@ describe("AI recipe parsing", () => {
 
     const { temperature, response_format } = request();
 
-    expect(temperature).toBe(0);
+    expect(temperature).toBeUndefined();
     expect(response_format.json_schema).toMatchObject({ name: "Recipe", strict: true });
 
     const { schema } = response_format.json_schema;

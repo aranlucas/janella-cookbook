@@ -32,9 +32,6 @@ import {
  */
 const MAX_INPUT_CHARS = 80_000;
 
-/** Free routed models can be slow; this covers the request and its retries. */
-const AI_TIMEOUT_MS = 90_000;
-
 const EXTRACTION_RULES = `You convert recipe sources into structured data for a home cookbook.
 
 Rules:
@@ -88,8 +85,6 @@ async function generateRecipe(
   try {
     const { output } = await generateText({
       model,
-      temperature: 0,
-      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
       output: Output.object({
         name: "Recipe",
         description: "A recipe extracted from the source, or empty lists if there is none.",
