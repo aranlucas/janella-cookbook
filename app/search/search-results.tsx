@@ -1,12 +1,25 @@
 import Link from "next/link";
+import { Clock, Heart, UtensilsCrossed } from "lucide-react";
 import { hybridSearch } from "@/lib/search";
-import { Badge } from "@/components/ui/badge";
 import { RecipeImage } from "@/components/ui/recipe-image";
-import { ContentEmptyState } from "@/components/ui/content-state";
+import { EmptyState } from "@/components/layout/page-state";
 import type { SearchResult } from "@/types/recipe";
+import { formatMinutes } from "@/lib/utils";
 
 interface SearchResultsProps {
   readonly query: string;
+}
+
+/** Snippets worth showing: drop ones that just repeat the title or description */
+function extraHighlights(
+  highlights: readonly string[] | undefined,
+  recipe: SearchResult["recipe"],
+): string[] {
+  const shown = `${recipe.title} ${recipe.description ?? ""}`.toLowerCase();
+
+  return [...new Set(highlights ?? [])]
+    .filter((highlight) => !shown.includes(highlight.trim().toLowerCase()))
+    .slice(0, 2);
 }
 
 export async function SearchResults({ query }: SearchResultsProps) {
@@ -24,8 +37,8 @@ export async function SearchResults({ query }: SearchResultsProps) {
 
   if (results.length === 0) {
     return (
-      <ContentEmptyState
-        icon="🍽️"
+      <EmptyState
+        icon={UtensilsCrossed}
         title="No recipes found"
         description="Try different keywords or add some recipes to your collection."
       />
@@ -33,75 +46,80 @@ export async function SearchResults({ query }: SearchResultsProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 sm:gap-4">
-      <p className="text-xs text-muted-foreground sm:text-sm">
-        Found {total} recipe{total !== 1 ? "s" : ""}
+    <div>
+      <p className="sr-only">
+        Found {total} {total === 1 ? "recipe" : "recipes"}
       </p>
-
-      <div className="flex flex-col gap-2.5 sm:gap-3 md:gap-4">
+      <ol className="flex flex-col">
         {results.map(({ recipe, score, highlights }) => (
-          <Link
-            key={recipe.id}
-            href={`/recipe/${recipe.slug}`}
-            className="group flex gap-2.5 rounded-xl border border-border/45 bg-card p-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md active:shadow-md sm:gap-3 sm:p-3 md:gap-4 md:p-4"
-          >
-            {/* Thumbnail */}
-            <div className="relative size-16 shrink-0 overflow-hidden rounded-lg sm:h-20 sm:w-24 md:h-24 md:w-32">
-              <RecipeImage
-                src={recipe.imageUrl}
-                alt={recipe.title}
-                sizes="(max-width: 640px) 64px, (max-width: 768px) 96px, 128px"
-                fallbackEmoji="🍲"
-              />
-            </div>
-
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-1.5 sm:gap-2">
-                <h3 className="line-clamp-2 font-serif text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:line-clamp-1 sm:text-base md:text-lg">
-                  {recipe.title}
-                </h3>
-                {score > 0.5 && (
-                  <Badge variant="secondary" className="hidden shrink-0 text-xs sm:inline-flex">
-                    {Math.round(score * 100)}% match
-                  </Badge>
+          <li key={recipe.id} className="border-be border-border/70 last:border-be-0">
+            <Link href={`/recipe/${recipe.slug}`} className="group flex gap-4 py-4 sm:gap-6">
+              <div className="relative aspect-4/3 w-28 shrink-0 overflow-hidden rounded-xl bg-card sm:w-44">
+                {recipe.imageUrl ? (
+                  <RecipeImage
+                    src={recipe.imageUrl}
+                    alt={recipe.title}
+                    sizes="(max-width: 640px) 112px, 176px"
+                    className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+                  />
+                ) : (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-0 flex items-center justify-center font-display text-4xl font-semibold text-primary/25"
+                  >
+                    {recipe.title.trim().charAt(0).toUpperCase()}
+                  </span>
                 )}
               </div>
 
-              {recipe.description && (
-                <p className="mbs-0.5 line-clamp-1 text-xs text-muted-foreground sm:mbs-1 sm:line-clamp-2 sm:text-sm">
-                  {recipe.description}
-                </p>
-              )}
+              <div className="flex min-w-0 flex-1 flex-col justify-center">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="line-clamp-2 font-display text-lg leading-tight font-semibold transition-colors group-hover:text-primary sm:text-2xl">
+                    {recipe.title}
+                  </h2>
+                  {score > 0.5 && (
+                    <span className="hidden shrink-0 text-sm text-muted-foreground sm:inline">
+                      {Math.round(score * 100)}% match
+                    </span>
+                  )}
+                </div>
 
-              <div className="mbs-1 flex flex-wrap items-center gap-1 text-3xs text-muted-foreground sm:mbs-1.5 sm:gap-1.5 sm:text-xs md:mbs-2 md:gap-2">
-                {recipe.totalTime && (
-                  <span className="flex items-center gap-0.5">⏱️ {recipe.totalTime} min</span>
+                {recipe.description && (
+                  <p className="mbs-1 line-clamp-2 text-sm text-muted-foreground sm:text-base">
+                    {recipe.description}
+                  </p>
                 )}
-                {recipe.cuisine && <span>• {recipe.cuisine}</span>}
-                {recipe.difficulty && (
-                  <span className="hidden sm:inline">• {recipe.difficulty.toLowerCase()}</span>
-                )}
-                {recipe.isFavorite && <span>❤️</span>}
-              </div>
 
-              {/* Highlights */}
-              {highlights && highlights.length > 0 && (
-                <div className="mbs-1.5 hidden text-xs text-muted-foreground sm:mbs-2 md:block">
-                  {highlights
-                    .slice(0, 2)
-                    .map((h, i) => ({ key: `${h}-${i}`, highlight: h }))
-                    .map(({ key, highlight }) => (
-                      <p key={key} className="line-clamp-1">
-                        ...{highlight}...
+                <div className="mbs-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                  {recipe.totalTime ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="size-3.5" aria-hidden="true" />
+                      {formatMinutes(recipe.totalTime)}
+                    </span>
+                  ) : null}
+                  {recipe.cuisine && <span>{recipe.cuisine}</span>}
+                  {recipe.isFavorite && (
+                    <span className="inline-flex items-center gap-1 text-primary">
+                      <Heart className="size-3.5 fill-current" aria-hidden="true" />
+                      Favorite
+                    </span>
+                  )}
+                </div>
+
+                {extraHighlights(highlights, recipe).length > 0 && (
+                  <div className="mbs-2 hidden text-sm text-muted-foreground italic md:block">
+                    {extraHighlights(highlights, recipe).map((highlight) => (
+                      <p key={highlight} className="line-clamp-1">
+                        …{highlight}…
                       </p>
                     ))}
-                </div>
-              )}
-            </div>
-          </Link>
+                  </div>
+                )}
+              </div>
+            </Link>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   );
 }

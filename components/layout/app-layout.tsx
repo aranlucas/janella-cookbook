@@ -151,7 +151,7 @@ export function AppLayout({
   navigation,
   contentType = "default",
 }: Readonly<AppLayoutProps>) {
-  if ((contentType === "table" || contentType === "cards") && title) {
+  if ((contentType === "table" || contentType === "cards" || contentType === "form") && title) {
     pageHeader = {
       title,
       description,
@@ -188,26 +188,10 @@ export function AppLayout({
                 contentClassName,
               )}
             >
-              <div
-                className={cn(
-                  "container",
-                  contentMaxWidth !== "full" && maxWidthClasses[contentMaxWidth],
-                  contentMaxWidth !== "full" && "mx-auto",
-                )}
-              >
-                {contentType === "form" && title && (
-                  <>
-                    <h1 className="mbe-2 font-display text-4xl leading-display font-semibold text-foreground sm:text-5xl">
-                      {title}
-                    </h1>
-                    {description && (
-                      <p className="mbe-6 text-sm text-muted-foreground sm:mbe-8 sm:text-base">
-                        {description}
-                      </p>
-                    )}
-                  </>
-                )}
-                {children}
+              <div className="container">
+                <div className={cn(contentMaxWidth !== "full" && maxWidthClasses[contentMaxWidth])}>
+                  {children}
+                </div>
               </div>
             </section>
           )}

@@ -17,8 +17,8 @@ interface ChatPageProps {
 function ChatLoadingState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4">
-      <div className="size-12 animate-pulse rounded-full bg-rustic-blush" />
-      <p className="font-serif text-lg text-rustic-charcoal/60">Warming up the kitchen...</p>
+      <div className="size-12 animate-pulse rounded-full bg-secondary" />
+      <p className="font-display text-lg text-muted-foreground">Warming up the kitchen…</p>
     </div>
   );
 }
@@ -30,9 +30,9 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     params.recipe && params.title ? { slug: params.recipe, title: params.title } : undefined;
 
   return (
-    <div className="flex h-dvh flex-col bg-rustic-cream">
+    <div className="flex h-dvh flex-col bg-background">
       <Header />
-      <main className="relative flex min-h-0 flex-1 overflow-hidden bg-chat-surface">
+      <main className="relative flex min-h-0 flex-1 overflow-hidden">
         <div className="relative z-10 flex min-h-0 w-full flex-1 p-2 sm:p-4">
           <Suspense fallback={<ChatLoadingState />}>
             <ChatInterface recipeContext={recipeContext} />

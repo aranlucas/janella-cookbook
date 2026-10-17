@@ -8,6 +8,12 @@ export const metadata: Metadata = createPageMetadata({
   path: "/about",
 });
 
+const PHILOSOPHY = [
+  "Fresh ingredients are the heart of every dish.",
+  "Recipes are meant to be shared and adapted.",
+  "Cooking is an act of care for yourself and others.",
+];
+
 export default function AboutPage() {
   return (
     <AppLayout
@@ -16,64 +22,53 @@ export default function AboutPage() {
         { label: "Home", href: "/" },
         { label: "About", active: true },
       ]}
-      contentMaxWidth="5xl"
     >
-      <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-        <div className="relative aspect-3/4 w-full overflow-hidden rounded-2xl border border-border/45 bg-linear-to-br from-card via-muted/55 to-secondary/35">
-          <div className="absolute inset-0 bg-about-hero" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 p-8 text-center">
-            <div className="flex size-28 items-center justify-center rounded-full border border-primary/35 bg-background/85 font-serif text-4xl font-bold text-primary shadow-sm">
-              J
-            </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold tracking-eyebrow text-muted-foreground uppercase">
-                Kitchen Notes
-              </p>
-              <p className="mx-auto max-w-xs font-serif text-xl text-foreground">
-                “Cook what you love. Share what you learn.”
-              </p>
-            </div>
+      <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-7">
+          <h1 className="font-display text-5xl leading-display font-semibold text-foreground sm:text-6xl lg:text-7xl">
+            About the cook
+          </h1>
+          <div className="mbs-6 flex max-w-prose flex-col gap-5 text-lg leading-relaxed text-muted-foreground">
+            <p>
+              Welcome to Janella&apos;s Kitchen. This digital cookbook is a labor of love, designed
+              to organize and share the recipes that have brought joy to my family and friends over
+              the years.
+            </p>
+            <p>
+              From simple weeknight dinners to elaborate holiday feasts, every recipe here has a
+              story. I believe that cooking shouldn&apos;t be complicated. It should be about good
+              ingredients, clear instructions, and the pleasure of sharing a meal.
+            </p>
+            <p>
+              I hope this collection inspires you to get into the kitchen and create something
+              delicious.
+            </p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-8">
-          <div>
-            <h1 className="mbe-6 font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-              About the <span className="text-primary italic">Cook</span>
-            </h1>
-            <div className="flex flex-col gap-6 text-lg leading-relaxed text-muted-foreground">
-              <p>
-                Welcome to Janella&apos;s Kitchen. This digital cookbook is a labor of love,
-                designed to organize and share the recipes that have brought joy to my family and
-                friends over the years.
-              </p>
-              <p>
-                From simple weeknight dinners to elaborate holiday feasts, every recipe here has a
-                story. I believe that cooking shouldn&apos;t be complicated—it should be about good
-                ingredients, clear instructions, and the pleasure of sharing a meal.
-              </p>
-              <p>
-                I hope this collection inspires you to get into the kitchen and create something
-                delicious.
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-10 lg:col-span-5 lg:pbs-4">
+          <figure className="rounded-3xl bg-card p-7 sm:p-9">
+            <blockquote className="font-display text-3xl leading-tight font-medium text-foreground italic sm:text-4xl">
+              &ldquo;Cook what you love. Share what you learn.&rdquo;
+            </blockquote>
+            <figcaption className="mbs-4 text-sm text-muted-foreground">Janella</figcaption>
+          </figure>
 
-          <div className="rounded-xl border border-border/20 bg-muted/30 p-8">
-            <h3 className="mbe-4 font-serif text-xl font-semibold text-foreground">Philosophy</h3>
-            <ul className="flex flex-col gap-3">
-              <li className="flex gap-3 text-muted-foreground">
-                <span className="font-bold text-primary">01.</span>
-                <span>Fresh ingredients are the heart of every dish.</span>
-              </li>
-              <li className="flex gap-3 text-muted-foreground">
-                <span className="font-bold text-primary">02.</span>
-                <span>Recipes are meant to be shared and adapted.</span>
-              </li>
-              <li className="flex gap-3 text-muted-foreground">
-                <span className="font-bold text-primary">03.</span>
-                <span>Cooking is an act of care for yourself and others.</span>
-              </li>
+          <div>
+            <h2 className="font-display text-2xl font-semibold">Philosophy</h2>
+            <ul className="mbs-3 flex flex-col">
+              {PHILOSOPHY.map((belief) => (
+                <li
+                  key={belief}
+                  className="flex gap-3 border-be border-border/70 py-3 text-base text-foreground last:border-be-0"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mbs-2.5 size-1.5 shrink-0 rounded-full bg-primary"
+                  />
+                  {belief}
+                </li>
+              ))}
             </ul>
           </div>
         </div>

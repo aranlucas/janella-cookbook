@@ -43,18 +43,27 @@ export function RecipeCard({
           isFeature ? "aspect-4/3 lg:aspect-auto lg:flex-1" : "aspect-4/3",
         )}
       >
-        <RecipeImage
-          src={recipe.imageUrl}
-          alt={recipe.title}
-          priority={priority}
-          className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
-          sizes={
-            isFeature
-              ? "(max-width: 1024px) 100vw, 50vw"
-              : "(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
-          }
-          fallbackEmoji="🍲"
-        />
+        {recipe.imageUrl ? (
+          <RecipeImage
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            priority={priority}
+            className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+            sizes={
+              isFeature
+                ? "(max-width: 1024px) 100vw, 50vw"
+                : "(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+            }
+            fallbackEmoji="🍲"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 flex items-center justify-center bg-card font-display text-7xl font-semibold text-primary/25 transition-colors group-hover:text-primary/40 sm:text-8xl"
+          >
+            {recipe.title.trim().charAt(0).toUpperCase()}
+          </span>
+        )}
         {recipe.isFavorite && (
           <span className="absolute inset-e-2.5 inset-bs-2.5 z-20 flex size-8 items-center justify-center rounded-full bg-background/90 text-primary backdrop-blur-sm">
             <Heart className="size-4 fill-current" aria-hidden="true" />

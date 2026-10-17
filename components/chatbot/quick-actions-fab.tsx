@@ -53,7 +53,7 @@ export function QuickActionsFab({ onSelectAction, disabled, className }: QuickAc
               transitionDelay: isOpen ? `${index * 50}ms` : "0ms",
             }}
           >
-            <span className="rounded-lg bg-white/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-rustic-charcoal shadow-md backdrop-blur-sm">
+            <span className="rounded-lg bg-popover/90 px-2 py-1 text-xs font-medium whitespace-nowrap text-foreground shadow-md backdrop-blur-sm">
               {action.label}
             </span>
             <Button
@@ -82,8 +82,8 @@ export function QuickActionsFab({ onSelectAction, disabled, className }: QuickAc
         className={cn(
           "size-14 rounded-full shadow-xl transition-all duration-300",
           isOpen
-            ? "rotate-45 bg-rustic-charcoal hover:bg-rustic-charcoal/90"
-            : "bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/80 hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/75",
+            ? "rotate-45 bg-foreground hover:bg-foreground/90"
+            : "bg-linear-to-br from-primary to-primary/80 hover:from-primary/95 hover:to-primary/75",
         )}
         aria-label={isOpen ? "Close quick actions" : "Open quick actions"}
         aria-expanded={isOpen}
@@ -125,7 +125,7 @@ export function CameraFab({ onCapture, disabled, className }: CameraFabProps) {
       className={cn(
         "fixed inset-s-4 inset-be-52 z-50 md:hidden",
         "size-12 rounded-full shadow-lg",
-        "bg-rustic-charcoal text-white hover:bg-rustic-charcoal/90",
+        "bg-foreground text-white hover:bg-foreground/90",
         "transition-transform active:scale-95",
         className,
       )}

@@ -52,7 +52,7 @@ export function ShoppingListDrawer() {
 
       <SheetContent side="right" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2 font-serif text-lg">
+          <SheetTitle className="flex items-center gap-2 font-display text-2xl font-semibold">
             <ShoppingCart className="size-5" />
             Shopping List
             {items.length > 0 && (
@@ -74,7 +74,7 @@ export function ShoppingListDrawer() {
           <div className="flex-1 overflow-y-auto px-4">
             {Object.entries(grouped).map(([recipeName, groupItems]) => (
               <div key={recipeName} className="mbe-4">
-                <h4 className="mbe-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                <h4 className="mbe-2 font-sans text-sm font-semibold tracking-normal text-foreground">
                   {recipeName}
                 </h4>
                 <ul className="flex flex-col gap-1.5">

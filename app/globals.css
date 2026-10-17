@@ -1,31 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Local font definitions - prevents build failures when Google Fonts API is unreachable */
-@font-face {
-  font-family: "Fraunces";
-  src: url("/fonts/Fraunces-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Fraunces";
-  src: url("/fonts/Fraunces-Italic-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Outfit";
-  src: url("/fonts/Outfit-Variable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -34,9 +9,9 @@
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
 
-  /* Typography - using local fonts with system fallbacks */
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", ui-serif, Georgia, serif;
+  /* Typography - self-hosted via next/font/local in app/layout.tsx */
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -75,19 +50,11 @@
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 
-  /* Fine-grained type scale for micro labels (below --text-xs) */
-  --text-2xs: 0.6875rem; /* 11px */
-  --text-3xs: 0.625rem; /* 10px */
-
   /* Display type: the home wordmark scales with the viewport */
   --text-wordmark: clamp(3.5rem, 10vw, 7.25rem);
   --text-wordmark--line-height: 0.86;
   --text-nav: 0.9375rem;
   --leading-display: 0.95;
-
-  /* Editorial letter-spacing for eyebrow labels */
-  --tracking-eyebrow: 0.18em;
-  --tracking-eyebrow-wide: 0.2em;
 
   /* Bold Earthy Modern Palette */
   --color-rustic-cream: #faf5ed;
@@ -210,22 +177,6 @@
     @apply bg-background text-foreground;
   }
 
-  /* Grain Texture Utility */
-  .grain {
-    position: relative;
-  }
-  .grain::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.06;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  }
-
   /* Container customization */
   .container {
     @apply px-4 sm:px-6 lg:px-8;
@@ -246,16 +197,20 @@
     letter-spacing: -0.02em; /* Tighter headings for editorial look */
   }
 
+  /* Plain line-height (not leading-*) so it can't override a utility's
+     --tw-leading, like the wordmark's tight line spacing */
   h1 {
-    @apply text-5xl leading-[0.92] font-black md:text-7xl lg:text-8xl xl:text-9xl;
+    @apply text-4xl md:text-5xl;
+    line-height: 1.15;
   }
 
   h2 {
-    @apply text-3xl leading-tight font-bold md:text-4xl lg:text-5xl;
+    @apply text-2xl md:text-3xl;
+    line-height: 1.2;
   }
 
   h3 {
-    @apply text-2xl font-semibold md:text-3xl;
+    @apply text-xl md:text-2xl;
   }
 
   p {
@@ -279,36 +234,12 @@
   min-height: 10vh;
 }
 
-@utility min-h-42vh {
-  min-height: 42vh;
-}
-
-@utility min-h-50vh {
-  min-height: 50vh;
-}
-
-@utility min-h-56vh {
-  min-height: 56vh;
-}
-
 @utility min-h-60vh {
   min-height: 60vh;
 }
 
 @utility max-h-sticky-panel {
   max-height: calc(100vh - 7rem);
-}
-
-@utility grid-cols-doc {
-  grid-template-columns: 15rem 1fr;
-}
-
-@utility grid-cols-dashboard {
-  grid-template-columns: 1.4fr 1fr;
-}
-
-@utility grid-cols-recipe {
-  grid-template-columns: 1fr 2fr;
 }
 
 @utility intake-grid {
@@ -343,31 +274,6 @@
   box-shadow: 0 20px 34px -20px rgb(224 78 57 / 0.32);
 }
 
-@utility bg-about-hero {
-  background-image:
-    radial-gradient(
-      circle at 20% 20%,
-      color-mix(in srgb, var(--primary) 12%, transparent),
-      transparent 38%
-    ),
-    radial-gradient(
-      circle at 78% 30%,
-      color-mix(in srgb, var(--highlight) 12%, transparent),
-      transparent 42%
-    ),
-    linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent);
-}
-
-@utility bg-chat-surface {
-  background-image:
-    radial-gradient(
-      1200px 520px at 50% -12%,
-      color-mix(in srgb, var(--primary) 9%, transparent),
-      transparent 60%
-    ),
-    linear-gradient(180deg, var(--background) 0%, var(--muted) 100%);
-}
-
 /* ═══════════════════════════════════════════════════════════
    Playful Animations & Micro-interactions
    ═══════════════════════════════════════════════════════════ */
@@ -395,20 +301,6 @@
   }
 }
 
-/* Gentle float - for decorative elements */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-  33% {
-    transform: translateY(-12px) rotate(2deg);
-  }
-  66% {
-    transform: translateY(-6px) rotate(-1deg);
-  }
-}
-
 /* Squish/bounce on click */
 @keyframes squish {
   0% {
@@ -419,31 +311,6 @@
   }
   60% {
     transform: scale(1.05, 0.95);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Rubber-band bounce for emphasis */
-@keyframes rubber-band {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scaleX(1.15) scaleY(0.88);
-  }
-  40% {
-    transform: scaleX(0.9) scaleY(1.1);
-  }
-  50% {
-    transform: scaleX(1.05) scaleY(0.95);
-  }
-  65% {
-    transform: scaleX(0.98) scaleY(1.02);
-  }
-  75% {
-    transform: scaleX(1.02) scaleY(0.98);
   }
   100% {
     transform: scale(1);
@@ -472,32 +339,6 @@
   }
 }
 
-/* Wave effect for text characters */
-@keyframes wave-char {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-/* Glow pulse for CTA buttons */
-@keyframes glow-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 4px var(--primary),
-      0 0 12px transparent;
-  }
-  50% {
-    box-shadow:
-      0 0 8px var(--primary),
-      0 0 24px color-mix(in srgb, var(--primary) 30%, transparent);
-  }
-}
-
 /* Playful squiggly underline via SVG */
 @keyframes squiggle {
   0% {
@@ -508,79 +349,17 @@
   }
 }
 
-/* Shimmer sweep for loading/decorative */
-@keyframes shimmer-sweep {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Utility classes for the animations */
-.animate-wiggle {
-  animation: wiggle 0.6s ease-in-out;
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
 .animate-squish {
   animation: squish 0.4s ease-in-out;
-}
-
-.animate-rubber-band {
-  animation: rubber-band 0.6s ease-in-out;
 }
 
 .animate-heart-pop {
   animation: heart-pop 0.5s ease-in-out;
 }
 
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
 /* Hover-triggered variants */
 .hover-wiggle:hover {
   animation: wiggle 0.6s ease-in-out;
-}
-
-.hover-squish:active {
-  animation: squish 0.3s ease-in-out;
-}
-
-/* Stagger delay helpers for children */
-.stagger-children > *:nth-child(1) {
-  animation-delay: 0ms;
-}
-.stagger-children > *:nth-child(2) {
-  animation-delay: 60ms;
-}
-.stagger-children > *:nth-child(3) {
-  animation-delay: 120ms;
-}
-.stagger-children > *:nth-child(4) {
-  animation-delay: 180ms;
-}
-.stagger-children > *:nth-child(5) {
-  animation-delay: 240ms;
-}
-.stagger-children > *:nth-child(6) {
-  animation-delay: 300ms;
-}
-
-/* Tilt-on-hover card perspective */
-.card-tilt {
-  perspective: 800px;
-  transform-style: preserve-3d;
-}
-
-.card-tilt:hover {
-  transform: rotateY(2deg) rotateX(-1deg) translateY(-4px);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Squiggly underline for nav links */
@@ -627,6 +406,17 @@
 
 .chat-container {
   animation: chat-fade-in 0.4s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-squish,
+  .animate-heart-pop,
+  .hover-wiggle:hover,
+  .squiggle-underline:hover,
+  .chat-typing-dot,
+  .chat-container {
+    animation: none;
+  }
 }
 
 /* Print styles for recipes */

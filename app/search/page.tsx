@@ -1,7 +1,8 @@
 import { Suspense } from "react";
+import { Search } from "lucide-react";
 import { SearchBar } from "@/components/search/search-bar";
 import { AppLayout } from "@/components/layout/app-layout";
-import { CardListSkeleton, ContentEmptyState } from "@/components/ui/content-state";
+import { EmptyState, RecipeGridSkeleton } from "@/components/layout/page-state";
 import { SearchResults } from "./search-results";
 import { SearchDiscovery } from "@/components/search/search-discovery";
 import type { Metadata } from "next";
@@ -26,7 +27,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 function SearchResultsSkeleton() {
-  return <CardListSkeleton count={6} />;
+  return <RecipeGridSkeleton count={8} />;
 }
 
 export default async function SearchPage({ searchParams }: PageProps) {
@@ -39,25 +40,21 @@ export default async function SearchPage({ searchParams }: PageProps) {
         { label: "Home", href: "/" },
         { label: "Search", active: true },
       ]}
-      contentMaxWidth="4xl"
-      contentClassName="py-5 sm:py-7"
+      contentType="table"
+      title="Search Recipes"
+      description="Describe what you're in the mood for. Ingredients, cravings, and occasions all work."
+      headerChildren={
+        <div className="mbs-5 flex max-w-2xl flex-col gap-3">
+          <Suspense fallback={<div className="h-12 sm:h-15" />}>
+            <SearchBar size="large" placeholder="Search for recipes..." />
+          </Suspense>
+          <SearchDiscovery />
+        </div>
+      }
     >
-      <h1 className="mbe-4 font-serif text-2xl font-bold text-foreground sm:mbe-6 sm:text-3xl">
-        Search Recipes
-      </h1>
-
-      <Suspense fallback={<div className="mbe-6 h-12 sm:mbe-8 sm:h-14" />}>
-        <SearchBar
-          size="large"
-          placeholder="Search for recipes..."
-
-          className="mbe-6 sm:mbe-8"
-        />
-      </Suspense>
-
       {query ? (
         <div>
-          <p className="mbe-6 text-sm text-muted-foreground">
+          <p className="mbe-4 text-sm text-muted-foreground">
             Showing results for &quot;{query}&quot;
           </p>
           <Suspense fallback={<SearchResultsSkeleton />}>
@@ -65,15 +62,11 @@ export default async function SearchPage({ searchParams }: PageProps) {
           </Suspense>
         </div>
       ) : (
-        <div className="flex flex-col gap-6">
-          <ContentEmptyState
-            icon="🔍"
-            title="Start searching"
-            description='Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".'
-            className="border border-border/45 bg-card/70"
-          />
-          <SearchDiscovery />
-        </div>
+        <EmptyState
+          icon={Search}
+          title="Start searching"
+          description='Try natural language queries like "quick weeknight dinner", "something with chicken and lemon", or "healthy meal prep ideas".'
+        />
       )}
     </AppLayout>
   );

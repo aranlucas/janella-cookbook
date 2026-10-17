@@ -56,6 +56,7 @@ export default async function EditRecipePage({ params }: PageProps) {
   return (
     <AppLayout
       contentType="form"
+      contentMaxWidth="4xl"
       breadcrumbs={[
         { label: "Home", href: "/" },
         { label: "Recipes", href: "/recipes" },

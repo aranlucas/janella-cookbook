@@ -46,16 +46,7 @@ import { MessageContextMenu } from "@/components/chatbot/message-context-menu";
 import { quickActions } from "@/components/chatbot/quick-actions";
 import { hapticLight, hapticSuccess } from "@/lib/haptics";
 import { jsonValueSchema, readJsonObject, readJsonString } from "@/lib/json";
-import {
-  Camera,
-  ChefHat,
-  CookingPot,
-  Flame,
-  MapPin,
-  MapPinOff,
-  Leaf,
-  UtensilsCrossed,
-} from "lucide-react";
+import { Camera, CookingPot, Flame, MapPin, MapPinOff, Leaf, UtensilsCrossed } from "lucide-react";
 import { useCallback, useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
@@ -432,22 +423,14 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       <Conversation className="relative z-10 flex-1 bg-transparent">
         <ConversationContent className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6 md:pbs-8">
           {messages.length === 0 ? (
-            <div className="flex h-full min-h-10vh flex-col items-center justify-center gap-4 px-4 text-center">
-              <div className="flex size-12 items-center justify-center rounded-2xl bg-rustic-terracotta text-white shadow-sm">
-                <ChefHat className="size-6" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <h3 className="font-serif text-4xl font-semibold tracking-tight text-rustic-charcoal">
-                  Hello there!
-                </h3>
-                <p className="mx-auto max-w-md text-base leading-relaxed text-rustic-charcoal/75">
-                  Ask for recipes, substitutions, meal prep ideas, or cooking help based on what you
-                  have.
-                </p>
-                <p className="text-sm text-rustic-charcoal/60">
-                  Start with a quick prompt below or type your own question.
-                </p>
-              </div>
+            <div className="flex h-full min-h-10vh flex-col justify-center gap-3 px-1">
+              <h1 className="font-display text-4xl leading-display font-semibold text-foreground sm:text-5xl">
+                What should we cook?
+              </h1>
+              <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+                Ask for recipes, substitutions, meal prep ideas, or help with what&apos;s in your
+                fridge. Start with a prompt below or type your own.
+              </p>
             </div>
           ) : (
             <>
@@ -470,8 +453,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                       <MessageContent
                         className={
                           role === "user"
-                            ? "rounded-3xl bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/92 px-4 py-3 text-white shadow-sm shadow-rustic-terracotta/20"
-                            : "rounded-3xl border border-rustic-sand/55 bg-white px-4 py-3 text-rustic-charcoal shadow-bubble"
+                            ? "rounded-3xl bg-linear-to-br from-primary to-primary/92 px-4 py-3 text-white shadow-sm shadow-primary/20"
+                            : "rounded-3xl border border-border/55 bg-popover px-4 py-3 text-foreground shadow-bubble"
                         }
                       >
                         {parts
@@ -506,7 +489,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                                     className={
                                       role === "user"
                                         ? "text-white [&_*]:text-white"
-                                        : "text-rustic-charcoal/95 [&_*]:text-rustic-charcoal/95"
+                                        : "text-foreground/95 [&_*]:text-foreground/95"
                                     }
                                   >
                                     {part.text}
@@ -559,23 +542,23 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               })}
               {isLoading && messages.at(-1)?.role === "user" && (
                 <Message from="assistant" className="max-w-chat-assistant">
-                  <MessageContent className="rounded-3xl border border-rustic-sand/55 bg-white px-4 py-3 shadow-bubble">
+                  <MessageContent className="rounded-3xl border border-border/55 bg-popover px-4 py-3 shadow-bubble">
                     <div className="flex items-center gap-3 py-2">
                       <div className="flex gap-1">
                         <span
-                          className="chat-typing-dot size-2 rounded-full bg-rustic-terracotta/85"
+                          className="chat-typing-dot size-2 rounded-full bg-primary/85"
                           style={{ animationDelay: "0ms" }}
                         />
                         <span
-                          className="chat-typing-dot size-2 rounded-full bg-rustic-terracotta/85"
+                          className="chat-typing-dot size-2 rounded-full bg-primary/85"
                           style={{ animationDelay: "150ms" }}
                         />
                         <span
-                          className="chat-typing-dot size-2 rounded-full bg-rustic-terracotta/85"
+                          className="chat-typing-dot size-2 rounded-full bg-primary/85"
                           style={{ animationDelay: "300ms" }}
                         />
                       </div>
-                      <span className="text-sm font-medium text-rustic-charcoal/75 italic">
+                      <span className="text-sm font-medium text-foreground/75 italic">
                         Cooking up a response...
                       </span>
                     </div>
@@ -617,7 +600,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                             }).catch(() => {});
                           }
                         }}
-                        className="self-start rounded-lg bg-rustic-terracotta px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-rustic-terracotta/90 hover:shadow active:scale-98"
+                        className="self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary/90 hover:shadow active:scale-98"
                       >
                         Try again
                       </button>
@@ -632,7 +615,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       </Conversation>
 
       {/* Input area */}
-      <div className="sticky inset-be-0 z-10 shrink-0 bg-linear-to-t from-rustic-cream via-rustic-cream/96 to-transparent pbs-2 pbe-3">
+      <div className="sticky inset-be-0 z-10 shrink-0 bg-linear-to-t from-background via-background/96 to-transparent pbs-2 pbe-3">
         <div className="mx-auto grid w-full max-w-3xl gap-3 px-3 md:px-4">
           {/* Suggestions */}
           {messages.length === 0 && (
@@ -644,9 +627,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                     onClick={() => handleSuggestionClick(suggestion.text)}
                     suggestion={suggestion.text}
                     variant="ghost"
-                    className="group/chip h-11 w-full justify-start gap-2 bg-white text-rustic-charcoal/95 shadow-chip outline-1 outline-rustic-sand/35 transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:outline-rustic-terracotta/35"
+                    className="group/chip h-11 w-full justify-start gap-2 bg-popover text-foreground/95 shadow-chip outline-1 outline-muted/35 transition-all hover:bg-secondary/45 hover:text-primary hover:outline-primary/35"
                   >
-                    <span className="text-rustic-charcoal/65 transition-colors group-hover/chip:text-rustic-terracotta">
+                    <span className="text-foreground/65 transition-colors group-hover/chip:text-primary">
                       {suggestion.icon}
                     </span>
                     {suggestion.text}
@@ -660,9 +643,9 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                     onClick={() => handleSuggestionClick(suggestion.text)}
                     suggestion={suggestion.text}
                     variant="ghost"
-                    className="group/chip gap-1.5 bg-white text-rustic-charcoal/95 shadow-chip-strong outline-1 outline-rustic-sand/35 transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta hover:outline-rustic-terracotta/35"
+                    className="group/chip gap-1.5 bg-popover text-foreground/95 shadow-chip-strong outline-1 outline-muted/35 transition-all hover:bg-secondary/45 hover:text-primary hover:outline-primary/35"
                   >
-                    <span className="text-rustic-charcoal/65 transition-colors group-hover/chip:text-rustic-terracotta">
+                    <span className="text-foreground/65 transition-colors group-hover/chip:text-primary">
                       {suggestion.icon}
                     </span>
                     {suggestion.text}
@@ -678,7 +661,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
             multiple
             accept="image/*"
             onSubmit={handleSubmit}
-            className="overflow-hidden rounded-3xl bg-white shadow-composer outline-1 outline-rustic-sand/35 transition-all focus-within:shadow-composer-focus focus-within:outline-rustic-terracotta/45 [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0"
+            className="overflow-hidden rounded-3xl bg-popover shadow-composer outline-1 outline-muted/35 transition-all focus-within:shadow-composer-focus focus-within:outline-primary/45 [&_[data-slot=input-group]]:border-0 [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0"
           >
             <PromptInputHeader>
               <PromptInputAttachmentsDisplay />
@@ -692,13 +675,13 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                     ? "Ask me anything... (location enabled)"
                     : "What shall we cook today?"
                 }
-                className="min-h-12 text-rustic-charcoal placeholder:text-rustic-charcoal/65"
+                className="min-h-12 text-foreground placeholder:text-foreground/65"
               />
             </PromptInputBody>
             <PromptInputFooter>
               <PromptInputTools>
                 <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger className="size-8 rounded-xl bg-rustic-cream/70 text-rustic-charcoal/70 transition-all hover:bg-rustic-blush/45 hover:text-rustic-terracotta" />
+                  <PromptInputActionMenuTrigger className="size-8 rounded-xl bg-background/70 text-foreground/70 transition-all hover:bg-secondary/45 hover:text-primary" />
                   <PromptInputActionMenuContent className="w-56">
                     <PromptInputActionAddAttachments label="Add recipe photo" />
                     <PromptInputActionMenuItem onClick={handleCameraCapture}>
@@ -723,7 +706,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                 <VoiceInput
                   onTranscript={handleVoiceTranscript}
                   disabled={isLoading}
-                  className="text-rustic-charcoal/70 hover:bg-rustic-cream/80 hover:text-rustic-charcoal"
+                  className="text-foreground/70 hover:bg-background/80 hover:text-foreground"
                 />
 
                 <PromptInputButton
@@ -732,8 +715,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                   variant={locationEnabled ? "default" : "ghost"}
                   className={
                     locationEnabled
-                      ? "bg-rustic-moss text-white hover:bg-rustic-moss/90"
-                      : "text-rustic-charcoal/65 hover:bg-rustic-cream hover:text-rustic-moss"
+                      ? "bg-accent text-white hover:bg-accent/90"
+                      : "text-foreground/65 hover:bg-background hover:text-accent"
                   }
                 >
                   {locationLoading ? (
@@ -751,7 +734,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
               <PromptInputSubmit
                 disabled={!text.trim() || isLoading}
                 status={status}
-                className="bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/85 text-white shadow-sm transition-all hover:from-rustic-terracotta/95 hover:to-rustic-terracotta/80 hover:shadow-md disabled:from-rustic-sand disabled:to-rustic-sand disabled:text-rustic-charcoal/30 disabled:shadow-none"
+                className="bg-linear-to-br from-primary to-primary/85 text-white shadow-sm transition-all hover:from-primary/95 hover:to-primary/80 hover:shadow-md disabled:from-muted disabled:to-muted disabled:text-foreground/30 disabled:shadow-none"
               />
             </PromptInputFooter>
           </PromptInput>

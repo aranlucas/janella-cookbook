@@ -97,8 +97,8 @@ export function MobileChatHeader({
   return (
     <header
       className={cn(
-        "sticky inset-bs-0 z-40 shrink-0 border-be border-rustic-sand/50 transition-all duration-300",
-        "bg-linear-to-r from-rustic-cream via-rustic-blush/30 to-rustic-butter/40 backdrop-blur-lg",
+        "sticky inset-bs-0 z-40 shrink-0 border-be border-border/50 transition-all duration-300",
+        "bg-linear-to-r from-background via-secondary/30 to-card/40 backdrop-blur-lg",
         isCompact ? "py-2" : "py-3",
         !isVisible && "-translate-y-full",
         className,
@@ -111,7 +111,7 @@ export function MobileChatHeader({
             variant="ghost"
             size="icon-sm"
             onClick={onBack}
-            className="text-rustic-charcoal/60 hover:text-rustic-charcoal md:hidden"
+            className="text-foreground/60 hover:text-foreground md:hidden"
             aria-label="Go back"
           >
             <ArrowLeft className="size-5" />
@@ -121,7 +121,7 @@ export function MobileChatHeader({
         {/* Logo/Icon */}
         <div
           className={cn(
-            "flex items-center justify-center rounded-2xl bg-linear-to-br from-rustic-terracotta to-rustic-terracotta/80 text-white shadow-lg shadow-rustic-terracotta/20 transition-all duration-300",
+            "flex items-center justify-center rounded-2xl bg-linear-to-br from-primary to-primary/80 text-white shadow-lg shadow-primary/20 transition-all duration-300",
             isCompact ? "size-8 rounded-xl" : "size-10",
           )}
         >
@@ -132,13 +132,13 @@ export function MobileChatHeader({
         <div className="min-w-0 flex-1">
           <h2
             className={cn(
-              "truncate font-serif font-bold tracking-tight text-rustic-charcoal transition-all duration-300",
+              "truncate font-serif font-bold tracking-tight text-foreground transition-all duration-300",
               isCompact ? "text-sm" : "text-base",
             )}
           >
             {title}
           </h2>
-          {!isCompact && <p className="truncate text-xs text-rustic-charcoal/50">{subtitle}</p>}
+          {!isCompact && <p className="truncate text-xs text-foreground/50">{subtitle}</p>}
         </div>
 
         {/* Status indicators */}
@@ -146,7 +146,7 @@ export function MobileChatHeader({
           {locationEnabled && (
             <div
               className={cn(
-                "flex items-center gap-1.5 rounded-full bg-rustic-moss/10 text-xs font-medium text-rustic-moss ring-1 ring-rustic-moss/20 transition-all duration-300",
+                "flex items-center gap-1.5 rounded-full bg-accent/10 text-xs font-medium text-accent ring-1 ring-accent/20 transition-all duration-300",
                 isCompact ? "px-2 py-0.5" : "px-2.5 py-1",
               )}
             >
@@ -162,7 +162,7 @@ export function MobileChatHeader({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-rustic-charcoal/50 hover:bg-rustic-blush/30 hover:text-rustic-charcoal"
+                  className="text-foreground/50 hover:bg-secondary/30 hover:text-foreground"
                   aria-label="More options"
                 />
               }
