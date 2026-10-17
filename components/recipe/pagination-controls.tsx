@@ -18,7 +18,7 @@ export function PaginationControls({ currentPage, totalPages, baseUrl }: Paginat
   const getPageHref = (pageNumber: number) => `${baseUrl}${pageSeparator}page=${pageNumber}`;
 
   return (
-    <div className="mbs-12 flex items-center justify-center gap-4">
+    <div className="mbs-10 flex items-center justify-between gap-4 border-bs border-border/70 pbs-5">
       {currentPage > 1 ? (
         <ButtonLink href={getPageHref(currentPage - 1)} variant="outline">
           Previous

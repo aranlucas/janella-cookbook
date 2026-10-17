@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { listRecipes } from "@/lib/recipe-queries";
@@ -7,7 +8,7 @@ import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { ButtonLink } from "@/components/recipe/button-link";
 import { PaginationControls } from "@/components/recipe/pagination-controls";
-import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
+import { EmptyState, RecipeGridSkeleton } from "@/components/layout/page-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 import { AppLayout } from "@/components/layout/app-layout";
 import type { Metadata } from "next";
@@ -177,8 +178,8 @@ async function RecipeList({ query, category, page, sort }: RecipeListProps) {
 
   if (recipes.length === 0) {
     return (
-      <ContentEmptyState
-        icon="🔍"
+      <EmptyState
+        icon={Search}
         title="No recipes found"
         description={
           query
@@ -186,7 +187,7 @@ async function RecipeList({ query, category, page, sort }: RecipeListProps) {
             : "Try adjusting your filters or search terms."
         }
         action={
-          <ButtonLink href="/recipes" variant="outline" className="rounded-full px-8">
+          <ButtonLink href="/recipes" variant="outline" size="lg" className="px-5">
             View All Recipes
           </ButtonLink>
         }

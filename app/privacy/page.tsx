@@ -1,4 +1,4 @@
-import { AppLayout } from "@/components/layout/app-layout";
+import { LegalPage } from "@/components/layout/legal-page";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -27,54 +27,5 @@ export default function PrivacyPage() {
     },
   ] as const;
 
-  return (
-    <AppLayout
-      contentType="default"
-      breadcrumbs={[
-        { label: "Home", href: "/" },
-        { label: "Privacy Policy", active: true },
-      ]}
-      contentMaxWidth="5xl"
-    >
-      <div className="grid gap-8 lg:grid-cols-doc">
-        <aside className="hidden lg:block">
-          <nav className="sticky inset-bs-28 rounded-xl border border-border/45 bg-card/70 p-4">
-            <p className="mbe-3 text-xs font-semibold tracking-eyebrow text-muted-foreground uppercase">
-              On This Page
-            </p>
-            <ul className="flex flex-col gap-2">
-              {sections.map((section) => (
-                <li key={section.id}>
-                  <a
-                    href={`#${section.id}`}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {section.title}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        <div className="flex flex-col gap-8 rounded-2xl border border-border/45 bg-card/55 p-6 sm:p-8">
-          <header className="flex flex-col gap-3">
-            <h1 className="font-serif text-4xl font-bold text-foreground">Privacy Policy</h1>
-            <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Last updated: January 2026
-            </p>
-          </header>
-
-          {sections.map((section) => (
-            <section key={section.id} id={section.id} className="flex flex-col gap-3">
-              <h2 className="font-serif text-2xl font-semibold text-foreground">{section.title}</h2>
-              <p className="max-w-3xl text-base leading-relaxed text-muted-foreground">
-                {section.body}
-              </p>
-            </section>
-          ))}
-        </div>
-      </div>
-    </AppLayout>
-  );
+  return <LegalPage title="Privacy Policy" updated="January 2026" sections={sections} />;
 }

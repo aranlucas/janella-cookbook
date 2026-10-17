@@ -216,10 +216,10 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
                 setError("");
                 setPreview(null);
               }}
-              className={`rounded-xl border p-4 text-start transition-colors focus-visible:outline-2 focus-visible:outline-primary ${source === id ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-muted"}`}
+              className={`rounded-2xl border p-4 text-start transition-colors focus-visible:outline-2 focus-visible:outline-primary ${source === id ? "border-primary bg-primary/5" : "border-border bg-background hover:bg-muted"}`}
             >
               <Icon className="mbe-3 size-5" aria-hidden="true" />
-              <span className="block font-medium">{label}</span>
+              <span className="block font-display text-lg font-semibold">{label}</span>
               <span className="mbs-1 block text-xs text-muted-foreground">{detail}</span>
             </button>
           ))}
@@ -231,7 +231,7 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
               event.preventDefault();
               extract();
             }}
-            className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:p-6"
+            className="flex flex-col gap-4 rounded-3xl bg-card p-5 sm:p-7"
           >
             <fieldset disabled={pending} className="flex flex-col gap-4">
               {source === "link" && (
@@ -293,7 +293,9 @@ export function RecipeIntake({ initialLink }: RecipeIntakeProps) {
                     className="rounded-xl border-2 border-dashed border-border bg-background/60 px-5 py-8 text-center"
                   >
                     <ImagePlus className="mx-auto mbe-3 size-8 text-primary" />
-                    <p className="font-serif text-xl">Bring a written recipe into your cookbook</p>
+                    <p className="font-display text-2xl font-semibold">
+                      Bring a written recipe into your cookbook
+                    </p>
                     <p className="mx-auto mbs-2 max-w-md text-sm text-muted-foreground">
                       Drop a recipe card, cookbook page or screenshot here. JPEG, PNG or WebP, up to
                       4 MB. Photos of dishes alone cannot be transcribed.

@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { FolderOpen } from "lucide-react";
 import { prisma, withDatabaseRetry } from "@/lib/prisma";
 import { AppLayout } from "@/components/layout/app-layout";
-import { ContentEmptyState } from "@/components/ui/content-state";
+import { EmptyState } from "@/components/layout/page-state";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -88,8 +89,8 @@ export default async function CategoriesPage() {
       description={`Browse ${categories.length} collections of recipes.`}
     >
       {categories.length === 0 ? (
-        <ContentEmptyState
-          icon="📭"
+        <EmptyState
+          icon={FolderOpen}
           title="No categories yet"
           description="Add a few recipes and we will build your category map automatically."
           actionHref="/recipes/new"

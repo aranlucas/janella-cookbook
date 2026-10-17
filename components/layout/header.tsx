@@ -19,7 +19,7 @@ const navItems = [
 
 export function Header() {
   return (
-    <header className="sticky inset-bs-0 z-50 w-full border-be border-border/70 bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
+    <header className="no-print sticky inset-bs-0 z-50 w-full border-be border-border/70 bg-background/92 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
       <div className="container flex h-14 items-center gap-2 sm:h-16">
         <Logo />
 

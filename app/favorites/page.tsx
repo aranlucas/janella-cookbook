@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { Heart } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ButtonLink } from "@/components/recipe/button-link";
-import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
+import { EmptyState, RecipeGridSkeleton } from "@/components/layout/page-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
@@ -42,8 +43,8 @@ async function RecipeList() {
 
   if (recipes.length === 0) {
     return (
-      <ContentEmptyState
-        icon="❤️"
+      <EmptyState
+        icon={Heart}
         title="No favorites yet"
         description="Mark recipes as favorites to save them here for quick access."
         actionHref="/recipes"

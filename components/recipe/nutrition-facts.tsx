@@ -34,7 +34,7 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-serif text-lg font-semibold md:text-xl">Nutrition Facts</h3>
+        <h2 className="font-display text-2xl font-semibold">Nutrition</h2>
         {!hasGenerated && !isLoading && (
           <Button
             onClick={() => void handleGenerate()}
@@ -65,13 +65,13 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       )}
 
       {error && (
-        <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+        <div role="alert" className="rounded-2xl bg-destructive/10 p-4 text-sm text-destructive">
           Failed to generate nutrition facts. Please try again.
         </div>
       )}
 
       {completion && (
-        <div className="rounded-lg bg-card p-4 shadow-sm md:p-6">
+        <div className="rounded-3xl bg-card p-5 md:p-6">
           <div className="max-w-none overflow-x-auto text-foreground">
             <Streamdown mode="streaming">{completion}</Streamdown>
           </div>
@@ -83,12 +83,9 @@ export function NutritionFacts({ recipe }: NutritionFactsProps) {
       )}
 
       {!hasGenerated && !isLoading && !completion && (
-        <div className="rounded-lg bg-muted/50 p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Click &quot;Generate with AI&quot; to get estimated nutritional information for this
-            recipe.
-          </p>
-        </div>
+        <p className="text-base text-muted-foreground">
+          Get an AI estimate of calories, protein, carbs, and fat per serving.
+        </p>
       )}
     </div>
   );

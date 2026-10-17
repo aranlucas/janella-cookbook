@@ -23,7 +23,7 @@ const linkGroups = [
 
 export function Footer() {
   return (
-    <footer className="border-bs border-border/70 bg-muted/40 pbs-8 pbe-6">
+    <footer className="no-print border-bs border-border/70 bg-muted/40 pbs-8 pbe-6">
       <div className="container">
         <div className="grid gap-8 md:grid-cols-12">
           <div className="md:col-span-6 lg:col-span-7">

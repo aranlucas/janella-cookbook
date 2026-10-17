@@ -42,41 +42,27 @@ export function SearchDiscovery() {
     return [];
   });
 
-  return (
-    <div className="flex flex-col gap-6">
-      {recentSearches.length > 0 && (
-        <section className="rounded-2xl border border-border/45 bg-card/70 p-4 sm:p-5">
-          <h2 className="text-sm font-semibold tracking-wide text-foreground uppercase">
-            Recent Searches
-          </h2>
-          <div className="mbs-3 flex flex-wrap gap-2">
-            {recentSearches.map((query) => (
-              <Link
-                key={query}
-                href={`/search?q=${encodeURIComponent(query)}`}
-                className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground sm:text-sm"
-              >
-                {query}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
+  const rows = [
+    { label: "Recent", queries: recentSearches },
+    { label: "Try", queries: DEFAULT_SUGGESTIONS },
+  ].filter((row) => row.queries.length > 0);
 
-      <section className="rounded-2xl border border-border/45 bg-card/70 p-4 sm:p-5">
-        <h2 className="text-sm font-semibold tracking-wide text-foreground uppercase">Try These</h2>
-        <div className="mbs-3 flex flex-wrap gap-2">
-          {DEFAULT_SUGGESTIONS.map((query) => (
+  return (
+    <div className="flex flex-col gap-2">
+      {rows.map((row) => (
+        <div key={row.label} className="flex flex-wrap items-center gap-1.5 text-sm">
+          <span className="w-14 shrink-0 text-muted-foreground">{row.label}</span>
+          {row.queries.map((query) => (
             <Link
               key={query}
               href={`/search?q=${encodeURIComponent(query)}`}
-              className="rounded-full border border-border/60 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/45 hover:text-foreground sm:text-sm"
+              className="rounded-full border border-border bg-background px-3 py-1 font-medium text-foreground transition-colors hover:border-highlight hover:bg-highlight hover:text-highlight-foreground"
             >
               {query}
             </Link>
           ))}
         </div>
-      </section>
+      ))}
     </div>
   );
 }

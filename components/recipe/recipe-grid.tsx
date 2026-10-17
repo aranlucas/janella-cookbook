@@ -1,7 +1,8 @@
 "use client";
 
 import { RecipeCard } from "./recipe-card";
-import { ContentEmptyState, RecipeGridSkeleton } from "@/components/ui/content-state";
+import { BookOpen } from "lucide-react";
+import { EmptyState, RecipeGridSkeleton } from "@/components/layout/page-state";
 import type { RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeGridProps {
@@ -16,10 +17,10 @@ export function RecipeGrid({ recipes, isLoading }: RecipeGridProps) {
 
   if (recipes.length === 0) {
     return (
-      <ContentEmptyState
-        icon="📚"
+      <EmptyState
+        icon={BookOpen}
         title="No recipes yet"
-        description="Start building your cookbook by adding your first recipe!"
+        description="Bring one in from a link, a photo, or your own notes."
         actionHref="/recipes/new"
         actionLabel="Add Your First Recipe"
       />

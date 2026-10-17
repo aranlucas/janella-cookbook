@@ -1,21 +1,11 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BookOpen,
-  Clock3,
-  Heart,
-  Layers,
-  Sparkles,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Heart } from "lucide-react";
 import { AppLayout } from "@/components/layout/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ContentEmptyState } from "@/components/ui/content-state";
-import { ButtonLink } from "@/components/recipe/button-link";
+import { EmptyState } from "@/components/layout/page-state";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
+import { formatMinutes } from "@/lib/utils";
 
 export const revalidate = 3600;
 
@@ -56,13 +46,10 @@ interface DashboardStats {
   momentumScore: number;
 }
 
-interface DashboardCard {
+interface DashboardStat {
   label: string;
   value: number;
-  icon: LucideIcon;
-  emoji: string;
   trend: string;
-  tone: string;
 }
 
 async function getDashboardStats(): Promise<DashboardStats> {
@@ -218,27 +205,24 @@ function statsBonus(recentlyUpdated: number, favorites: number): number {
   return Math.round(recentlyUpdated * 1.5 + favorites * 0.5);
 }
 
+const shortDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+
 export default async function DashboardPage() {
   const stats = await getDashboardStats();
+  const addedDelta = stats.recentlyAdded - stats.recentlyAddedPrevPeriod;
 
-  const cards: DashboardCard[] = [
+  const statRow: DashboardStat[] = [
     {
-      label: "Total Recipes",
+      label: "Recipes",
       value: stats.totalRecipes,
-      icon: BookOpen,
-      tone: "from-primary/20 to-primary/5",
-      emoji: "📖",
       trend:
         stats.createdLast30Days > 0
           ? `${stats.createdLast30Days} added in 30 days`
-          : "No new recipes this month",
+          : "None added this month",
     },
     {
       label: "Favorites",
       value: stats.favorites,
-      icon: Heart,
-      tone: "from-rose-400/20 to-rose-300/5",
-      emoji: "❤️",
       trend:
         stats.favoritesLast30Days > 0
           ? `${stats.favoritesLast30Days} touched in 30 days`
@@ -247,31 +231,21 @@ export default async function DashboardPage() {
     {
       label: "Categories",
       value: stats.categories,
-      icon: Layers,
-      tone: "from-amber-400/20 to-amber-300/5",
-      emoji: "🏷️",
-      trend:
-        stats.categories > 0 ? "Across courses and cuisines" : "Add recipes to build categories",
+      trend: stats.categories > 0 ? "Courses and cuisines" : "Add recipes to build categories",
     },
     {
-      label: "Added (7 days)",
+      label: "Added this week",
       value: stats.recentlyAdded,
-      icon: Clock3,
-      tone: "from-sky-400/20 to-sky-300/5",
-      emoji: "🆕",
-      trend:
-        stats.recentlyAdded - stats.recentlyAddedPrevPeriod >= 0
-          ? `+${stats.recentlyAdded - stats.recentlyAddedPrevPeriod} vs prior 7 days`
-          : `${stats.recentlyAdded - stats.recentlyAddedPrevPeriod} vs prior 7 days`,
+      trend: `${addedDelta >= 0 ? "+" : ""}${addedDelta} vs the week before`,
     },
   ];
 
   const momentumLevel =
     stats.momentumScore > 60
-      ? "🔥 On fire"
+      ? "On fire"
       : stats.momentumScore > 20
-        ? "⚡ Building momentum"
-        : "🌱 Getting started";
+        ? "Building momentum"
+        : "Getting started";
 
   return (
     <AppLayout
@@ -281,176 +255,129 @@ export default async function DashboardPage() {
         { label: "Dashboard", active: true },
       ]}
       title="Dashboard"
-      description="A live overview of your cookbook collection."
+      description={`${stats.recentlyUpdated} ${stats.recentlyUpdated === 1 ? "recipe" : "recipes"} updated this week. Cook or tweak one today to keep it going.`}
     >
-      <div className="flex flex-col gap-8">
-        <Card className="overflow-hidden border-border/70 bg-linear-to-br from-card via-card to-primary/5 shadow-sm">
-          <CardContent className="flex flex-col gap-4 p-6 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs tracking-eyebrow-wide text-muted-foreground uppercase">
-                Weekly Pulse
-              </p>
-              <h2 className="mbs-2 font-serif text-3xl font-semibold tracking-tight">
-                {stats.recentlyUpdated} recipes tuned this week
-              </h2>
-              <p className="mbs-2 text-sm text-muted-foreground">
-                Keep the streak alive: update or cook one recipe today.
-              </p>
+      <div className="flex flex-col gap-10">
+        <dl className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+          {statRow.map((stat) => (
+            <div key={stat.label} className="border-bs border-border/80 pbs-3">
+              <dt className="text-sm font-medium text-foreground">{stat.label}</dt>
+              <dd className="mbs-1 font-display text-5xl leading-none font-semibold tabular-nums">
+                {stat.value}
+              </dd>
+              <dd className="mbs-2 text-sm text-muted-foreground">{stat.trend}</dd>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{momentumLevel}</Badge>
-              <Badge variant="outline">{stats.fastestCount} quick wins</Badge>
-            </div>
-          </CardContent>
-        </Card>
+          ))}
+        </dl>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => {
-            const Icon = card.icon;
-
-            return (
-              <Card
-                key={card.label}
-                className="group relative overflow-hidden border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+          <section className="lg:col-span-7">
+            <div className="mbe-3 flex items-end justify-between gap-4">
+              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Recently updated</h2>
+              <Link
+                href="/recipes"
+                className="group inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                <div
-                  className={`absolute inset-x-0 inset-bs-0 h-1.5 bg-linear-to-r ${card.tone}`}
+                All recipes
+                <ArrowRight
+                  className="size-4 transition-transform group-hover:translate-x-0.5"
+                  aria-hidden="true"
                 />
-                <CardHeader className="pbe-3">
-                  <CardTitle className="flex items-center justify-between text-sm font-medium text-muted-foreground">
-                    {card.label}
-                    <span className="inline-flex size-8 items-center justify-center rounded-full bg-muted/60 text-foreground transition-transform duration-300 group-hover:scale-110">
-                      <Icon className="size-4" />
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-serif text-3xl font-bold transition-transform duration-200 group-hover:scale-105">
-                    {card.value}
-                  </p>
-                  <p className="mbs-2 text-xs text-muted-foreground">{card.trend}</p>
-                  <p className="mbs-3 text-sm">{card.emoji}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+              </Link>
+            </div>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-dashboard">
-          <Card className="border-border/60 bg-card shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="font-serif text-xl">Recently Updated</CardTitle>
-              <ButtonLink href="/recipes" variant="outline" size="sm">
-                View all
-              </ButtonLink>
-            </CardHeader>
-            <CardContent>
-              {stats.latestRecipes.length === 0 ? (
-                <ContentEmptyState
-                  icon="📚"
-                  title="No recipes yet"
-                  description="Add your first recipe to start filling your dashboard."
-                  actionHref="/recipes/new"
-                  actionLabel="Add Recipe"
-                  className="py-10"
-                />
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {stats.latestRecipes.map((recipe) => (
+            {stats.latestRecipes.length === 0 ? (
+              <EmptyState
+                icon={BookOpen}
+                title="No recipes yet"
+                description="Add your first recipe to start filling your dashboard."
+                actionHref="/recipes/new"
+                actionLabel="Add Recipe"
+              />
+            ) : (
+              <ul className="border-bs border-border/70">
+                {stats.latestRecipes.map((recipe) => (
+                  <li key={recipe.id} className="border-be border-border/70">
                     <Link
-                      key={recipe.id}
                       href={`/recipe/${recipe.slug}`}
-                      className="group flex items-center justify-between rounded-lg border border-border/70 px-4 py-3 transition-all duration-200 hover:translate-x-1 hover:bg-muted/50 hover:shadow-sm"
+                      className="group flex items-center justify-between gap-4 py-3.5"
                     >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium transition-colors duration-200 group-hover:text-primary">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-base font-medium transition-colors group-hover:text-primary">
                           {recipe.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Updated {recipe.updatedAt.toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
+                        </span>
                         {recipe.isFavorite && (
-                          <Badge
-                            variant="secondary"
-                            className="transition-transform duration-200 group-hover:scale-105"
-                          >
-                            ❤️ Favorite
-                          </Badge>
+                          <Heart
+                            className="size-3.5 shrink-0 fill-primary text-primary"
+                            aria-label="Favorite"
+                          />
                         )}
-                        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                      </div>
+                      </span>
+                      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+                        {shortDate.format(recipe.updatedAt)}
+                      </span>
                     </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-          <Card className="border-border/60 bg-card shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-serif text-xl">
-                <Sparkles className="size-5 text-primary" />
-                Chef DNA
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-muted/25 p-4">
-                <div className="flex items-start justify-between">
-                  <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                    Momentum score
-                  </p>
-                  <Badge variant="outline">{momentumLevel}</Badge>
-                </div>
-                <p className="font-serif text-4xl font-bold">{stats.momentumScore}</p>
-                <p className="text-xs text-muted-foreground">
-                  Weighted from cook counts, favorites, and weekly updates.
+          <aside className="flex flex-col gap-6 lg:col-span-5">
+            {stats.challengeRecipe ? (
+              <Link
+                href={`/recipe/${stats.challengeRecipe.slug}`}
+                className="group block rounded-3xl bg-card p-6 transition-colors hover:bg-secondary sm:p-7"
+              >
+                <p className="text-sm text-muted-foreground">Cook next</p>
+                <p className="mbs-1 font-display text-3xl leading-tight font-semibold transition-colors group-hover:text-primary">
+                  {stats.challengeRecipe.title}
                 </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border/70 p-3">
-                  <p className="text-xs text-muted-foreground">Comfort zone</p>
-                  <p className="mbs-1 text-sm font-semibold">
-                    {stats.favoriteCuisine?.name ?? "Not enough data"}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border/70 p-3">
-                  <p className="text-xs text-muted-foreground">Quick wins</p>
-                  <p className="mbs-1 text-sm font-semibold">{stats.fastestCount} recipes</p>
-                </div>
-              </div>
-
-              {stats.challengeRecipe ? (
-                <Link
-                  href={`/recipe/${stats.challengeRecipe.slug}`}
-                  className="group block rounded-lg border border-dashed border-primary/50 bg-primary/5 px-4 py-3 transition hover:bg-primary/10"
-                >
-                  <p className="text-xs tracking-wide text-muted-foreground uppercase">
-                    Today&apos;s adventure pick
-                  </p>
-                  <p className="mbs-1 font-medium group-hover:text-primary">
-                    {stats.challengeRecipe.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.challengeRecipe.totalTime
-                      ? `${stats.challengeRecipe.totalTime} min • `
-                      : "No time estimate • "}
-                    {stats.challengeRecipe.cookCount > 0
+                <p className="mbs-2 text-sm text-muted-foreground">
+                  {[
+                    stats.challengeRecipe.totalTime
+                      ? formatMinutes(stats.challengeRecipe.totalTime)
+                      : null,
+                    stats.challengeRecipe.cookCount > 0
                       ? `Cooked ${stats.challengeRecipe.cookCount} times`
-                      : "Never cooked before"}
-                    {stats.challengeRecipe.isFavorite ? " • Favorite pick" : ""}
-                  </p>
-                </Link>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  You&apos;ve cooked everything recently. Add a new recipe to unlock your next
-                  challenge.
+                      : "Never cooked yet",
+                    stats.challengeRecipe.isFavorite ? "A favorite" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </p>
-              )}
-            </CardContent>
-          </Card>
+              </Link>
+            ) : (
+              <p className="rounded-3xl bg-card p-6 text-muted-foreground sm:p-7">
+                You&apos;ve cooked everything recently. Add a new recipe to find your next one.
+              </p>
+            )}
+
+            <dl className="flex flex-col">
+              {[
+                {
+                  label: "Most-saved cuisine",
+                  value: stats.favoriteCuisine?.name ?? "Not enough data",
+                },
+                { label: "Ready in 30 minutes", value: `${stats.fastestCount} recipes` },
+                {
+                  label: "Momentum",
+                  value: `${stats.momentumScore}, ${momentumLevel.toLowerCase()}`,
+                },
+              ].map((fact) => (
+                <div
+                  key={fact.label}
+                  className="flex items-baseline justify-between gap-4 border-be border-border/70 py-3"
+                >
+                  <dt className="text-sm text-muted-foreground">{fact.label}</dt>
+                  <dd className="text-base font-medium">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="-mbs-3 text-xs text-muted-foreground">
+              Momentum blends cook counts, favorites, and this week&apos;s updates.
+            </p>
+          </aside>
         </div>
       </div>
     </AppLayout>
