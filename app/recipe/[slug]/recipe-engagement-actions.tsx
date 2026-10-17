@@ -64,63 +64,46 @@ export function RecipeEngagementActions({
     });
   };
 
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3",
-        className,
-      )}
-    >
-      <div className="flex gap-2 sm:contents">
-        <Button
-          variant={recipe.isFavorite ? "default" : "outline"}
-          size="default"
-          onClick={handleToggleFavorite}
-          disabled={isFavoriting}
-          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
-        >
-          <Heart
-            className={`me-1.5 size-4 transition-transform duration-300 group-hover:scale-125 sm:me-2 sm:size-5 ${
-              recipe.isFavorite ? "animate-heart-pop fill-current" : "group-hover:-rotate-12"
-            }`}
-          />
-          <span className="text-sm font-medium sm:text-base">
-            {recipe.isFavorite ? "Favorited" : "Favorite"}
-          </span>
-        </Button>
+  const cookCount = recipe.cookCount || 0;
 
-        <Button
-          variant="outline"
-          size="default"
-          onClick={handleMarkCooked}
-          disabled={isCooking}
-          className="hover-squish group relative flex-1 overflow-hidden transition-all hover:scale-105 sm:flex-initial"
-        >
-          <ChefHat className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:me-2 sm:size-5" />
-          <span className="text-sm font-medium sm:text-base">I Made This</span>
-          {(recipe.cookCount || 0) > 0 && (
-            <span className="ms-1.5 rounded-full bg-primary px-1.5 py-0.5 text-3xs font-semibold text-primary-foreground transition-transform duration-200 group-hover:scale-110 sm:ms-2 sm:px-2 sm:text-xs">
-              {recipe.cookCount}
-            </span>
-          )}
-        </Button>
-      </div>
+  return (
+    <div className={cn("grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center", className)}>
+      <Button
+        onClick={handleMarkCooked}
+        disabled={isCooking}
+        size="lg"
+        className="group gap-2 sm:px-4"
+      >
+        <ChefHat className="size-4 transition-transform group-hover:-rotate-12" />
+        I Made This
+        {cookCount > 0 && (
+          <span className="rounded-full bg-primary-foreground/20 px-1.5 text-xs font-semibold tabular-nums">
+            {cookCount}
+          </span>
+        )}
+      </Button>
+
+      <Button
+        variant="outline"
+        size="lg"
+        onClick={handleToggleFavorite}
+        disabled={isFavoriting}
+        aria-pressed={recipe.isFavorite}
+        className={cn("gap-2 sm:px-4", recipe.isFavorite && "border-primary/40 text-primary")}
+      >
+        <Heart className={cn("size-4", recipe.isFavorite && "animate-heart-pop fill-current")} />
+        {recipe.isFavorite ? "Favorited" : "Favorite"}
+      </Button>
 
       <AddToShoppingListButton
         ingredients={recipe.ingredients}
         recipeTitle={recipe.title}
         recipeSlug={recipe.slug}
-        className="w-full sm:w-auto"
       />
 
-      <Button
-        variant="default"
-        size="default"
-        onClick={handleChatWithRecipe}
-        className="hover-squish group relative w-full overflow-hidden bg-linear-to-r from-orange-500 to-orange-600 text-white transition-all hover:scale-105 hover:from-orange-600 hover:to-orange-700 sm:w-auto"
-      >
-        <MessageCircle className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12 sm:me-2 sm:size-5" />
-        <span className="text-sm font-medium sm:text-base">Chat with Recipe</span>
+      <Button variant="ghost" size="lg" onClick={handleChatWithRecipe} className="gap-2 sm:px-3">
+        <MessageCircle className="size-4" />
+        Ask AI
       </Button>
     </div>
   );

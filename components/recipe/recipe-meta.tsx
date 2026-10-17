@@ -1,11 +1,17 @@
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { Star } from "lucide-react";
+import { cn, formatMinutes } from "@/lib/utils";
 import type { Difficulty, Course } from "@/types/recipe";
 
 const starSlots = ["star-1", "star-2", "star-3", "star-4", "star-5"];
 
-function formatCourse(course: Course) {
-  return course.charAt(0) + course.slice(1).toLowerCase();
+function capitalize(value: string) {
+  return value.charAt(0) + value.slice(1).toLowerCase();
+}
+
+interface Fact {
+  readonly label: string;
+  readonly value: string;
 }
 
 interface RecipeMetaProps {
@@ -33,88 +39,73 @@ export function RecipeMeta({
   cookCount,
   className,
 }: RecipeMetaProps) {
-  const difficultyColor = {
-    EASY: "bg-accent text-primary-foreground",
-    MEDIUM: "bg-muted text-foreground",
-    HARD: "bg-primary text-primary-foreground",
-    EXPERT: "bg-destructive text-destructive-foreground",
-  };
+  const facts = [
+    { label: "Prep", value: prepTime ? formatMinutes(prepTime) : null },
+    { label: "Cook", value: cookTime ? formatMinutes(cookTime) : null },
+    { label: "Total", value: totalTime ? formatMinutes(totalTime) : null },
+    { label: "Makes", value: servings?.trim() ? servings.trim() : null },
+  ].filter((fact): fact is Fact => fact.value !== null);
 
-  const hasPositiveRatingOrCookCount =
-    (rating !== undefined && rating !== null && rating > 0) ||
-    (cookCount !== undefined && cookCount > 0);
+  const hasRating = rating !== undefined && rating !== null && rating > 0;
+  const hasCookCount = cookCount !== undefined && cookCount > 0;
 
   return (
-    <div className={cn("flex flex-col gap-3 md:gap-4", className)}>
-      {/* Time info */}
-      <div className="flex flex-wrap gap-3 text-xs sm:gap-4 sm:text-sm">
-        {prepTime && (
-          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
-            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
-              🔪
-            </span>
-            <span className="text-muted-foreground/95">Prep:</span>
-            <span className="font-medium">{prepTime} min</span>
-          </div>
-        )}
-        {cookTime && (
-          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
-            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
-              🔥
-            </span>
-            <span className="text-muted-foreground/95">Cook:</span>
-            <span className="font-medium">{cookTime} min</span>
-          </div>
-        )}
-        {totalTime && (
-          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
-            <span className="inline-block transition-transform duration-300 group-hover/meta:rotate-360">
-              ⏱️
-            </span>
-            <span className="text-muted-foreground/95">Total:</span>
-            <span className="font-medium">{totalTime} min</span>
-          </div>
-        )}
-        {servings && (
-          <div className="group/meta flex items-center gap-1.5 sm:gap-2">
-            <span className="inline-block transition-transform duration-300 group-hover/meta:scale-125">
-              🍽️
-            </span>
-            <span className="text-muted-foreground/95">Servings:</span>
-            <span className="font-medium">{servings}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Badges */}
-      <div className="flex flex-wrap gap-2">
-        {difficulty && (
-          <Badge className={cn(difficultyColor[difficulty])}>
-            {difficulty.charAt(0) + difficulty.slice(1).toLowerCase()}
-          </Badge>
-        )}
-        {cuisine && <Badge variant="outline">{cuisine}</Badge>}
-        {course && <Badge variant="secondary">{formatCourse(course)}</Badge>}
-      </div>
-      {/* Rating and cook count (only show positive values) */}
-      {hasPositiveRatingOrCookCount && (
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          {rating !== undefined && rating !== null && rating > 0 && (
-            <div className="flex items-center gap-1">
-              {starSlots.map((slot, i) => (
-                <span key={slot} className={i < rating ? "text-primary" : "text-muted-foreground"}>
-                  ★
-                </span>
-              ))}
+    <div className={cn("flex flex-col gap-4", className)}>
+      {facts.length > 0 && (
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-border/80 py-3 sm:grid-cols-4">
+          {facts.map((fact) => (
+            <div key={fact.label} className="flex flex-col-reverse gap-0.5">
+              <dt className="text-sm text-muted-foreground">{fact.label}</dt>
+              <dd className="font-display text-xl leading-tight font-semibold sm:text-2xl">
+                {fact.value}
+              </dd>
             </div>
-          )}
-          {cookCount !== undefined && cookCount > 0 && (
-            <span>
-              Cooked {cookCount} time{cookCount !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
+          ))}
+        </dl>
       )}
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+        {difficulty && (
+          <span>
+            <span className="font-medium text-foreground">{capitalize(difficulty)}</span> to make
+          </span>
+        )}
+        {course && (
+          <Link
+            href={`/recipes?category=${course.toLowerCase()}`}
+            className="underline decoration-border underline-offset-4 transition-colors hover:text-primary hover:decoration-primary"
+          >
+            {capitalize(course)}
+          </Link>
+        )}
+        {cuisine && (
+          <Link
+            href={`/recipes?category=${encodeURIComponent(cuisine.toLowerCase())}`}
+            className="underline decoration-border underline-offset-4 transition-colors hover:text-primary hover:decoration-primary"
+          >
+            {cuisine}
+          </Link>
+        )}
+        {hasRating && (
+          <span className="flex items-center gap-0.5" aria-label={`Rated ${rating} out of 5`}>
+            {starSlots.map((slot, i) => (
+              <Star
+                key={slot}
+                aria-hidden="true"
+                className={cn(
+                  "size-4",
+                  i < rating ? "fill-highlight text-highlight" : "text-muted-foreground/50",
+                )}
+              />
+            ))}
+          </span>
+        )}
+        {hasCookCount && (
+          <span>
+            Cooked {cookCount} {cookCount === 1 ? "time" : "times"}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

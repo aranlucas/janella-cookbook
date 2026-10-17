@@ -1,23 +1,9 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { prisma, withDatabaseRetry } from "@/lib/prisma";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ContentEmptyState } from "@/components/ui/content-state";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
-
-const courseIcons = {
-  BREAKFAST: "🍳",
-  LUNCH: "🥪",
-  DINNER: "🍖",
-  DESSERT: "🍰",
-  SNACK: "🍿",
-  DRINK: "🥤",
-  APPETIZER: "🥟",
-  SALAD: "🥗",
-  SOUP: "🍲",
-  SIDE: "🍟",
-} satisfies Readonly<Record<string, string>>;
 
 function formatCategoryName(value: string): string {
   return value
@@ -68,7 +54,6 @@ async function getCategories() {
           value: course.course,
           count,
           type: "course",
-          icon: Object.entries(courseIcons).find(([value]) => value === course.course)?.[1] ?? "🍽️",
         };
       }),
       ...cuisines.map((cuisine) => {
@@ -79,7 +64,6 @@ async function getCategories() {
           value: cuisine.cuisine,
           count,
           type: "cuisine",
-          icon: "🌍",
         };
       }),
     ].toSorted((a, b) => b.count - a.count);
@@ -112,34 +96,42 @@ export default async function CategoriesPage() {
           actionLabel="Add Recipe"
         />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <Link
-              key={`${category.type}-${category.name}`}
-              href={`/recipes?category=${encodeURIComponent((category.value ?? category.name).toLowerCase())}`}
-              className="group"
-            >
-              <Card className="h-full border-border/45 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-lg">
-                <CardContent className="flex h-full flex-col items-center justify-center p-8 text-center">
-                  <span className="mbe-4 text-4xl transition-transform duration-300 group-hover:scale-110">
-                    {category.icon}
-                  </span>
-                  <h3
-                    className="mbe-2 line-clamp-2 min-h-15 font-serif text-2xl font-semibold text-foreground transition-colors group-hover:text-primary"
-                    title={category.name}
-                  >
-                    {category.name}
-                  </h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-3xs font-bold tracking-wider uppercase">
-                      {category.type === "course" ? "Course" : "Cuisine"}
-                    </span>
-                    <span className="font-medium">{category.count} recipes</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="flex flex-col gap-10">
+          {(["course", "cuisine"] as const).map((type) => {
+            const group = categories.filter((category) => category.type === type);
+
+            if (group.length === 0) {
+              return null;
+            }
+
+            return (
+              <section key={type}>
+                <h2 className="mbe-3 font-display text-2xl font-semibold sm:text-3xl">
+                  {type === "course" ? "Courses" : "Cuisines"}
+                </h2>
+                <ul className="grid border-bs border-border/70 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-3">
+                  {group.map((category) => (
+                    <li key={category.name} className="border-be border-border/70">
+                      <Link
+                        href={`/recipes?category=${encodeURIComponent((category.value ?? category.name).toLowerCase())}`}
+                        className="group flex items-baseline justify-between gap-4 py-3"
+                      >
+                        <span
+                          className="truncate font-display text-xl font-semibold transition-colors group-hover:text-primary sm:text-2xl"
+                          title={category.name}
+                        >
+                          {category.name}
+                        </span>
+                        <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+                          {category.count} {category.count === 1 ? "recipe" : "recipes"}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
         </div>
       )}
     </AppLayout>

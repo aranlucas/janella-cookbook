@@ -12,6 +12,7 @@ import type { RecipeWithRelations } from "@/types/recipe";
 import { AppLayout } from "@/components/layout/app-layout";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
+import { cn } from "@/lib/utils";
 
 export const revalidate = 86400;
 
@@ -211,8 +212,16 @@ async function RecipeList({ query, category, page, sort }: RecipeListProps) {
   const baseQuery = baseParams.toString();
   const baseUrl = baseQuery ? `/recipes?${baseQuery}` : "/recipes";
 
+  const firstShown = (page - 1) * ITEMS_PER_PAGE + 1;
+  const lastShown = firstShown + recipes.length - 1;
+
   return (
     <div>
+      <p className="mbe-4 text-sm text-muted-foreground">
+        {total <= ITEMS_PER_PAGE
+          ? `${total} ${total === 1 ? "recipe" : "recipes"}`
+          : `Showing ${firstShown}–${lastShown} of ${total} recipes`}
+      </p>
       <RecipeGrid recipes={recipes} />
       <PaginationControls currentPage={page} totalPages={totalPages} baseUrl={baseUrl} />
     </div>
@@ -261,15 +270,16 @@ export default async function RecipesPage(props: RecipesPageProps) {
       title={title}
       description={description}
       headerChildren={
-        <div className="mx-auto mbs-6 flex w-full max-w-4xl flex-col gap-4">
+        <div className="mbs-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <Suspense>
             <SearchBar
               placeholder="Search within collection..."
               redirectTo="/recipes"
-              size="large"
+              className="w-full max-w-xl"
             />
           </Suspense>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <nav aria-label="Sort recipes" className="-mx-1 flex items-center gap-1 overflow-x-auto">
+            <span className="shrink-0 px-1 text-sm text-muted-foreground">Sort</span>
             {SORT_OPTIONS.map((option) => {
               const isActive = option.value === currentSort;
 
@@ -277,21 +287,23 @@ export default async function RecipesPage(props: RecipesPageProps) {
                 <Link
                   key={option.value}
                   href={buildSortHref(option.value)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
                     isActive
-                      ? "border-primary/40 bg-primary text-primary-foreground"
-                      : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                  }`}
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
                 >
                   {option.label}
                 </Link>
               );
             })}
-          </div>
+          </nav>
         </div>
       }
     >
-      <Suspense fallback={<RecipeGridSkeleton />}>
+      <Suspense fallback={<RecipeGridSkeleton className="2xl:grid-cols-4" />}>
         <RecipeList query={q} category={category} page={currentPage} sort={currentSort} />
       </Suspense>
     </AppLayout>

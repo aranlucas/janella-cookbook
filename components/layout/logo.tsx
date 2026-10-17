@@ -12,21 +12,22 @@ export function Logo({ className }: LogoProps) {
   return (
     <Link
       href="/"
-      className={cn(
-        "hover-wiggle flex items-center gap-2 transition-opacity hover:opacity-90",
-        className,
-      )}
+      aria-label="Janella's Kitchen home"
+      className={cn("group flex shrink-0 items-center gap-2.5", className)}
     >
-      <div className="relative size-10 transition-transform duration-300 hover:scale-110">
+      <span className="hover-wiggle relative size-9 sm:size-10">
         <Image
           src="/logo-bg.png"
-          alt="Janella's Cookbook"
+          alt=""
           sizes="40px"
           fill
           className="object-contain object-left"
           priority
         />
-      </div>
+      </span>
+      <span className="font-display text-xl leading-none font-semibold text-foreground transition-colors group-hover:text-primary sm:text-2xl">
+        Janella&apos;s Kitchen
+      </span>
     </Link>
   );
 }
