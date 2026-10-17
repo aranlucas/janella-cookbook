@@ -9,7 +9,12 @@ export const env = createEnv({
     FREELLM_API_KEY: z.string().min(1).optional(),
     FREELLM_BASE_URL: z.url().default("https://freellmapi-production-1175.up.railway.app/v1"),
     FREELLM_MODEL: z.string().min(1).default("auto"),
-    FREELLM_RECIPE_MODEL: z.string().min(1).default("auto"),
+    FREELLM_RECIPE_MODEL: z
+      .string()
+      .min(1)
+      .default("auto:fast")
+      // Existing deployments use "auto"; prioritize speed for recipe extraction there too.
+      .transform((model) => (model === "auto" ? "auto:fast" : model)),
     // Keep existing vectors in the same model space; other families require reindexing.
     FREELLM_EMBEDDING_MODEL: z.literal("embeddinggemma-300m").default("embeddinggemma-300m"),
     MCP_API_TOKEN: z.string().min(1).optional(),
