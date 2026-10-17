@@ -34,7 +34,7 @@ describe("application environment", () => {
     expect(env.DATABASE_POOL_MAX).toBe(5);
     expect(env.FREELLM_BASE_URL).toBe("https://freellmapi-production-1175.up.railway.app/v1");
     expect(env.FREELLM_MODEL).toBe("auto");
-    expect(env.FREELLM_RECIPE_MODEL).toBe("auto");
+    expect(env.FREELLM_RECIPE_MODEL).toBe("auto:fast");
     expect(env.FREELLM_EMBEDDING_MODEL).toBe("embeddinggemma-300m");
     expect(env.FREELLM_API_KEY).toBeUndefined();
     expect(env.MCP_API_TOKEN).toBeUndefined();

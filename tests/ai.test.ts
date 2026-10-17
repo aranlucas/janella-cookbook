@@ -49,9 +49,15 @@ describe("Railway FreeLLMAPI integration", () => {
     expect(JSON.parse(z.string().parse(request?.body))).toMatchObject({ model: "auto" });
   });
 
-  test("supports structured recipe output through a configured router endpoint", async () => {
+  test.each([
+    ["", "auto:fast"],
+    ["auto", "auto:fast"],
+    ["auto:fast", "auto:fast"],
+    ["auto:recipes", "auto:recipes"],
+    ["pinned-recipe-model", "pinned-recipe-model"],
+  ])("routes structured recipe output from %s to %s", async (configuredModel, expectedModel) => {
     vi.stubEnv("FREELLM_BASE_URL", "https://router.example/v1");
-    vi.stubEnv("FREELLM_RECIPE_MODEL", "auto:recipes");
+    vi.stubEnv("FREELLM_RECIPE_MODEL", configuredModel);
 
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json({
@@ -84,7 +90,7 @@ describe("Railway FreeLLMAPI integration", () => {
     expect(url).toBe("https://router.example/v1/chat/completions");
 
     expect(JSON.parse(z.string().parse(request?.body))).toMatchObject({
-      model: "auto:recipes",
+      model: expectedModel,
       response_format: { type: "json_schema" },
     });
   });
