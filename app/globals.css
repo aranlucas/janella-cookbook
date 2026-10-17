@@ -11,6 +11,14 @@
 }
 
 @font-face {
+  font-family: "Fraunces";
+  src: url("/fonts/Fraunces-Italic-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Outfit";
   src: url("/fonts/Outfit-Variable.woff2") format("woff2");
   font-weight: 100 900;
@@ -70,6 +78,12 @@
   /* Fine-grained type scale for micro labels (below --text-xs) */
   --text-2xs: 0.6875rem; /* 11px */
   --text-3xs: 0.625rem; /* 10px */
+
+  /* Display type: the home wordmark scales with the viewport */
+  --text-wordmark: clamp(3.5rem, 10vw, 7.25rem);
+  --text-wordmark--line-height: 0.86;
+  --text-nav: 0.9375rem;
+  --leading-display: 0.95;
 
   /* Editorial letter-spacing for eyebrow labels */
   --tracking-eyebrow: 0.18em;
@@ -249,6 +263,16 @@
   }
 }
 
+/* Fraunces at its softest and wonkiest, for the wordmark and recipe titles */
+@utility font-display {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-variation-settings:
+    "SOFT" 100,
+    "WONK" 1;
+  letter-spacing: -0.025em;
+}
+
 /* Custom layout, shadow and background utilities
    (one-off values that have no Tailwind design-token equivalent) */
 @utility min-h-10vh {
@@ -269,6 +293,10 @@
 
 @utility min-h-60vh {
   min-height: 60vh;
+}
+
+@utility max-h-sticky-panel {
+  max-height: calc(100vh - 7rem);
 }
 
 @utility grid-cols-doc {

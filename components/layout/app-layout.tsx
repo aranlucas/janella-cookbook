@@ -52,6 +52,10 @@ interface PageHeaderConfig {
   readonly children?: React.ReactNode;
 }
 
+interface PageHeaderProps extends PageHeaderConfig {
+  readonly breadcrumbs?: readonly BreadcrumbNavItem[];
+}
+
 interface AppLayoutProps {
   /** Breadcrumb navigation items */
   readonly breadcrumbs?: readonly BreadcrumbNavItem[];
@@ -78,36 +82,51 @@ interface AppLayoutProps {
 }
 
 /**
- * PageHeader component for hero-style page headers
+ * PageHeader component for page titles, with optional actions and controls below
  */
 function PageHeader({
   title,
   description,
   actions,
-  centered = true,
-  background = "muted",
+  centered = false,
+  background = "plain",
+  breadcrumbs,
   children,
-}: PageHeaderConfig) {
+}: PageHeaderProps) {
   return (
     <section
       className={cn(
-        "py-5 sm:py-7 md:py-10",
-        background === "muted" && "border-be border-border/30 bg-muted/35",
+        "border-be border-border/70 pbs-5 pbe-6 sm:pbs-6 sm:pbe-7",
+        background === "muted" && "bg-muted/35",
       )}
     >
       <div className="container">
+        {breadcrumbs && breadcrumbs.length > 0 && (
+          <BreadcrumbNav
+            items={breadcrumbs}
+            container={false}
+            className="mbe-4 text-muted-foreground sm:mbe-5 [&_[data-slot=breadcrumb-list]]:text-sm"
+          />
+        )}
         <div className={cn(centered && "text-center")}>
-          <h1 className="mbe-2 font-serif text-3xl font-bold text-foreground sm:mbe-3 sm:text-4xl md:text-5xl">
-            {title}
-          </h1>
-          {description && (
-            <p className="mx-auto max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base md:text-lg">
-              {description}
-            </p>
-          )}
-          {actions && (
-            <div className={cn("mbs-4 sm:mbs-5", centered && "flex justify-center")}>{actions}</div>
-          )}
+          <div
+            className={cn(
+              "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
+              centered && "items-center sm:flex-col sm:items-center",
+            )}
+          >
+            <div className={cn("max-w-3xl", centered && "mx-auto")}>
+              <h1 className="font-display text-4xl leading-display font-semibold text-foreground sm:text-5xl md:text-6xl">
+                {title}
+              </h1>
+              {description && (
+                <p className="mbs-2 text-base text-muted-foreground sm:mbs-3 sm:text-lg">
+                  {description}
+                </p>
+              )}
+            </div>
+            {actions && <div className="shrink-0">{actions}</div>}
+          </div>
           {children}
         </div>
       </div>
@@ -136,8 +155,6 @@ export function AppLayout({
     pageHeader = {
       title,
       description,
-      centered: true,
-      background: "muted",
       children: headerChildren,
     };
   }
@@ -150,28 +167,11 @@ export function AppLayout({
         {navigation && <aside className="w-64 bg-gray-100 p-4">{navigation}</aside>}
         <main className="flex-1">
           {pageHeader ? (
-            <div>
-              {breadcrumbs && breadcrumbs.length > 0 && (
-                <div
-                  className={cn(
-                    "container",
-                    pageHeader.background === "muted" && "bg-muted/30",
-                    "pbs-4 pbe-1",
-                  )}
-                >
-                  <BreadcrumbNav
-                    items={breadcrumbs}
-                    container={false}
-                    className="mbe-0 text-muted-foreground [&_[data-slot=breadcrumb-list]]:text-sm [&_[data-slot=breadcrumb-list]]:text-muted-foreground"
-                  />
-                </div>
-              )}
-              <PageHeader {...pageHeader} />
-            </div>
+            <PageHeader {...pageHeader} breadcrumbs={breadcrumbs} />
           ) : (
             breadcrumbs &&
             breadcrumbs.length > 0 && (
-              <div className="container py-4">
+              <div className="container pbs-6">
                 <BreadcrumbNav items={breadcrumbs} container={false} />
               </div>
             )
@@ -183,9 +183,8 @@ export function AppLayout({
           ) : (
             <section
               className={cn(
-                "py-4 sm:py-8 md:py-10",
-                contentType === "default" && "py-5 sm:py-9 md:py-12",
-                contentType === "form" && "py-4 sm:py-6 md:py-8",
+                "py-6 sm:py-8",
+                contentType === "form" && "py-5 sm:py-7",
                 contentClassName,
               )}
             >
@@ -198,7 +197,7 @@ export function AppLayout({
               >
                 {contentType === "form" && title && (
                   <>
-                    <h1 className="mbe-2 font-serif text-2xl font-bold text-foreground sm:text-3xl">
+                    <h1 className="mbe-2 font-display text-4xl leading-display font-semibold text-foreground sm:text-5xl">
                       {title}
                     </h1>
                     {description && (

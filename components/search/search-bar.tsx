@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 
@@ -56,23 +57,25 @@ export function SearchBar({
     [query, router, redirectTo, storageKey],
   );
 
+  const isLarge = size === "large";
+
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
       <div
         className={cn(
-          "relative flex gap-1.5 transition-transform duration-300",
-          isFocused && "scale-102",
+          "flex items-center gap-1.5 rounded-xl border border-border bg-card p-1 transition duration-200",
+          isFocused && "border-primary/60 ring-3 ring-primary/15",
+          isLarge && "sm:rounded-2xl sm:p-1.5",
         )}
       >
         <div className="relative flex-1">
-          <span
+          <Search
+            aria-hidden="true"
             className={cn(
-              "absolute inset-s-3 inset-bs-1/2 -translate-y-1/2 text-sm transition-transform duration-300 sm:text-base",
-              isFocused && "scale-110 -rotate-12",
+              "pointer-events-none absolute inset-s-3 inset-bs-1/2 size-4 -translate-y-1/2 text-muted-foreground",
+              isLarge && "sm:inset-s-4 sm:size-5",
             )}
-          >
-            🔍
-          </span>
+          />
           <Input
             type="search"
             value={query}
@@ -80,11 +83,9 @@ export function SearchBar({
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder={placeholder}
-
             className={cn(
-              "border-border bg-card ps-9 text-base transition-shadow duration-300 focus:border-primary sm:ps-10 md:text-base",
-              isFocused && "ring-3 ring-primary/15",
-              size === "large" && "h-10 rounded-lg sm:h-12 sm:rounded-xl sm:text-lg md:text-lg",
+              "border-none bg-transparent ps-9 text-base shadow-none focus-visible:ring-0 md:text-base dark:bg-transparent",
+              isLarge && "h-10 sm:h-12 sm:ps-11 sm:text-lg md:text-lg",
             )}
           />
         </div>
@@ -92,9 +93,8 @@ export function SearchBar({
           ref={buttonRef}
           type="submit"
           className={cn(
-            "bg-primary text-primary-foreground transition-all duration-200 hover:bg-primary/90 active:scale-95",
-            size === "large" &&
-              "h-10 rounded-lg px-4 text-sm sm:h-12 sm:rounded-xl sm:px-8 sm:text-lg",
+            "shrink-0 rounded-lg px-4",
+            isLarge && "h-10 sm:h-12 sm:rounded-xl sm:px-7 sm:text-base",
           )}
         >
           Search

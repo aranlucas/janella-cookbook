@@ -14,18 +14,17 @@ interface NavLinkProps {
 
 export function NavLink({ href, children, onClick, variant = "desktop", className }: NavLinkProps) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
   if (variant === "mobile") {
     return (
       <Link
         href={href}
         onClick={onClick}
+        aria-current={isActive ? "page" : undefined}
         className={cn(
-          "rounded-lg px-4 py-3 text-lg font-medium transition-colors hover:text-primary",
-          isActive
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground/95 hover:text-foreground",
+          "rounded-lg px-4 py-2.5 font-display text-2xl font-medium transition-colors",
+          isActive ? "text-primary" : "text-foreground hover:text-primary",
           className,
         )}
       >
@@ -37,10 +36,12 @@ export function NavLink({ href, children, onClick, variant = "desktop", classNam
   return (
     <Link
       href={href}
+      aria-current={isActive ? "page" : undefined}
       className={cn(
-        "relative text-sm font-medium tracking-wide transition-colors duration-300 hover:text-primary",
-        isActive ? "squiggle-underline font-semibold text-primary" : "text-muted-foreground/95",
-        !isActive && "hover-squish squiggle-underline",
+        "relative text-nav font-medium transition-colors duration-200",
+        isActive
+          ? "squiggle-underline text-foreground"
+          : "text-muted-foreground hover:text-foreground",
         className,
       )}
     >

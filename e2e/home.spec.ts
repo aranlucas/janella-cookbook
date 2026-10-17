@@ -8,7 +8,6 @@ test.describe("Home page", () => {
 
     // Core branding
     await expect(page.locator("h1")).toContainText("Kitchen");
-    await expect(main.getByText("The Cookbook Collection")).toBeVisible();
     await expect(main.getByText("Good food,")).toBeVisible();
 
     // Search bar is present
@@ -34,8 +33,7 @@ test.describe("Home page", () => {
   test("displays the Recent Recipes section", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByText("Recent Recipes")).toBeVisible();
-    await expect(page.getByText("Fresh from the kitchen")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Recent Recipes" })).toBeVisible();
   });
 
   test("header has navigation links", async ({ page }) => {

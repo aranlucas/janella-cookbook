@@ -25,9 +25,9 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
     setChecked(newChecked);
   };
 
-  // Group ingredients by their group field
+  // Group ingredients by their group field; ungrouped ingredients get no heading
   const groupedIngredients = ingredients.reduce<Record<string, Ingredient[]>>((acc, ing) => {
-    const group = ing.group ?? "Ingredients";
+    const group = ing.group?.trim() ?? "";
 
     if (!acc[group]) {
       acc[group] = [];
@@ -41,53 +41,48 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
   const groups = Object.entries(groupedIngredients);
 
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div className={cn("flex flex-col gap-5", className)}>
       {groups.map(([groupName, groupIngredients]) => (
-        <div key={groupName}>
-          {groups.length > 1 && (
-            <h4 className="mbe-3 font-serif text-lg font-medium text-foreground">{groupName}</h4>
+        <div key={groupName || "ungrouped"}>
+          {groupName && (
+            <h3 className="mbe-1 font-sans text-sm font-semibold tracking-normal text-foreground">
+              {groupName}
+            </h3>
           )}
-          <ul className="flex flex-col gap-2.5">
-            {groupIngredients.map((ingredient) => (
-              <li
-                key={ingredient.id}
-                className={cn(
-                  "flex items-start gap-3 rounded-lg border border-border/35 px-2.5 py-2 transition-all duration-300",
-                  checked.has(ingredient.id)
-                    ? "scale-98 bg-accent/7"
-                    : "bg-background/55 hover:bg-muted/35",
-                )}
-              >
-                <Checkbox
-                  id={ingredient.id}
-                  checked={checked.has(ingredient.id)}
-                  onCheckedChange={() => toggleIngredient(ingredient.id)}
-                  className="mbs-0.5 transition-transform duration-200 hover:scale-110"
-                />
-                <label
-                  htmlFor={ingredient.id}
-                  className={cn(
-                    "flex-1 cursor-pointer text-sm leading-relaxed text-foreground transition-all duration-300 select-none sm:text-base",
-                    checked.has(ingredient.id) &&
-                      "text-muted-foreground/60 line-through decoration-highlight decoration-2",
-                  )}
+          <ul>
+            {groupIngredients.map((ingredient) => {
+              const isChecked = checked.has(ingredient.id);
+
+              return (
+                <li
+                  key={ingredient.id}
+                  className="flex items-start gap-3 border-be border-dashed border-foreground/15 py-2 last:border-be-0"
                 >
-                  {ingredient.quantity && (
-                    <span className="font-medium">{ingredient.quantity} </span>
-                  )}
-                  {ingredient.unit && (
-                    <span className="text-muted-foreground">{ingredient.unit} </span>
-                  )}
-                  <span>{ingredient.name}</span>
-                  {ingredient.notes && (
-                    <span className="text-muted-foreground"> ({ingredient.notes})</span>
-                  )}
-                  {checked.has(ingredient.id) && (
-                    <span className="animate-rubber-band ms-1.5 inline-block text-xs">✓</span>
-                  )}
-                </label>
-              </li>
-            ))}
+                  <Checkbox
+                    id={ingredient.id}
+                    checked={isChecked}
+                    onCheckedChange={() => toggleIngredient(ingredient.id)}
+                    className="mbs-1"
+                  />
+                  <label
+                    htmlFor={ingredient.id}
+                    className={cn(
+                      "flex-1 cursor-pointer text-base leading-relaxed text-foreground transition-colors select-none",
+                      isChecked && "text-muted-foreground line-through decoration-accent/60",
+                    )}
+                  >
+                    {ingredient.quantity && (
+                      <span className="font-semibold">{ingredient.quantity} </span>
+                    )}
+                    {ingredient.unit && <span className="font-semibold">{ingredient.unit} </span>}
+                    <span>{ingredient.name}</span>
+                    {ingredient.notes && (
+                      <span className="text-muted-foreground">, {ingredient.notes}</span>
+                    )}
+                  </label>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ))}

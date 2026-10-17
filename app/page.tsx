@@ -1,29 +1,14 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { AppLayout } from "@/components/layout/app-layout";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { RecipeCard } from "@/components/recipe/recipe-card";
-import { RecipeGridSkeleton } from "@/components/ui/content-state";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import {
-  FloatingEmojis,
-  AnimatedHeading,
-  AnimatedUnderline,
-  AnimatedSubtitle,
-  AnimatedBadge,
-  AnimatedSearchArea,
-  AnimatedTagPill,
-  AnimatedSection,
-} from "@/components/layout/animated-hero";
-import type { RecipeWithRelations } from "@/types/recipe";
+import { RecipeImage } from "@/components/ui/recipe-image";
+import { cn } from "@/lib/utils";
+import type { Course, RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
 
@@ -37,161 +22,240 @@ export const metadata: Metadata = createPageMetadata({
 // Revalidate every 24 hours, or on-demand via revalidatePath("/")
 export const revalidate = 86400;
 
-async function getRecentRecipes(): Promise<RecipeWithRelations[]> {
+const QUICK_SEARCHES = ["Breakfast", "Pasta", "Dessert", "Vegan", "Quick & Easy"];
+
+// Meal order reads more naturally than alphabetical or by count
+const COURSE_ORDER: readonly Course[] = [
+  "BREAKFAST",
+  "LUNCH",
+  "DINNER",
+  "APPETIZER",
+  "SIDE",
+  "SAUCE",
+  "BREAD",
+  "SNACK",
+  "DESSERT",
+  "DRINK",
+];
+
+const recipeInclude = {
+  ingredients: { orderBy: { sortOrder: "asc" } },
+  instructions: { orderBy: { sortOrder: "asc" } },
+  tags: true,
+  images: true,
+} as const;
+
+interface CourseCount {
+  readonly course: Course;
+  readonly count: number;
+}
+
+interface MostCookedProps {
+  readonly recipe: RecipeWithRelations;
+}
+
+interface SectionHeadingProps {
+  readonly title: string;
+  readonly href: string;
+  readonly linkLabel: string;
+}
+
+interface HomeData {
+  readonly recent: RecipeWithRelations[];
+  readonly mostCooked: RecipeWithRelations | null;
+  readonly courses: readonly CourseCount[];
+}
+
+async function getHomeData(): Promise<HomeData> {
   try {
-    const recipes = await prisma.recipe.findMany({
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 20,
+    const [recent, mostCooked, courseCounts] = await Promise.all([
+      prisma.recipe.findMany({
+        include: recipeInclude,
+        orderBy: { updatedAt: "desc" },
+        take: 9,
+      }),
+      prisma.recipe.findFirst({
+        include: recipeInclude,
+        where: { imageUrl: { not: null }, cookCount: { gt: 0 } },
+        orderBy: [{ cookCount: "desc" }, { updatedAt: "desc" }],
+      }),
+      prisma.recipe.groupBy({
+        by: ["course"],
+        _count: true,
+        where: { course: { not: null } },
+      }),
+    ]);
+
+    const courses = COURSE_ORDER.flatMap((course) => {
+      const match = courseCounts.find((entry) => entry.course === course);
+
+      if (!match) {
+        return [];
+      }
+
+      const { _count: count } = match;
+
+      return [{ course, count }];
     });
 
-    return recipes;
+    return { recent, mostCooked, courses };
   } catch (error) {
-    console.error("Error fetching recipes:", error);
+    console.error("Error fetching home page data:", error);
 
-    return [];
+    return { recent: [], mostCooked: null, courses: [] };
   }
 }
 
-async function RecipeList() {
-  const recipes = await getRecentRecipes();
+function formatCourse(course: Course): string {
+  return course.charAt(0) + course.slice(1).toLowerCase();
+}
 
-  if (recipes.length === 0) {
-    return <RecipeGrid recipes={[]} />;
-  }
-
+function MostCooked({ recipe }: MostCookedProps) {
   return (
-    <div className="flex flex-col gap-12">
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        className="w-full px-2 sm:px-3 md:px-4"
-      >
-        <CarouselContent>
-          {recipes.slice(0, 10).map((recipe) => (
-            <CarouselItem
-              key={recipe.id}
-              className="sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
-            >
-              <RecipeCard recipe={recipe} />
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <div className="mbs-8 flex justify-center gap-2">
-          <CarouselPrevious variant="ghost" className="static translate-y-0" />
-          <CarouselNext variant="ghost" className="static translate-y-0" />
+    <Link
+      href={`/recipe/${recipe.slug}`}
+      className="group block rounded-3xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none motion-safe:animate-in motion-safe:delay-200 motion-safe:duration-700 motion-safe:fill-mode-both motion-safe:fade-in"
+    >
+      <figure>
+        <div className="relative aspect-4/3 overflow-hidden rounded-3xl bg-muted lg:aspect-5/4">
+          <RecipeImage
+            src={recipe.imageUrl}
+            alt={recipe.title}
+            priority
+            sizes="(max-width: 1024px) 100vw, 40vw"
+            className="size-full object-cover transition-transform duration-700 ease-out group-hover:scale-103"
+          />
         </div>
-      </Carousel>
+        <figcaption className="flex items-baseline justify-between gap-4 pbs-3">
+          <span className="font-display text-xl leading-tight font-semibold transition-colors group-hover:text-primary sm:text-2xl">
+            {recipe.title}
+          </span>
+          <span className="shrink-0 text-sm text-muted-foreground">
+            Cooked {recipe.cookCount} {recipe.cookCount === 1 ? "time" : "times"}
+          </span>
+        </figcaption>
+      </figure>
+    </Link>
+  );
+}
 
-      {/* Show more recipes in a grid below the carousel if needed */}
-      {recipes.length > 10 && (
-        <div className="flex flex-col gap-8 pbs-8">
-          <h3 className="font-serif text-2xl font-bold text-foreground">Explore More</h3>
-          <RecipeGrid recipes={recipes.slice(10)} />
-        </div>
-      )}
+function SectionHeading({ title, href, linkLabel }: SectionHeadingProps) {
+  return (
+    <div className="mbe-5 flex items-end justify-between gap-4">
+      <h2 className="font-display text-3xl leading-none font-semibold sm:text-4xl">{title}</h2>
+      <Link
+        href={href}
+        className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary sm:text-base"
+      >
+        {linkLabel}
+        <ArrowRight
+          className="size-4 transition-transform group-hover:translate-x-0.5"
+          aria-hidden="true"
+        />
+      </Link>
     </div>
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { recent, mostCooked, courses } = await getHomeData();
+  const [lead, ...rest] = recent;
+
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <Header />
+    <AppLayout customContent>
+      {/* Hero */}
+      <section className="container grid items-center gap-6 pbs-6 pbe-8 sm:pbs-8 lg:grid-cols-12 lg:gap-10 lg:pbs-10 lg:pbe-12">
+        <div className={cn(mostCooked ? "lg:col-span-7" : "lg:col-span-9")}>
+          <h1 className="font-display text-wordmark font-bold text-foreground motion-safe:animate-in motion-safe:duration-700 motion-safe:fade-in motion-safe:slide-in-from-bottom-3">
+            Janella&apos;s
+            <br />
+            Kitchen
+          </h1>
+          <p className="mbs-4 max-w-md text-lg text-muted-foreground sm:mbs-5 sm:text-xl">
+            Good food, simply found. Every recipe worth making again, in one place.
+          </p>
 
-      <main className="flex-1">
-        <section className="grain relative flex min-h-42vh flex-col items-center justify-center overflow-hidden bg-linear-to-b from-secondary/60 via-background to-background px-4 py-8 sm:min-h-50vh md:min-h-56vh md:py-14">
-          {/* Floating food emojis */}
-          <FloatingEmojis />
+          <Suspense fallback={<div className="mbs-6 h-12 max-w-xl sm:h-15" />}>
+            <SearchBar
+              size="large"
+              placeholder="Search by ingredient, craving, or season..."
+              className="mbs-6 max-w-xl"
+            />
+          </Suspense>
 
-          {/* Decorative gradient blobs */}
-          <div className="animate-float pointer-events-none absolute inset-s-4 inset-bs-10 size-20 rounded-full bg-highlight/10 blur-3xl sm:inset-s-10 sm:inset-bs-20 md:size-40" />
-          <div
-            className="pointer-events-none absolute inset-e-4 inset-be-16 size-24 rounded-full bg-primary/10 blur-3xl sm:inset-e-10 sm:inset-be-32 md:size-48"
-            style={{ animationDelay: "2s" }}
-          />
+          <div className="mbs-3 flex flex-wrap items-center gap-1.5 text-sm">
+            <span className="me-1 text-muted-foreground">Try</span>
+            {QUICK_SEARCHES.map((label) => (
+              <Link
+                key={label}
+                href={`/recipes?q=${encodeURIComponent(label)}`}
+                className="rounded-full border border-border bg-background px-3 py-1 font-medium text-foreground transition-colors hover:border-highlight hover:bg-highlight hover:text-highlight-foreground"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        </div>
 
-          <div className="relative z-10 container">
-            <div className="mx-auto max-w-4xl text-center">
-              <AnimatedBadge className="mbe-3 inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-bold tracking-wide text-primary uppercase sm:mbe-4 sm:gap-2 sm:px-5 sm:py-2 sm:text-sm">
-                <span className="inline-block size-1.5 animate-pulse rounded-full bg-primary sm:size-2" />
-                The Cookbook Collection
-              </AnimatedBadge>
-              <AnimatedHeading className="mbe-3 font-serif text-3xl tracking-tight text-foreground sm:mbe-4 sm:text-4xl md:text-5xl lg:text-6xl">
-                Janella&apos;s <br />
-                <span className="relative inline-block text-primary italic">
-                  Kitchen.
-                  <AnimatedUnderline />
-                </span>
-              </AnimatedHeading>
-              <AnimatedSubtitle className="mx-auto max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg md:text-xl lg:text-2xl">
-                Good food, <span className="font-semibold text-foreground">simply found.</span>
-              </AnimatedSubtitle>
+        {mostCooked && (
+          <div className="lg:col-span-5">
+            <MostCooked recipe={mostCooked} />
+          </div>
+        )}
+      </section>
 
-              <AnimatedSearchArea className="mbs-5 sm:mbs-7 md:mbs-8">
-                <Suspense fallback={<div className="h-12 sm:h-14 md:h-16" />}>
-                  <SearchBar
-                    size="large"
-                    placeholder="Search by ingredient, craving, or season..."
-                    className="mx-auto max-w-2xl"
-                  />
-                </Suspense>
+      {/* Recent recipes */}
+      <section className="border-bs border-border/70 py-8 sm:py-10">
+        <div className="container">
+          <SectionHeading title="Recent Recipes" href="/recipes" linkLabel="All recipes" />
 
-                {/* Quick Tags */}
-                <div className="mbs-4 flex flex-wrap items-center justify-center gap-1.5 text-xs sm:mbs-6 sm:gap-2 sm:text-sm">
-                  <span className="me-1 font-medium text-muted-foreground sm:me-2">Try:</span>
-                  {[
-                    { label: "Breakfast", emoji: "🍳" },
-                    { label: "Pasta", emoji: "🍝" },
-                    { label: "Dessert", emoji: "🍰" },
-                    { label: "Vegan", emoji: "🥬" },
-                    { label: "Quick & Easy", emoji: "⚡" },
-                  ].map((tag, index) => (
-                    <AnimatedTagPill
-                      key={tag.label}
-                      index={index}
-                      href={`/recipes?q=${encodeURIComponent(tag.label)}`}
-                      className="inline-flex cursor-pointer rounded-full border border-border bg-card px-3 py-1 font-medium transition-colors duration-200 hover:border-highlight hover:bg-highlight hover:text-highlight-foreground sm:px-4 sm:py-1.5"
-                    >
-                      <span className="me-0.5 sm:me-1">{tag.emoji}</span>
-                      {tag.label}
-                    </AnimatedTagPill>
-                  ))}
-                </div>
-              </AnimatedSearchArea>
+          {lead ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-5 sm:gap-y-7 lg:grid-cols-3 xl:grid-cols-4">
+              <RecipeCard
+                recipe={lead}
+                variant="feature"
+                priority={!mostCooked}
+                className="col-span-2 lg:row-span-2"
+              />
+              {rest.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))}
             </div>
+          ) : (
+            <RecipeGrid recipes={[]} />
+          )}
+        </div>
+      </section>
+
+      {/* Course index */}
+      {courses.length > 0 && (
+        <section className="border-bs border-border/70 py-12 sm:py-16">
+          <div className="container">
+            <SectionHeading
+              title="Browse by course"
+              href="/categories"
+              linkLabel="All categories"
+            />
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 sm:gap-x-10">
+              {courses.map(({ course, count }) => (
+                <li key={course}>
+                  <Link
+                    href={`/recipes?category=${course.toLowerCase()}`}
+                    className="group inline-flex items-start gap-1.5"
+                  >
+                    <span className="font-display text-3xl font-semibold transition-colors group-hover:text-primary sm:text-4xl">
+                      {formatCourse(course)}
+                    </span>
+                    <span className="mbs-1 text-sm text-muted-foreground tabular-nums">
+                      {count}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
-
-        {/* Recipe Section */}
-        <AnimatedSection className="overflow-hidden py-7 sm:py-10 md:py-12">
-          <div className="container">
-            <div className="mbe-8 text-center sm:mbe-12">
-              <span className="mbe-2 inline-block rounded-full bg-accent/10 px-3 py-1 text-3xs font-bold tracking-wider text-accent uppercase sm:mbe-3 sm:px-4 sm:py-1.5 sm:text-xs">
-                Fresh from the kitchen
-              </span>
-              <h2 className="font-serif text-2xl font-bold text-foreground sm:text-4xl md:text-5xl lg:text-6xl">
-                Recent Recipes
-              </h2>
-              <p className="mbs-2 text-sm text-muted-foreground sm:mbs-3 sm:text-lg md:text-xl">
-                The latest creations, ready for your table.
-              </p>
-            </div>
-            <Suspense fallback={<RecipeGridSkeleton />}>
-              <RecipeList />
-            </Suspense>
-          </div>
-        </AnimatedSection>
-      </main>
-
-      <Footer />
-    </div>
+      )}
+    </AppLayout>
   );
 }

@@ -39,15 +39,12 @@ export function AddToShoppingListButton({
   return (
     <Button
       variant="outline"
-      size="default"
+      size="lg"
       onClick={handleAdd}
-      className={cn(
-        "hover-squish group relative overflow-hidden transition-all hover:scale-105",
-        className,
-      )}
+      className={cn("gap-2 sm:px-4", className)}
     >
-      <ShoppingCart className="me-1.5 size-4 transition-transform duration-300 group-hover:scale-110 sm:me-2 sm:size-5" />
-      <span className="text-sm font-medium sm:text-base">Add to Shopping List</span>
+      <ShoppingCart className="size-4" />
+      Add to Shopping List
     </Button>
   );
 }

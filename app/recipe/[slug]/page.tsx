@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getRecipeBySlug } from "@/lib/recipe-queries";
 import { RecipeMeta } from "@/components/recipe/recipe-meta";
@@ -6,18 +7,11 @@ import { InstructionSteps } from "@/components/recipe/instruction-steps";
 import { NutritionFacts } from "@/components/recipe/nutrition-facts";
 import { RecipeEngagementActions } from "./recipe-engagement-actions";
 import { RecipeManagementActions } from "./recipe-management-actions";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { RecipeImage } from "@/components/ui/recipe-image";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { BreadcrumbNav } from "@/components/layout/breadcrumb-nav";
 import { AppLayout } from "@/components/layout/app-layout";
 import { createPageMetadata } from "@/lib/metadata";
+import { cn } from "@/lib/utils";
 import type { RecipeWithRelations } from "@/types/recipe";
 import type { Metadata } from "next";
 
@@ -61,6 +55,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
 }
 
+function getHostname(url: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
 export default async function RecipePage({ params }: PageProps) {
   const { slug } = await params;
   const recipe = await getRecipe(slug);
@@ -69,10 +75,12 @@ export default async function RecipePage({ params }: PageProps) {
     notFound();
   }
 
+  const sourceHost = getHostname(recipe.sourceUrl);
+
   return (
     <AppLayout customContent>
-      {/* Breadcrumbs and Actions */}
-      <div className="no-print container flex items-center justify-between py-3 sm:py-4">
+      {/* Breadcrumbs and management actions */}
+      <div className="no-print container flex items-center justify-between gap-4 pbs-4">
         <BreadcrumbNav
           container={false}
           items={[
@@ -80,149 +88,136 @@ export default async function RecipePage({ params }: PageProps) {
             { label: "Recipes", href: "/recipes" },
             { label: recipe.title, active: true },
           ]}
+          className="min-w-0 [&_[data-slot=breadcrumb-list]]:text-sm"
         />
         <RecipeManagementActions recipe={recipe} />
       </div>
 
-      {/* Recipe Header */}
-      <section className="container pbe-4 sm:pbe-6 md:pbe-8">
-        <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2">
-          {/* Image */}
-          <div className="relative aspect-4/3 overflow-hidden rounded-xl border border-border/45 bg-card/55">
-            {recipe.imageUrl ? (
-              <a
-                href={recipe.imageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block h-full"
-              >
-                <RecipeImage
-                  src={recipe.imageUrl}
-                  alt={recipe.title}
-                  priority
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="hover:opacity-90"
-                />
-              </a>
-            ) : (
-              <RecipeImage src={null} alt={recipe.title} />
-            )}
+      {/* Recipe header */}
+      <section className="container grid gap-6 pbs-4 pbe-8 sm:pbs-5 lg:grid-cols-12 lg:gap-10 lg:pbe-10">
+        {recipe.imageUrl && (
+          <div className="relative aspect-4/3 overflow-hidden rounded-3xl bg-muted lg:order-last lg:col-span-6 lg:self-start">
+            <a
+              href={recipe.imageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block h-full"
+            >
+              <RecipeImage
+                src={recipe.imageUrl}
+                alt={recipe.title}
+                priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            </a>
           </div>
+        )}
 
-          {/* Info */}
-          <div className="flex flex-col gap-3 sm:gap-4 md:gap-6">
-            <div>
-              <h1 className="font-serif text-2xl font-bold text-foreground sm:text-3xl md:text-4xl">
-                {recipe.title}
-              </h1>
-              {recipe.description && (
-                <p className="mbs-2 text-sm leading-relaxed text-muted-foreground sm:text-base md:mbs-3 md:text-lg">
-                  {recipe.description}
-                </p>
-              )}
-            </div>
+        <div
+          className={cn(
+            "flex flex-col lg:pbs-2",
+            recipe.imageUrl ? "lg:col-span-6" : "lg:col-span-9",
+          )}
+        >
+          <h1 className="font-display text-4xl leading-display font-semibold text-balance text-foreground sm:text-5xl lg:text-6xl">
+            {recipe.title}
+          </h1>
+          {recipe.description && (
+            <p className="mbs-3 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              {recipe.description}
+            </p>
+          )}
 
-            <RecipeMeta
-              prepTime={recipe.prepTime}
-              cookTime={recipe.cookTime}
-              totalTime={recipe.totalTime}
-              servings={recipe.servings}
-              difficulty={recipe.difficulty}
-              cuisine={recipe.cuisine}
-              course={recipe.course}
-              rating={recipe.rating}
-              cookCount={recipe.cookCount}
-            />
+          <RecipeMeta
+            className="mbs-5"
+            prepTime={recipe.prepTime}
+            cookTime={recipe.cookTime}
+            totalTime={recipe.totalTime}
+            servings={recipe.servings}
+            difficulty={recipe.difficulty}
+            cuisine={recipe.cuisine}
+            course={recipe.course}
+            rating={recipe.rating}
+            cookCount={recipe.cookCount}
+          />
 
-            {recipe.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {recipe.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline">
+          {recipe.tags.length > 0 && (
+            <ul className="mbs-3 flex flex-wrap gap-1.5" aria-label="Tags">
+              {recipe.tags.map((tag) => (
+                <li key={tag.id}>
+                  <Link
+                    href={`/recipes?q=${encodeURIComponent(tag.name)}`}
+                    className="inline-flex rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                  >
                     {tag.name}
-                  </Badge>
-                ))}
-              </div>
-            )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
 
-            {/* Engagement Actions */}
-            <div className="no-print sticky inset-be-2 z-30 rounded-xl border border-border/50 bg-background/95 p-2 shadow-lg backdrop-blur sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
-              <RecipeEngagementActions recipe={recipe} />
-            </div>
+          {/* Stays within thumb reach on phones while scrolling the recipe */}
+          <div className="no-print sticky inset-be-3 z-30 mbs-6 rounded-2xl border border-border/70 bg-background/95 p-2 shadow-lg backdrop-blur sm:static sm:border-none sm:bg-transparent sm:p-0 sm:shadow-none">
+            <RecipeEngagementActions recipe={recipe} />
           </div>
         </div>
       </section>
 
-      <Separator className="container" />
-
-      {/* Recipe Content */}
-      <section className="container py-4 sm:py-6 md:py-8">
-        <div className="grid gap-5 sm:gap-6 md:gap-8 lg:grid-cols-recipe">
-          {/* Ingredients */}
-          <div className="lg:sticky lg:inset-bs-24 lg:self-start">
-            <h2 className="mbe-2.5 font-serif text-lg font-semibold sm:mbe-3 sm:text-xl md:mbe-4 md:text-2xl">
-              Ingredients
-            </h2>
-            <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
+      {/* Ingredients and method */}
+      <section className="border-bs border-border/70">
+        <div className="container grid gap-8 py-8 sm:py-10 lg:grid-cols-12 lg:gap-10">
+          <aside className="lg:sticky lg:inset-bs-24 lg:col-span-5 lg:max-h-sticky-panel lg:self-start lg:overflow-y-auto xl:col-span-4">
+            <div className="recipe-content rounded-3xl bg-card p-5 sm:p-6">
+              <div className="mbe-3 flex items-baseline justify-between gap-4">
+                <h2 className="font-display text-2xl font-semibold sm:text-3xl">Ingredients</h2>
+                <span className="text-sm text-muted-foreground">
+                  {recipe.ingredients.length} {recipe.ingredients.length === 1 ? "item" : "items"}
+                </span>
+              </div>
               <IngredientList ingredients={recipe.ingredients} />
             </div>
-          </div>
+          </aside>
 
-          {/* Instructions */}
-          <div className="flex flex-col gap-5 sm:gap-6 md:gap-8">
-            <div>
-              <h2 className="mbe-2.5 font-serif text-lg font-semibold sm:mbe-3 sm:text-xl md:mbe-4 md:text-2xl">
+          <div className="flex flex-col gap-10 lg:col-span-7 xl:col-span-8">
+            <div className="recipe-content">
+              <h2 className="mbe-5 font-display text-2xl font-semibold sm:text-3xl">
                 Instructions
               </h2>
-              <div className="recipe-content rounded-lg border border-border/40 bg-card p-3 shadow-sm sm:p-4 md:p-6">
-                <InstructionSteps instructions={recipe.instructions} />
-              </div>
+              <InstructionSteps instructions={recipe.instructions} />
             </div>
 
-            {/* Nutrition Facts */}
-            <div className="no-print">
+            {(Boolean(recipe.notes) || Boolean(sourceHost)) && (
+              <div className="flex max-w-prose flex-col gap-6 border-bs border-border/70 pbs-8">
+                {recipe.notes && (
+                  <div>
+                    <h2 className="mbe-3 font-display text-2xl font-semibold">Notes</h2>
+                    <p className="text-base leading-relaxed whitespace-pre-wrap text-muted-foreground sm:text-lg">
+                      {recipe.notes}
+                    </p>
+                  </div>
+                )}
+                {recipe.sourceUrl && sourceHost && (
+                  <p className="text-sm text-muted-foreground">
+                    Originally from{" "}
+                    <a
+                      href={recipe.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-foreground underline decoration-primary/40 underline-offset-4 transition-colors hover:text-primary"
+                    >
+                      {sourceHost}
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="no-print border-bs border-border/70 pbs-8">
               <NutritionFacts recipe={recipe} />
             </div>
           </div>
         </div>
       </section>
-
-      {/* Notes and Source */}
-      {(recipe.notes ?? recipe.sourceUrl) && (
-        <>
-          <Separator className="container" />
-          <section className="container py-6 md:py-8">
-            {recipe.notes && (
-              <Accordion className="max-w-2xl">
-                <AccordionItem value="notes" className="border-none">
-                  <AccordionTrigger className="py-2 font-serif text-lg font-semibold md:text-xl">
-                    Notes
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm whitespace-pre-wrap text-muted-foreground md:text-base">
-                    {recipe.notes}
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            )}
-
-            {recipe.sourceUrl && (
-              <div className="mbs-8 border-bs pbs-8">
-                <h3 className="mbe-2 font-serif text-lg font-semibold md:text-xl">
-                  Original Source
-                </h3>
-                <a
-                  href={recipe.sourceUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm break-all text-primary hover:text-primary/80 hover:underline md:text-base"
-                >
-                  <span className="shrink-0 text-xl">🔗</span>
-                  {recipe.sourceUrl}
-                </a>
-              </div>
-            )}
-          </section>
-        </>
-      )}
     </AppLayout>
   );
 }

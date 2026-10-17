@@ -28,7 +28,7 @@ export function MobileNav({ navItems }: MobileNavProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-foreground md:hidden"
+            className="text-foreground lg:hidden"
             aria-label="Open menu"
           />
         }
@@ -36,7 +36,7 @@ export function MobileNav({ navItems }: MobileNavProps) {
         <Menu className="size-6" />
       </SheetTrigger>
       <SheetContent side="right" className="w-70 bg-background">
-        <nav className="mbs-8 flex flex-col gap-2">
+        <nav aria-label="Mobile" className="mbs-10 flex flex-col gap-1">
           {navItems.map((item) => (
             <NavLink key={item.href} href={item.href} variant="mobile" onClick={closeMenu}>
               {item.label}

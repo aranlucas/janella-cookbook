@@ -1,111 +1,93 @@
 "use client";
 
 import Link from "next/link";
+import { Clock, Heart } from "lucide-react";
 import { RecipeImage } from "@/components/ui/recipe-image";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import type { RecipeWithRelations } from "@/types/recipe";
+import { cn, formatMinutes } from "@/lib/utils";
+import type { Difficulty, RecipeWithRelations } from "@/types/recipe";
 
 interface RecipeCardProps {
   readonly recipe: RecipeWithRelations;
   readonly className?: string;
   readonly priority?: boolean;
+  /** "feature" is the oversized lead card on the home page */
+  readonly variant?: "default" | "feature";
 }
 
-export function RecipeCard({ recipe, className, priority = false }: RecipeCardProps) {
-  const difficultyVariant = {
-    EASY: "secondary",
-    MEDIUM: "default",
-    HARD: "destructive",
-    EXPERT: "destructive",
-  } as const;
+const difficultyLabel: Record<Difficulty, string> = {
+  EASY: "Easy",
+  MEDIUM: "Medium",
+  HARD: "Hard",
+  EXPERT: "Expert",
+};
 
-  const difficultyEmoji = {
-    EASY: "🟢",
-    MEDIUM: "🟡",
-    HARD: "🔴",
-    EXPERT: "💀",
-  } as const;
-
-  const servingsLabel = recipe.servings?.trim();
-
-  const hasServingsLabel =
-    servingsLabel && /serving/i.test(servingsLabel) ? servingsLabel : servingsLabel;
+export function RecipeCard({
+  recipe,
+  className,
+  priority = false,
+  variant = "default",
+}: RecipeCardProps) {
+  const isFeature = variant === "feature";
 
   return (
-    <Link href={`/recipe/${recipe.slug}`} className="group block h-full">
+    <Link
+      href={`/recipe/${recipe.slug}`}
+      className={cn(
+        "group flex h-full flex-col rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+        className,
+      )}
+    >
       <div
         className={cn(
-          "relative flex h-full min-h-79 flex-col overflow-hidden rounded-2xl border border-border/45 bg-card shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/30 group-hover:shadow-xl",
-          className,
+          "relative w-full overflow-hidden rounded-2xl bg-muted",
+          isFeature ? "aspect-4/3 lg:aspect-auto lg:flex-1" : "aspect-4/3",
         )}
       >
-        <div className="relative aspect-4/3 w-full overflow-hidden bg-linear-to-br from-muted/70 via-muted/50 to-muted/80">
-          <RecipeImage
-            src={recipe.imageUrl}
-            alt={recipe.title}
-            priority={priority}
-            className="size-full object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-            fallbackEmoji="🍲"
-          />
-          {!recipe.imageUrl && (
-            <div className="pointer-events-none absolute inset-x-0 inset-be-0 bg-linear-to-t from-background/95 to-transparent px-3 py-2 text-center text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Photo coming soon
-            </div>
+        <RecipeImage
+          src={recipe.imageUrl}
+          alt={recipe.title}
+          priority={priority}
+          className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-103"
+          sizes={
+            isFeature
+              ? "(max-width: 1024px) 100vw, 50vw"
+              : "(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          }
+          fallbackEmoji="🍲"
+        />
+        {recipe.isFavorite && (
+          <span className="absolute inset-e-2.5 inset-bs-2.5 z-20 flex size-8 items-center justify-center rounded-full bg-background/90 text-primary backdrop-blur-sm">
+            <Heart className="size-4 fill-current" aria-hidden="true" />
+            <span className="sr-only">Favorite</span>
+          </span>
+        )}
+      </div>
+
+      <div className={cn("flex flex-col pbs-2.5", isFeature && "pbs-3")}>
+        <h3
+          className={cn(
+            "font-display leading-tight font-semibold text-foreground transition-colors group-hover:text-primary",
+            isFeature ? "text-2xl sm:text-3xl" : "line-clamp-2 text-lg sm:text-xl",
           )}
-          {recipe.isFavorite && (
-            <div className="absolute inset-e-2 inset-bs-2 z-20 rounded-full bg-white/90 p-1 backdrop-blur-sm sm:inset-e-3 sm:inset-bs-3 sm:p-1.5">
-              <span className="inline-block text-xs sm:text-sm">❤️</span>
-            </div>
-          )}
-        </div>
+        >
+          {recipe.title}
+        </h3>
 
-        <div className="flex flex-1 flex-col p-3 sm:p-4">
-          <div className="mbe-2 flex items-center justify-between gap-2">
-            {recipe.difficulty && (
-              <Badge
-                variant={difficultyVariant[recipe.difficulty] || "secondary"}
-                className="text-3xs font-bold tracking-wider uppercase"
-              >
-                <span className="me-0.5">{difficultyEmoji[recipe.difficulty]}</span>
-                {recipe.difficulty}
-              </Badge>
-            )}
-            {recipe.totalTime && (
-              <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground/95">
-                <span className="inline-block">⏱️</span>
-                {recipe.totalTime}m
-              </span>
-            )}
-          </div>
+        {isFeature && recipe.description && (
+          <p className="mbs-2 line-clamp-2 max-w-xl text-base text-muted-foreground">
+            {recipe.description}
+          </p>
+        )}
 
-          <h3 className="mbe-1.5 line-clamp-2 min-h-11 font-serif text-base leading-tight font-bold text-card-foreground sm:min-h-12.5 sm:text-xl">
-            {recipe.title}
-          </h3>
-
-          {recipe.description && (
-            <p className="mbe-3 line-clamp-2 min-h-9 text-xs leading-relaxed text-muted-foreground/95 sm:min-h-11.5 sm:text-sm">
-              {recipe.description}
-            </p>
-          )}
-
-          <div className="mbs-auto flex items-end justify-between gap-2 text-3xs text-muted-foreground/95 sm:gap-3 sm:text-xs">
-            {recipe.cuisine && (
-              <Badge
-                variant="outline"
-                className="max-w-3/5 truncate border-border/60 bg-background/60 text-3xs font-medium tracking-wider uppercase"
-                title={recipe.cuisine}
-              >
-                {recipe.cuisine}
-              </Badge>
-            )}
-            {hasServingsLabel && (
-              <span className="truncate text-end font-medium text-muted-foreground/90">
-                {hasServingsLabel}
-              </span>
-            )}
-          </div>
+        <div className="mbs-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          {recipe.totalTime ? (
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3.5" aria-hidden="true" />
+              {formatMinutes(recipe.totalTime)}
+            </span>
+          ) : null}
+          {recipe.difficulty && <span>{difficultyLabel[recipe.difficulty]}</span>}
+          {isFeature && recipe.cuisine && <span>{recipe.cuisine}</span>}
         </div>
       </div>
     </Link>
