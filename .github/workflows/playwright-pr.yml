@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 25
     services:
       postgres:
-        image: pgvector/pgvector:0.8.6-pg18
+        image: pgvector/pgvector:0.8.7-pg18
         env:
           POSTGRES_DB: janella
           POSTGRES_USER: postgres
