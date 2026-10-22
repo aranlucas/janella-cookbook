@@ -68,6 +68,20 @@
       {
         "allow": ["error", "warn"]
       }
+    ],
+    "vitest/consistent-test-filename": [
+      "error",
+      {
+        "allTestPattern": "\\.(test|spec)\\.([cm]?[jt]s|[jt]sx)$",
+        "pattern": "(^|[\\\\/])(tests[\\\\/]([^\\\\/]+[\\\\/])*[^\\\\/]+\\.test|e2e[\\\\/][^\\\\/]+\\.spec)\\.([cm]?[jt]s|[jt]sx)$"
+      }
+    ],
+    "eslint/eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
     ]
   }
 }
