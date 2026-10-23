@@ -4,7 +4,9 @@ test.describe("Categories page", () => {
   test("renders the categories page with heading", async ({ page }) => {
     await page.goto("/categories");
 
-    await expect(page.getByRole("heading", { name: "Categories" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Categories", exact: true }),
+    ).toBeVisible();
   });
 
   test("displays category cards or empty state", async ({ page }) => {
