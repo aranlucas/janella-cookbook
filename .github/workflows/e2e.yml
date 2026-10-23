@@ -2,6 +2,7 @@ name: E2E Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   deployment_status:
@@ -21,7 +22,7 @@ permissions:
 
 jobs:
   e2e:
-    if: github.event_name != 'deployment_status' && !inputs.deployment_url
+    if: ${{ (github.event_name != 'deployment_status' && !inputs.deployment_url) && github.event.pull_request.draft != true }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -76,10 +77,10 @@ jobs:
 
   deployment-e2e:
     if: >-
-      (github.event_name == 'deployment_status' &&
-       github.event.deployment_status.state == 'success' &&
-       github.event.deployment.creator.login == 'vercel[bot]') ||
-      (github.event_name == 'workflow_dispatch' && inputs.deployment_url != '')
+      ((github.event_name == 'deployment_status' &&
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.creator.login == 'vercel[bot]') ||
+      (github.event_name == 'workflow_dispatch' && inputs.deployment_url != '')) && github.event.pull_request.draft != true
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
