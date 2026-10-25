@@ -27,14 +27,15 @@ AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted 
 
 ## Start cooking locally
 
-Requirements: Node.js 24, pnpm 12.6, and PostgreSQL with the pgvector extension enabled.
+Requirements: Node.js 24 or later and the pnpm version pinned in
+`package.json`, plus PostgreSQL with the pgvector extension enabled.
 
 ```sh
 pnpm install
 cp .env.example .env
 ```
 
-Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; optional `FREELLM_MODEL` and `FREELLM_RECIPE_MODEL` override `auto` for chat and recipe extraction/nutrition respectively. Existing OpenRouter environment variables are no longer used.
+Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; Optional `FREELLM_MODEL` overrides `auto` for chat. Recipe extraction and nutrition use `auto:fast` by default; set `FREELLM_RECIPE_MODEL` to override it. The legacy value `auto` for that recipe setting is normalized to `auto:fast`. Existing OpenRouter environment variables are no longer used.
 
 Embeddings always use FreeLLMAPI with the same `FREELLM_API_KEY` and base URL as chat, through `/v1/embeddings`. `FREELLM_EMBEDDING_MODEL` is pinned to `embeddinggemma-300m`, matching the existing 768-dimensional index. The router may fail over between providers of this model, but changing model families requires reindexing and a schema update. The cookbook no longer needs a separate Hugging Face key; manage provider keys in FreeLLMAPI.
 
