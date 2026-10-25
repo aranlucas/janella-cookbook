@@ -3,6 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import sharp from "sharp";
+import { extractYouTubeVideoId } from "@/lib/youtube";
 import { prisma } from "@/lib/prisma";
 import {
   parseRecipeFromUrl,
@@ -48,16 +49,13 @@ export async function previewRecipe(form: FormData): Promise<ActionResult<Import
       const youtube = youtubeImportSchema.safeParse({ url: sourceUrl }).success;
 
       if (youtube) {
-        const videoId =
-          url.hostname === "youtu.be"
-            ? url.pathname.slice(1)
-            : (url.searchParams.get("v") ?? url.pathname.split("/")[2]);
+        const videoId = extractYouTubeVideoId(sourceUrl);
 
-        if (!videoId || !/^[\w-]{11}$/.test(videoId)) {
+        if (videoId.isErr()) {
           return { success: false, error: "Enter a YouTube video or Shorts link." };
         }
 
-        sourceUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        sourceUrl = `https://www.youtube.com/watch?v=${videoId.value}`;
       }
 
       parsed = await (youtube ? parseRecipeFromYouTube(sourceUrl) : parseRecipeFromUrl(sourceUrl));

@@ -48,44 +48,21 @@ export function extractYouTubeVideoId(url: string): Result<string, RecipeParseEr
   try {
     const parsedUrl = new URL(url);
 
-    // Handle youtu.be short URLs
-    if (parsedUrl.hostname === "youtu.be") {
-      return ok(parsedUrl.pathname.slice(1).split("?")[0]);
+    let videoId: string | null | undefined;
+
+    if (["http:", "https:"].includes(parsedUrl.protocol)) {
+      if (parsedUrl.hostname === "youtu.be") {
+        videoId = parsedUrl.pathname.slice(1);
+      } else if (["www.youtube.com", "youtube.com", "m.youtube.com"].includes(parsedUrl.hostname)) {
+        videoId =
+          parsedUrl.pathname === "/watch"
+            ? parsedUrl.searchParams.get("v")
+            : parsedUrl.pathname.match(/^\/(?:shorts|embed|v)\/([\w-]{11})\/?$/)?.[1];
+      }
     }
 
-    // Handle youtube.com URLs
-    if (
-      parsedUrl.hostname === "www.youtube.com" ||
-      parsedUrl.hostname === "youtube.com" ||
-      parsedUrl.hostname === "m.youtube.com"
-    ) {
-      // Handle /watch?v=VIDEO_ID
-      const videoId = parsedUrl.searchParams.get("v");
-
-      if (videoId) {
-        return ok(videoId);
-      }
-
-      // Handle /shorts/VIDEO_ID
-      const shortsMatch = parsedUrl.pathname.match(/\/shorts\/([^/?]+)/);
-
-      if (shortsMatch) {
-        return ok(shortsMatch[1]);
-      }
-
-      // Handle /embed/VIDEO_ID
-      const embedMatch = parsedUrl.pathname.match(/\/embed\/([^/?]+)/);
-
-      if (embedMatch) {
-        return ok(embedMatch[1]);
-      }
-
-      // Handle /v/VIDEO_ID
-      const vMatch = parsedUrl.pathname.match(/\/v\/([^/?]+)/);
-
-      if (vMatch) {
-        return ok(vMatch[1]);
-      }
+    if (videoId && /^[\w-]{11}$/.test(videoId)) {
+      return ok(videoId);
     }
 
     return err(new RecipeParseError("Could not extract video ID from YouTube URL", url));

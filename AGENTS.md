@@ -8,42 +8,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A modern Next.js 16 recipe management application with AI-powered recipe parsing, YouTube transcript extraction, AI chat assistant, and hybrid semantic search. Built with React 19, TypeScript, PostgreSQL with pgvector, HuggingFace embeddings, and OpenRouter AI integration.
+A modern Next.js 16 recipe management application with AI-powered recipe parsing, YouTube transcript extraction, AI chat assistant, and hybrid semantic search. Built with React 19, TypeScript, PostgreSQL with pgvector, FreeLLMAPI embeddings, and FreeLLMAPI chat and recipe extraction.
 
-**Tech Stack:** Next.js 16.1.6 | React 19 | TypeScript 5 | Node 24.x | Prisma 7 | PostgreSQL + pgvector | Tailwind CSS v4 | AI SDK 6 | ES Modules
+**Tech Stack:** Next.js 16 | React 19 | TypeScript | Node 24+ | Prisma 7 | PostgreSQL + pgvector | Tailwind CSS v4 | AI SDK 7 | ES Modules. Use `package.json` and the lockfile for exact dependency versions.
 
 ## Environment Setup
 
-**This project uses Railway for deployment.** The Railway service name is **`surprising-growth`**.
+The website is deployed on Vercel. PostgreSQL and the FreeLLMAPI router run on
+Railway. See `README.md` for the current deployment and configuration contract;
+`lib/env.ts` is the application's environment schema. Do not use legacy OpenRouter
+or Hugging Face variables to configure this app.
 
-Use `railway env` to access environment variables:
+- `DATABASE_URL`: PostgreSQL connection URL; use a local development database for
+  schema changes. `DATABASE_POOL_MAX` defaults to 5.
+- `FREELLM_API_KEY`: the router's Unified API key, used by chat, recipe extraction,
+  and embeddings. It is optional at configuration-load time.
+- `FREELLM_BASE_URL`: defaults to the Railway router's `/v1` endpoint.
+- `FREELLM_MODEL`: defaults to `auto` for chat.
+- `FREELLM_RECIPE_MODEL`: defaults to `auto:fast` for extraction and nutrition;
+  the legacy value `auto` is normalized to `auto:fast`.
+- `FREELLM_EMBEDDING_MODEL`: fixed to `embeddinggemma-300m` (768 dimensions).
+- R2 settings are optional for managed image storage. `MCP_API_TOKEN` configures
+  the bearer-token-protected recipe MCP endpoint.
 
-```bash
-railway env                    # View all environment variables
-railway run pnpm run dev        # Run commands with Railway environment
-railway run pnpm run db:migrate # Run with specific service
-```
-
-**Required Environment Variables:**
-
-- `DATABASE_URL` - PostgreSQL connection string (access via Railway)
-- `OPENROUTER_API_KEY` - Recipe parsing via OpenRouter (openrouter/healer-alpha model)
-- `HUGGINGFACE_API_KEY` - Embedding generation (google/embeddinggemma-300m, 768 dims)
-
-**Optional Environment Variables:**
-
-- `GOOGLE_GENERATIVE_AI_API_KEY` - Alternative AI provider (Gemini)
-- `OPENAI_API_KEY` - Legacy/deprecated, using HuggingFace now
-- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` - Cloudflare R2 image storage
-- `NEXTAUTH_SECRET`, `NEXTAUTH_URL` - Authentication (optional)
-
-**First-Time Setup:**
+**First-time local setup:**
 
 ```bash
-pnpm install                    # Auto-runs postinstall (prisma generate)
-railway run pnpm run db:push    # Push schema to Railway database
-pnpm run dev                    # Start dev server on localhost:3000
+pnpm install                    # Runs prisma generate
+cp .env.example .env            # Set DATABASE_URL to a local database
+# Put FREELLM_API_KEY in ignored .env.local if exercising AI features.
+pnpm db:push                    # Apply schema to that development database
+pnpm dev                        # https://janella-cookbook.localhost via Portless
 ```
+
+Use the pnpm version pinned by `packageManager`. No provider credentials are
+needed for the fixture-based Vitest suite. Browser E2E tests need a running app
+and the configured PostgreSQL database; deployment tests have separate settings.
 
 ## Common Commands
 
@@ -53,8 +53,8 @@ pnpm run dev                    # Start dev server on localhost:3000
 pnpm run dev                    # Start Next.js dev server with Turbopack
 pnpm run build                  # Production build
 pnpm run start                  # Start production server
-pnpm run lint                   # Run ESLint with --fix
-pnpm run format                 # Run Prettier with --write
+pnpm run lint                   # Check with Oxlint (use lint:fix to apply fixes)
+pnpm run format                 # Format with Oxfmt
 ```
 
 **Database (Prisma):**
@@ -186,7 +186,7 @@ This project uses the **App Router** (not Pages Router). Key patterns:
 
 **Vector Search Fields:**
 
-- `Recipe.embedding` - 768-dim vector from HuggingFace google/embeddinggemma-300m
+- `Recipe.embedding` - 768-dim EmbeddingGemma vector from FreeLLMAPI
 - `Recipe.searchText` - Concatenated searchable content for keyword fallback
 
 **Important:** The pgvector extension must be enabled in PostgreSQL. Vector operations use raw SQL queries since Prisma doesn't natively support vector types.
@@ -195,9 +195,9 @@ This project uses the **App Router** (not Pages Router). Key patterns:
 
 Located in `lib/search.ts`, implements dual-mode search:
 
-1. **Semantic Search** (when HUGGINGFACE_API_KEY available):
+1. **Semantic Search** (when the embedding request succeeds):
    - Enhances query with synonym expansion (`enhanceSearchQuery()`)
-   - Generates query embedding via HuggingFace
+   - Generates query embedding via FreeLLMAPI
    - Uses PostgreSQL `<=>` operator for cosine distance
    - Similarity threshold: 0.35
    - Batch fetches relations to prevent N+1 queries
@@ -213,8 +213,8 @@ Located in `lib/search.ts`, implements dual-mode search:
 
 **Recipe Parsing** (`lib/recipe-parser.ts`):
 
-- Uses OpenRouter openrouter/healer-alpha model via AI SDK (`lib/ai.ts`)
-- Forces Chat Completions API (not Responses API) for OpenRouter compatibility
+- Uses the configured FreeLLMAPI recipe model via AI SDK (`lib/ai.ts`)
+- Uses the router's Chat Completions endpoint with structured outputs
 - Zod schema validation for structured output
 
 **URL Import** (`parseRecipeFromUrl`):
@@ -222,12 +222,12 @@ Located in `lib/search.ts`, implements dual-mode search:
 1. Fetch HTML from URL
 2. Try JSON-LD extraction (schema.org Recipe format)
 3. Fallback: Extract main content with Cheerio + Readability
-4. Parse with OpenRouter openrouter/healer-alpha in structured output mode
+4. Parse with the configured FreeLLMAPI recipe model in structured output mode
 
 **YouTube Import** (`parseRecipeFromYouTube` + `lib/youtube.ts`):
 
-- Extract video ID from various YouTube URL formats
-- Fetch transcript via youtube-transcript library
+- Validate video links through the shared `extractYouTubeVideoId` parser before fetching
+- Fetch transcript via youtubei.js, falling back to youtube-transcript or a usable video description
 - Parse transcript into structured recipe with AI
 
 **Text Import** (`parseRecipeFromText`):
@@ -237,9 +237,9 @@ Located in `lib/search.ts`, implements dual-mode search:
 
 **Embedding Generation** (`lib/embeddings.ts`):
 
-- Model: HuggingFace google/embeddinggemma-300m (768 dimensions)
+- Model: `embeddinggemma-300m` through FreeLLMAPI (768 dimensions)
 - Generates semantic search text with context hints (quick/easy/advanced etc.)
-- Graceful degradation if API key missing
+- Keyword search remains available when an embedding request fails
 
 **AI Chat** (`/api/chat`):
 
@@ -269,7 +269,7 @@ Client Form Submit
   -> Server Action: createRecipe() / importFromUrl() / importFromYouTube()
     -> Generate unique slug (with collision detection)
     -> Upsert tags by name
-    -> Generate HuggingFace embedding (if API key available)
+    -> Attempt FreeLLMAPI embedding generation
     -> Prisma create with nested relations
     -> Raw SQL to update embedding vector
   -> Return full recipe with slug
@@ -300,9 +300,9 @@ type ActionResult<T> =
 | `prisma.ts`        | Singleton Prisma client with PrismaPg adapter                         |
 | `actions.ts`       | Server Actions for all recipe mutations                               |
 | `search.ts`        | Hybrid semantic + keyword search with RRF                             |
-| `embeddings.ts`    | HuggingFace embedding generation and query enhancement                |
+| `embeddings.ts`    | FreeLLMAPI embedding generation and query enhancement                 |
 | `recipe-parser.ts` | AI-powered recipe parsing (URL, YouTube, text)                        |
-| `ai.ts`            | OpenRouter model configuration (openrouter/healer-alpha)              |
+| `ai.ts`            | FreeLLMAPI chat, recipe, and embedding model configuration            |
 | `youtube.ts`       | YouTube URL parsing, transcript extraction, metadata                  |
 | `validations.ts`   | Zod schemas for all input validation                                  |
 | `slug.ts`          | Unique slug generation with collision detection                       |
@@ -412,13 +412,13 @@ The project uses ES Modules (`"type": "module"` in `package.json`). Prisma is co
 - Requires PostgreSQL with pgvector extension installed
 - Extension configured in `prisma/schema.prisma` with `postgresqlExtensions` preview feature
 - Vector operations use raw SQL: `await prisma.$executeRaw`
-- Vector dimension: 768 (matching HuggingFace embeddinggemma-300m output)
+- Vector dimension: 768 (matching the configured EmbeddingGemma model output)
 
 **AI Graceful Degradation:**
 
-- Search degrades to keyword-only if HUGGINGFACE_API_KEY is missing
-- Recipe embedding generation is skipped if API key is unavailable
-- Import features require OPENROUTER_API_KEY for AI parsing
+- Search degrades to keyword-only when embedding generation fails.
+- Embedding requests use a five-second deadline and validate 768 finite values.
+- AI parsing, chat, and embeddings use `FREELLM_API_KEY`; structured webpage recipes can be parsed locally before the model fallback.
 
 **Responsive Design:**
 

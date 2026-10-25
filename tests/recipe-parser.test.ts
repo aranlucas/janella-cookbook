@@ -5,8 +5,56 @@ import { z } from "zod";
 import { parseIngredientLine } from "@/lib/imports/ingredient-line";
 import type { modelRecipeSchema } from "@/lib/imports/recipe-schema";
 import { extractStructuredRecipe } from "@/lib/imports/structured-recipe";
+import { extractYouTubeVideoId } from "@/lib/youtube";
 
 type ModelReply = z.input<typeof modelRecipeSchema>;
+
+describe("YouTube video links", () => {
+  test("extracts the same ID from supported video links", () => {
+    for (const url of [
+      "https://www.youtube.com/watch?v=abcdefghijk&t=30",
+      "https://m.youtube.com/watch?v=abcdefghijk",
+      "https://youtu.be/abcdefghijk?si=share",
+      "https://youtube.com/shorts/abcdefghijk",
+      "https://youtube.com/embed/abcdefghijk",
+      "https://youtube.com/v/abcdefghijk",
+    ]) {
+      expect(extractYouTubeVideoId(url)._unsafeUnwrap(), url).toBe("abcdefghijk");
+    }
+  });
+
+  test("rejects missing or malformed IDs and non-video links before transcript requests", async () => {
+    const fetchMock = vi.fn<typeof fetch>();
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      const { parseRecipeFromYouTube } = await import("@/lib/recipe-parser");
+
+      const urls = [
+        "not a URL",
+        "https://youtu.be/",
+        "https://youtu.be/abcdefghijk/extra",
+        "https://youtube.com/watch?v=short",
+        "https://youtube.com/watch?v=abcdefghijkl",
+        "https://youtube.com/watch?v=abcdefghij%26",
+        "https://youtube.com/channel/abcdefghijk?v=abcdefghijk",
+        "https://example.com/watch?v=abcdefghijk",
+        "ftp://youtube.com/watch?v=abcdefghijk",
+      ];
+
+      await Promise.all(
+        urls.map(async (url) => {
+          expect(extractYouTubeVideoId(url).isErr(), url).toBe(true);
+          expect((await parseRecipeFromYouTube(url)).isErr(), url).toBe(true);
+        }),
+      );
+
+      expect(fetchMock).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+});
 
 const objectSchema = z.object({
   properties: z.record(z.string(), z.unknown()),
