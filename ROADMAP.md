@@ -6,12 +6,6 @@ Updated 2026-10-26. Proposed release order, not delivery dates or evidence of cu
 
 A home cook who wants saved recipes to become meals they actually make, including when using an assistant through MCP.
 
-## Current baseline
-
-The app already imports recipes, searches, records cooking history and builds shopping lists. The MCP endpoint currently lists, retrieves and adds recipes; the next work should connect discovery to cooking rather than duplicate import modes.
-
-Planning evidence: [README](README.md), [recipe MCP tools](lib/recipe-mcp.ts) and [MCP route](app/api/mcp/route.ts) at `fa2fa2a2d26c`. This focused product pass does not claim a complete new code audit or live-provider validation.
-
 ## Prioritized releases
 
 | Order | Feature                                          | User value and scope                                                                                                                   | Release acceptance                                                                                                               |
@@ -27,12 +21,16 @@ Track saved-to-cooked conversion within the pilot, time to choose dinner, correc
 
 Collect the baseline before building the first slice. Use voluntary pilot feedback and minimal aggregate events; do not log private content or credentials to measure adoption. If the first workflow is not used again, revisit the problem before adding the later features. Revenue impact is unvalidated.
 
-## Next shippable slice
-
-Extend existing list/search MCP behavior with constrained recipe discovery and clear match reasons.
-
 ## Dependencies and deliberate limits
 
 Do not claim dietary/allergen safety from AI parsing. Preserve original ingredient text and make corrections easy. Coordinate inventory with Pantry Pulse and cart preparation with Shopping MCP.
 
-Engineering work belongs in the milestone only when it enables that acceptance criterion. Prefer existing native libraries and test runners. Update this roadmap when a user-visible increment ships, recording the outcome and remaining limits rather than checking off implementation activity alone.
+## Access and abuse constraints
+
+Before opening the cookbook beyond a protected deployment:
+
+- Add authentication and authorization to recipe writes and private reads. See the current [access boundary](README.md#access-boundary).
+- Bound per-user or per-IP import and chat traffic. Public-address validation on source fetching does not provide rate limiting.
+- Replace unrestricted HTTP/HTTPS image-host patterns in `next.config.mjs` with an explicit image-source policy appropriate to imported recipes.
+
+Update this roadmap when a user-visible increment ships, recording the outcome and remaining limits.
