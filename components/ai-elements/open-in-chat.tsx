@@ -231,6 +231,7 @@ export const OpenInChatGPT = (props: OpenInChatGPTProps) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.chatgpt.title}
           className="flex items-center gap-2"
           href={providers.chatgpt.createUrl(query)}
           rel="noopener"
@@ -256,6 +257,7 @@ export const OpenInClaude = (props: OpenInClaudeProps) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.claude.title}
           className="flex items-center gap-2"
           href={providers.claude.createUrl(query)}
           rel="noopener"
@@ -281,6 +283,7 @@ export const OpenInT3 = (props: OpenInT3Props) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.t3.title}
           className="flex items-center gap-2"
           href={providers.t3.createUrl(query)}
           rel="noopener"
@@ -306,6 +309,7 @@ export const OpenInScira = (props: OpenInSciraProps) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.scira.title}
           className="flex items-center gap-2"
           href={providers.scira.createUrl(query)}
           rel="noopener"
@@ -331,6 +335,7 @@ export const OpenInv0 = (props: OpenInv0Props) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.v0.title}
           className="flex items-center gap-2"
           href={providers.v0.createUrl(query)}
           rel="noopener"
@@ -356,6 +361,7 @@ export const OpenInCursor = (props: OpenInCursorProps) => {
       {...props}
       render={
         <a
+          aria-label={props["aria-label"] ?? providers.cursor.title}
           className="flex items-center gap-2"
           href={providers.cursor.createUrl(query)}
           rel="noopener"
