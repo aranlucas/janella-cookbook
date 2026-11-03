@@ -2,18 +2,10 @@
 
 [![CI](https://github.com/aranlucas/janella-cookbook/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/aranlucas/janella-cookbook/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/github/license/aranlucas/janella-cookbook)](LICENSE)
-![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?logo=postgresql&logoColor=white)
 
 ![Janella Cookbook logo, an open recipe book with a whisk](public/logo-bg.png)
 
-**The recipe you loved last month deserves better than another lost browser tab.**
-
 Janella Cookbook is a home for recipes worth keeping. Save what you cook, pull recipes in from a webpage or video, and search your collection when the familiar question returns: “What should we make tonight?”
-
-> “Find something quick and vegetarian with the ingredients I already have.”
-
-Use cookbook filters and search, or ask the recipe assistant to help explore the collection.
 
 ## From discovery to dinner
 
@@ -23,11 +15,9 @@ Use cookbook filters and search, or ask the recipe assistant to help explore the
 - Search with combined semantic and keyword results using FreeLLMAPI embeddings.
 - Chat about recipes and add ingredients to shopping lists from recipe pages.
 
-AI recipe parsing, photo extraction, nutrition, and chat use the Railway-hosted FreeLLMAPI router through the `@ai-sdk/openai-compatible` adapter and its Chat Completions endpoint. The default `auto` model follows the router's active fallback chain. Hosted embeddings run automatically for recipe indexing and semantic search, with keyword search available if the provider fails.
-
 ## Start cooking locally
 
-Requirements: Node.js 24 or later and the pnpm version pinned in
+Requirements: Node.js 24.x and the pnpm version pinned in
 `package.json`, plus PostgreSQL with the pgvector extension enabled.
 
 ```sh
@@ -35,13 +25,13 @@ pnpm install
 cp .env.example .env
 ```
 
-Set DATABASE_URL to your PostgreSQL database. Create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and save its key as `FREELLM_API_KEY` in `.env.local` and the deployment's server environment. `FREELLM_BASE_URL` defaults to `https://freellmapi-production-1175.up.railway.app/v1`; Optional `FREELLM_MODEL` overrides `auto` for chat. Recipe extraction and nutrition use `auto:fast` by default; set `FREELLM_RECIPE_MODEL` to override it. The legacy value `auto` for that recipe setting is normalized to `auto:fast`. Existing OpenRouter environment variables are no longer used.
+Set `DATABASE_URL` in `.env` to a **local development database**. Prisma CLI commands load `.env`; Next.js also loads `.env.local`. Keep credentials out of committed files.
 
-Embeddings always use FreeLLMAPI with the same `FREELLM_API_KEY` and base URL as chat, through `/v1/embeddings`. `FREELLM_EMBEDDING_MODEL` is pinned to `embeddinggemma-300m`, matching the existing 768-dimensional index. The router may fail over between providers of this model, but changing model families requires reindexing and a schema update. The cookbook no longer needs a separate Hugging Face key; manage provider keys in FreeLLMAPI.
+For AI parsing, photo extraction, nutrition, chat and semantic search, create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and put `FREELLM_API_KEY` in ignored `.env.local`. The key is optional for configuration loading, manual entry, structured webpage extraction and keyword search. Embedding failures do not block saving or keyword search.
 
-Optional Cloudflare R2 credentials enable managed recipe-image storage.
+[.env.example](.env.example) lists the configuration and [lib/env.ts](lib/env.ts) validates it. Chat defaults to `auto`; extraction and nutrition default to `auto:fast` (the legacy recipe value `auto` also selects `auto:fast`). Embeddings use `embeddinggemma-300m`; changing model families requires a schema update and reindexing the 768-dimensional vectors. Manage provider credentials in FreeLLMAPI rather than configuring legacy OpenRouter or Hugging Face keys in the cookbook.
 
-Application configuration is centralized in `lib/env.ts` using [t3-env](https://env.t3.gg/docs/nextjs). Next.js validates it when loading its config. Empty optional values are treated as unset; provider keys remain optional, while `DATABASE_URL` must be a valid URL and `DATABASE_POOL_MAX` must be a positive integer (default 5). Only declared `NEXT_PUBLIC_*` values are accessible on the client. Prisma and test-runner configuration retain their own environment loading so dependency installation and client generation work without application credentials.
+R2 and NextAuth variables are declared but have no storage or cookbook sign-in implementation. Setting them does not enable those features.
 
 Create or update the database schema, then launch Next.js:
 
@@ -55,8 +45,6 @@ Open [https://janella-cookbook.localhost](https://janella-cookbook.localhost). `
 ## Connect an MCP client
 
 The cookbook exposes recipe tools at `/api/mcp`, using [Vercel's mcp-handler](https://github.com/vercel-labs/mcp-handler). It runs in the existing Next.js app. The handler uses stateless Streamable HTTP and does not need Redis or a separate server.
-
-MCP and the app share recipe queries in `lib/recipe-queries.ts`: listing, filters, pagination, and recipe lookup are reused by the tools, REST endpoints, and recipe browsing, detail, and edit pages. Saving uses the same `createRecipe` action as the app's recipe form. MCP keeps its own protocol response formatting and returns compact summaries when browsing.
 
 Set `MCP_API_TOKEN` to a random secret in your local environment or the Vercel production environment. Generate one with:
 
@@ -114,18 +102,7 @@ For example, call `add_recipe` with:
 
 Generate a new `saveKey` UUID for each recipe and reuse it only when retrying that same save. Times and instruction durations are in minutes, and array order determines ingredient and step order. Recipes added through MCP have source type `API`. Adding structured recipes and keyword browsing work without AI API keys; embedding generation runs in the background through FreeLLMAPI and provider failures do not block saving.
 
-Run the MCP protocol and tool tests with `pnpm exec vitest run tests/recipe-mcp.test.mjs`.
-
-## Where the ingredients live
-
-- app/ contains the Next.js pages and API routes for recipes, search, chat, and nutrition.
-- components/forms/ contains manual entry and recipe-intake flows.
-- components/recipe/, components/search/, and components/chatbot/ contain the product UI.
-- lib/actions.ts handles recipe changes and import workflows.
-- lib/recipe-parser.ts and lib/youtube.ts parse recipe sources.
-- lib/search.ts combines keyword and optional semantic search.
-- lib/embeddings.ts handles hosted embedding generation.
-- prisma/ contains the PostgreSQL schema and migrations.
+Run the MCP protocol and tool tests with `pnpm test:mcp`.
 
 ## Checks
 
@@ -133,7 +110,18 @@ Run the MCP protocol and tool tests with `pnpm exec vitest run tests/recipe-mcp.
 pnpm lint
 pnpm format:check
 pnpm typecheck
+pnpm test
+```
+
+Vitest uses fixtures and needs no provider credentials. Browser E2E tests need a configured **isolated development database** and a production build:
+
+```sh
+pnpm build
 pnpm test:e2e
 ```
 
-For current follow-up work, see [IMPROVEMENTS.md](IMPROVEMENTS.md).
+Playwright starts the built app automatically unless `PLAYWRIGHT_BASE_URL` is supplied. These tests create and update recipes; do not point the ordinary suite at production. Live import tests additionally require `LIVE_IMPORT_TESTS=1` and a working FreeLLMAPI key. For protected deployments, use the separate [deployment E2E procedure](docs/deployment-e2e.md).
+
+## Access boundary
+
+Cookbook pages, REST routes and recipe mutation actions have no application user authentication or ownership checks. The MCP bearer token protects only `/api/mcp`; grocery OAuth authorizes the external grocery service. Keep deployment protection enabled for a private cookbook. See the [roadmap](ROADMAP.md) for proposed sharing and access requirements, and the [recipe workflow design](docs/design/recipe-workflow.md) for intake and recovery constraints.
