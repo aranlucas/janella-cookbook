@@ -1186,13 +1186,12 @@ export type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
 export const PromptInputTabLabel = ({
   className,
+  children,
   ...props
 }: HTMLAttributes<HTMLHeadingElement>) => (
-  // Content provided via children in props
-  <h3
-    className={cn("mbe-2 px-3 text-xs font-medium text-muted-foreground", className)}
-    {...props}
-  />
+  <h3 className={cn("mbe-2 px-3 text-xs font-medium text-muted-foreground", className)} {...props}>
+    {children}
+  </h3>
 );
 
 export type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
