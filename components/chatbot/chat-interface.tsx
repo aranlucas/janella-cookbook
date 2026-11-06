@@ -249,13 +249,14 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
 
   const sendMessage: typeof sendChatMessage = useCallback(
     (message, options) => {
-      const body = { ...options?.body };
-
       if (location) {
-        body.location = location;
+        return sendChatMessage(message, {
+          ...options,
+          body: { ...options?.body, location },
+        });
       }
 
-      return sendChatMessage(message, { ...options, body });
+      return sendChatMessage(message, options);
     },
     [sendChatMessage, location],
   );
