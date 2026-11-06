@@ -13,6 +13,7 @@ import type { Prisma } from "@prisma/client";
 import { AppError, ValidationError, thrownValueSchema, toAppError } from "@/lib/errors";
 import type { RecipeInput, RecipeWithRelations } from "@/types/recipe";
 import { createRecipeSearchProjection } from "@/lib/search-projection";
+import { persistRecipeEmbedding } from "@/lib/embedding-index";
 
 export type ActionResult<T = RecipeWithRelations> =
   | { success: true; data: T; slug?: string }
@@ -113,12 +114,7 @@ const searchProjection = createRecipeSearchProjection<Prisma.TransactionClient>(
     SET "searchText" = ${searchText}, embedding = NULL
     WHERE id = ${recipeId}
   `,
-  persistEmbedding: (recipeId, embedding, searchText) =>
-    prisma.$executeRaw`
-      UPDATE "Recipe"
-      SET embedding = ${`[${embedding.join(",")}]`}::vector
-      WHERE id = ${recipeId} AND "searchText" = ${searchText}
-    `,
+  persistEmbedding: persistRecipeEmbedding,
 });
 
 function deferEmbeddingGeneration(recipeId: string, searchText: string) {

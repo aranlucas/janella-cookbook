@@ -29,7 +29,7 @@ Set `DATABASE_URL` in `.env` to a **local development database**. Prisma CLI com
 
 For AI parsing, photo extraction, nutrition, chat and semantic search, create a dedicated client profile under Keys → Unified API key on [FreeLLMAPI](https://freellmapi-production-1175.up.railway.app/keys) and put `FREELLM_API_KEY` in ignored `.env.local`. The key is optional for configuration loading, manual entry, structured webpage extraction and keyword search. Embedding failures do not block saving or keyword search.
 
-[.env.example](.env.example) lists the configuration and [lib/env.ts](lib/env.ts) validates it. Chat defaults to `auto`; extraction and nutrition default to `auto:fast` (the legacy recipe value `auto` also selects `auto:fast`). Embeddings use `embeddinggemma-300m`; changing model families requires a schema update and reindexing the 768-dimensional vectors. Manage provider credentials in FreeLLMAPI rather than configuring legacy OpenRouter or Hugging Face keys in the cookbook.
+[.env.example](.env.example) lists the configuration and [lib/env.ts](lib/env.ts) validates it. Chat defaults to `auto`; extraction and nutrition default to `auto:fast` (the legacy recipe value `auto` also selects `auto:fast`). Embeddings default to `bge-m3` (1024 dimensions), with a separate model-versioned index. Existing `FREELLM_EMBEDDING_MODEL=embeddinggemma-300m` overrides remain explicit; follow the [embedding migration runbook](docs/embedding-migration.md) to switch and backfill before Cloudflare retirement. Never reuse old vectors for a new model family. Manage provider credentials in FreeLLMAPI rather than configuring legacy OpenRouter or Hugging Face keys in the cookbook.
 
 R2 and NextAuth variables are declared but have no storage or cookbook sign-in implementation. Setting them does not enable those features.
 
@@ -113,7 +113,7 @@ pnpm typecheck
 pnpm test
 ```
 
-Vitest uses fixtures and needs no provider credentials. Browser E2E tests need a configured **isolated development database** and a production build:
+Vitest uses fixtures and needs no provider credentials. To include the versioned-vector SQL integration tests, set `RUN_EMBEDDING_DB_TESTS=1` with an isolated pgvector database after applying the schema; CI does this automatically. Browser E2E tests need a configured **isolated development database** and a production build:
 
 ```sh
 pnpm build

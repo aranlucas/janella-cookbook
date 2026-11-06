@@ -1,7 +1,12 @@
 import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
 import { recipeRelations } from "./recipe-queries";
-import { generateEmbedding, enhanceSearchQuery } from "./embeddings";
+import {
+  generateEmbedding,
+  enhanceSearchQuery,
+  embeddingSpace,
+  embeddingDimensions,
+} from "./embeddings";
 import {
   ExternalApiError,
   DatabaseError,
@@ -37,7 +42,10 @@ interface ScoredRecipe {
 }
 
 function buildFilterConditions(filters: SearchFilters): Prisma.Sql[] {
-  const conditions: Prisma.Sql[] = [Prisma.sql`r.embedding IS NOT NULL`];
+  const conditions: Prisma.Sql[] = [
+    Prisma.sql`e.space = ${embeddingSpace}`,
+    Prisma.sql`e."searchText" = r."searchText"`,
+  ];
 
   if (filters.cuisine && filters.cuisine.length > 0) {
     const safeCuisines = filters.cuisine.filter((c) => /^[\w\s-]+$/i.test(c));
@@ -79,7 +87,7 @@ export function semanticSearch(
     .mapErr(
       (error) =>
         new ExternalApiError(
-          "Hugging Face",
+          "FreeLLMAPI",
           "Failed to generate embedding for search query",
           thrownValueSchema.parse(error),
         ),
@@ -102,6 +110,13 @@ async function semanticSearchWithEmbedding(
 ): Promise<SearchOutput> {
   const embeddingString = `[${queryEmbedding.join(",")}]`;
 
+  // CASE prevents evaluating distance for another family, even if the planner reorders filters.
+  const similarityExpression = Prisma.sql`CASE
+    WHEN e.space = ${embeddingSpace} AND vector_dims(e.embedding) = ${embeddingDimensions}
+    THEN 1 - (e.embedding <=> ${embeddingString}::vector)
+    ELSE NULL
+  END`;
+
   const conditions = buildFilterConditions(filters);
   const whereClause = Prisma.join(conditions, " AND ");
 
@@ -112,8 +127,9 @@ async function semanticSearchWithEmbedding(
       SELECT * FROM (
         SELECT
           r.id,
-          1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+          ${similarityExpression} as similarity
         FROM "Recipe" r
+        JOIN "RecipeEmbedding" e ON e."recipeId" = r.id
         WHERE ${whereClause}
       ) AS sub
       WHERE similarity > 0.35
@@ -130,8 +146,9 @@ async function semanticSearchWithEmbedding(
   try {
     const countResult = await prisma.$queryRaw<CountResultRows>`
       SELECT COUNT(*) as count FROM (
-        SELECT 1 - (r.embedding <=> ${embeddingString}::vector) as similarity
+        SELECT ${similarityExpression} as similarity
         FROM "Recipe" r
+        JOIN "RecipeEmbedding" e ON e."recipeId" = r.id
         WHERE ${whereClause}
       ) AS sub
       WHERE similarity > 0.35
