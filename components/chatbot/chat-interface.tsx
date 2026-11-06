@@ -527,6 +527,8 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                               case "step-start":
                                 return null;
                             }
+
+                            return null;
                           })}
                       </MessageContent>
                     </Message>

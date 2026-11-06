@@ -30,7 +30,8 @@ test.each(pages)(
     vi.spyOn(embeddings, "generateEmbedding").mockImplementation(() =>
       errAsync(new ExternalApiError("fixture", "offline")),
     );
-    vi.spyOn(prisma.recipe, "findMany")
+    const findMany = vi
+      .spyOn(prisma.recipe, "findMany")
       .mockResolvedValueOnce(recipes.slice(0, 4))
       .mockResolvedValueOnce(recipes.slice(offset, offset + 2));
     vi.spyOn(prisma.recipe, "count").mockResolvedValue(7);
@@ -45,8 +46,6 @@ test.each(pages)(
 
     expect(result.value.results.map(({ recipe }) => recipe.id)).toEqual(expectedIds);
     expect(result.value.total).toBe(7);
-    expect(prisma.recipe.findMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({ take: 2, skip: offset }),
-    );
+    expect(findMany).toHaveBeenLastCalledWith(expect.objectContaining({ take: 2, skip: offset }));
   },
 );
