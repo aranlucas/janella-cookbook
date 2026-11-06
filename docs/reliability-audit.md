@@ -32,7 +32,7 @@ Clean isolated worktree at remote default `88a692b` (includes merged untangle #1
 
 Preserve existing Vitest, MCP protocol and Playwright journeys. Add the real published `e2e@0.23.0` and `@e2e-dev/web@0.15.5` (npm metadata verified, Node ^22.22.3 or >=24.8), manually configured without agents/credentials. Published docs and e2e.com quickstart/CI/GitHub Actions docs inspected. A deterministic browser journey will manually save two recipes, verify persisted content, sort matching results alphabetically and reopen a saved recipe. Run against the CI database/build, upload `.e2e` evidence. No local tests or builds.
 
-Independent review and CI results: pending.
+Independent static review approved after fixing editor clear serialization and a chat test readiness race. CI evidence pending on PR #141; no local tests/builds run.
 
 ## Additional findings confirmed before edits
 

@@ -53,6 +53,7 @@ test("chat shares granted location only while enabled @isolated", async ({ page 
   await expect(composer).toBeEnabled();
   await page.getByRole("button", { name: "Disable location", exact: true }).click();
   await composer.fill("What next?");
+  await expect(page.getByRole("button", { name: "Submit", exact: true })).toBeEnabled();
   const withoutLocation = page.waitForRequest("**/api/chat");
   await composer.press("Enter");
   expect((await withoutLocation).postDataJSON()).not.toHaveProperty("location");
