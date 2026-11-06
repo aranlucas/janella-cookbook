@@ -284,7 +284,9 @@ async function hybridSearchImpl(
   if (semanticResult.isErr()) {
     console.error("Semantic search failed, using keyword only:", semanticResult.error);
 
-    return keywordResult.value;
+    // The candidate query starts at zero and overfetches for fusion.
+    // Use the public fallback to honor the requested page instead.
+    throw semanticResult.error;
   }
 
   const semanticResults = semanticResult.value;

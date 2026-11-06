@@ -125,3 +125,9 @@ Playwright starts the built app automatically unless `PLAYWRIGHT_BASE_URL` is su
 ## Access boundary
 
 Cookbook pages, REST routes and recipe mutation actions have no application user authentication or ownership checks. The MCP bearer token protects only `/api/mcp`; grocery OAuth authorizes the external grocery service. Keep deployment protection enabled for a private cookbook. See the [roadmap](ROADMAP.md) for proposed sharing and access requirements, and the [recipe workflow design](docs/design/recipe-workflow.md) for intake and recovery constraints.
+
+The reliability audit also adds deterministic [tester-army/e2e](https://github.com/tester-army/e2e)
+journeys in `tests/journeys`, configured by `e2e.config.ts`. CI runs `pnpm exec e2e run`
+against its isolated database and uploads `.e2e/` evidence. These tests use no agent
+steps, provider credentials or model calls. Existing Playwright coverage remains in place.
+See [the audit](docs/reliability-audit.md) for findings and pre-fix reproduction gates.

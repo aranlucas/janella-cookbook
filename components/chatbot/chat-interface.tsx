@@ -119,7 +119,7 @@ const PromptInputAttachmentsDisplay = () => {
 
 export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   const [text, setText] = useState<string>("");
-  const [, setLocation] = useState<LocationData | null>(null);
+  const [location, setLocation] = useState<LocationData | null>(null);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -166,7 +166,12 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     return () => {};
   }, [isMobile]);
 
-  const { messages, sendMessage, status, error } = useChat({
+  const {
+    messages,
+    sendMessage: sendChatMessage,
+    status,
+    error,
+  } = useChat({
     onError: (chatError: Error) => {
       console.error("Chat error:", chatError.message);
 
@@ -241,6 +246,15 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       });
     },
   });
+
+  const sendMessage: typeof sendChatMessage = useCallback(
+    (message, options) =>
+      sendChatMessage(message, {
+        ...options,
+        body: { ...options?.body, ...(location ? { location } : {}) },
+      }),
+    [sendChatMessage, location],
+  );
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -500,30 +514,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                                     width={512}
                                   />
                                 );
-                              case "custom": {
-                                throw new Error('Not implemented yet: "custom" case');
-                              }
-
-                              case "reasoning": {
-                                throw new Error('Not implemented yet: "reasoning" case');
-                              }
-
-                              case "reasoning-file": {
-                                throw new Error('Not implemented yet: "reasoning-file" case');
-                              }
-
-                              case "source-document": {
-                                throw new Error('Not implemented yet: "source-document" case');
-                              }
-
-                              case "source-url": {
-                                throw new Error('Not implemented yet: "source-url" case');
-                              }
-
-                              case "step-start": {
-                                throw new Error('Not implemented yet: "step-start" case');
-                              }
-
                               default:
                                 return null;
                             }

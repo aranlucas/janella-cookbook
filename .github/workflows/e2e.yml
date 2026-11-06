@@ -44,6 +44,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
         with:
@@ -56,14 +58,56 @@ jobs:
       - name: Initialize isolated test database
         run: pnpm run db:push
 
-      - name: Build app
-        run: pnpm run build
-
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      - name: Install e2e engine browser
+        run: pnpm exec e2e-web install chromium --with-deps
+
+      - name: Prove browser regressions fail on pre-fix source
+        run: |
+          cp components/forms/manual-recipe-form.tsx "$RUNNER_TEMP/manual-recipe-form.tsx"
+          git show 88a692b:components/forms/manual-recipe-form.tsx > components/forms/manual-recipe-form.tsx
+          cp app/recipes/page.tsx "$RUNNER_TEMP/recipes-page.tsx"
+          cp components/chatbot/chat-interface.tsx "$RUNNER_TEMP/chat-interface.tsx"
+          git show 88a692b:app/recipes/page.tsx > app/recipes/page.tsx
+          git show 88a692b:components/chatbot/chat-interface.tsx > components/chatbot/chat-interface.tsx
+          pnpm run build
+          failed=0
+          for behavior in "chat accepts step" "chat shares granted"; do
+            if pnpm exec playwright test e2e/reliability.spec.ts --grep "$behavior" --retries=0; then
+              echo "Regression unexpectedly passed on baseline: $behavior"
+              failed=1
+            fi
+          done
+          for behavior in "save, reopen" "cleared preparation"; do
+            if pnpm exec e2e run --grep "$behavior"; then
+              echo "Recipe regression unexpectedly passed on baseline: $behavior"
+              failed=1
+            fi
+          done
+          cp "$RUNNER_TEMP/manual-recipe-form.tsx" components/forms/manual-recipe-form.tsx
+          cp "$RUNNER_TEMP/recipes-page.tsx" app/recipes/page.tsx
+          cp "$RUNNER_TEMP/chat-interface.tsx" components/chatbot/chat-interface.tsx
+          exit "$failed"
+
+      - name: Build fixed app
+        run: pnpm run build
+
       - name: Run Playwright tests
         run: pnpm exec playwright test
+
+      - name: Run deterministic recipe journey
+        run: pnpm exec e2e run
+
+      - name: Upload e2e evidence
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: e2e-recipe-journey
+          path: .e2e/
+          include-hidden-files: true
+          retention-days: 7
 
       - name: Upload test results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
