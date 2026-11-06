@@ -7,13 +7,7 @@
 
 import { NextResponse } from "next/server";
 import type { JsonObject } from "@/types/json";
-import {
-  formatErrorResponse,
-  isAppError,
-  isTransientDatabaseError,
-  toAppError,
-  type ThrownValue,
-} from "./errors";
+import { isAppError, isTransientDatabaseError, toAppError, type ThrownValue } from "./errors";
 
 /**
  * Standard API response envelope.
@@ -37,9 +31,6 @@ export interface ApiErrorResponse {
 
 export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
-/**
- * Metadata for paginated responses
- */
 export interface PaginationMeta {
   readonly total: number;
   readonly limit: number;
@@ -47,9 +38,6 @@ export interface PaginationMeta {
   readonly hasMore: boolean;
 }
 
-/**
- * General response metadata
- */
 export interface ApiResponseMeta {
   readonly pagination?: PaginationMeta;
   /** ISO timestamp of when the response was generated */
@@ -58,9 +46,6 @@ export interface ApiResponseMeta {
   readonly version?: string;
 }
 
-/**
- * Create a successful API response
- */
 export function apiSuccess<T>(
   data: T,
   meta?: ApiResponseMeta,
@@ -79,9 +64,6 @@ export function apiSuccess<T>(
   return NextResponse.json(response, { status });
 }
 
-/**
- * Create a paginated API response
- */
 export function apiPaginated<T>(
   data: readonly T[],
   pagination: Omit<PaginationMeta, "hasMore">,
@@ -105,18 +87,14 @@ export function apiPaginated<T>(
  * so clients (and Next.js fetch) can retry instead of seeing a scary 500.
  */
 export function apiError(error: ThrownValue, status?: number): NextResponse<ApiErrorResponse> {
-  // Normalize transient PG errors (57P03 etc.) to 503 DATABASE_UNAVAILABLE
-  const normalized = isTransientDatabaseError(error) ? toAppError(error) : null;
-  const effectiveError = normalized ?? error;
-  const appError = toAppError(effectiveError);
-  const formatted = formatErrorResponse(effectiveError);
+  const appError = toAppError(error);
 
   const response: ApiErrorResponse = {
     success: false,
     error: {
-      message: formatted.error,
-      code: formatted.code,
-      details: formatted.details,
+      message: appError.message,
+      code: appError.code,
+      details: appError.details,
     },
   };
 
@@ -128,9 +106,6 @@ export function apiError(error: ThrownValue, status?: number): NextResponse<ApiE
   });
 }
 
-/**
- * Create a validation error response
- */
 export function apiValidationError(
   message: string,
   fieldErrors?: Readonly<Record<string, readonly string[]>>,
@@ -145,21 +120,4 @@ export function apiValidationError(
   };
 
   return NextResponse.json(response, { status: 400 });
-}
-
-/**
- * Create a not found error response
- */
-export function apiNotFound(resource: string, identifier?: string): NextResponse<ApiErrorResponse> {
-  const message = identifier ? `${resource} not found: ${identifier}` : `${resource} not found`;
-
-  const response: ApiErrorResponse = {
-    success: false,
-    error: {
-      message,
-      code: "NOT_FOUND",
-    },
-  };
-
-  return NextResponse.json(response, { status: 404 });
 }

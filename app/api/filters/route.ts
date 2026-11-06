@@ -33,7 +33,6 @@ import type { Course, Difficulty } from "@prisma/client";
 export function GET() {
   return ResultAsync.fromPromise(
     Promise.all([
-      // Get distinct cuisines
       prisma.recipe
         .findMany({
           where: { cuisine: { not: null } },
@@ -43,7 +42,6 @@ export function GET() {
         })
         .then((results) => results.map((r) => r.cuisine).filter((c): c is string => c !== null)),
 
-      // Get courses with recipes
       prisma.recipe
         .findMany({
           select: { course: true },
@@ -51,7 +49,6 @@ export function GET() {
         })
         .then((results) => results.map((r) => r.course).filter((c): c is Course => c !== null)),
 
-      // Get difficulties with recipes
       prisma.recipe
         .findMany({
           select: { difficulty: true },
@@ -61,7 +58,6 @@ export function GET() {
           results.map((r) => r.difficulty).filter((d): d is Difficulty => d !== null),
         ),
 
-      // Get all tags with usage count
       prisma.tag.findMany({
         select: {
           id: true,
@@ -72,26 +68,21 @@ export function GET() {
         orderBy: { name: "asc" },
       }),
 
-      // Get time range
       prisma.recipe.aggregate({
         _min: { totalTime: true },
         _max: { totalTime: true },
         where: { totalTime: { not: null } },
       }),
 
-      // Get total count
       prisma.recipe.count(),
 
-      // Get favorite count
       prisma.recipe.count({ where: { isFavorite: true } }),
 
-      // Get counts by course
       prisma.recipe.groupBy({
         by: ["course"],
         _count: { course: true },
       }),
 
-      // Get counts by difficulty
       prisma.recipe.groupBy({
         by: ["difficulty"],
         _count: { difficulty: true },
@@ -111,7 +102,6 @@ export function GET() {
         courseCounts,
         difficultyCounts,
       ]) => {
-        // Transform course counts to record
         const byCourse: Partial<Record<Course, number>> = {};
 
         for (const item of courseCounts) {
@@ -121,7 +111,6 @@ export function GET() {
           }
         }
 
-        // Transform difficulty counts to record
         const byDifficulty: Partial<Record<Difficulty, number>> = {};
 
         for (const item of difficultyCounts) {

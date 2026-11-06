@@ -3,7 +3,7 @@
  * Uses the Vibration API when available
  */
 
-type HapticPattern = "light" | "medium" | "heavy" | "success" | "warning" | "error" | "selection";
+type HapticPattern = "light" | "medium" | "success";
 
 type VibrationPattern = number | readonly number[];
 
@@ -14,11 +14,7 @@ function isVibrationSequence(value: VibrationPattern): value is readonly number[
 const patterns: Record<HapticPattern, VibrationPattern> = {
   light: 10,
   medium: 25,
-  heavy: 50,
   success: [50, 50, 50],
-  warning: [100, 50, 100],
-  error: [200, 100, 200],
-  selection: 5,
 };
 
 /**
@@ -64,67 +60,8 @@ export function hapticMedium(): boolean {
 }
 
 /**
- * Heavy tap feedback - for significant actions
- */
-export function hapticHeavy(): boolean {
-  return haptic("heavy");
-}
-
-/**
  * Success feedback - for completed actions
  */
 export function hapticSuccess(): boolean {
   return haptic("success");
-}
-
-/**
- * Warning feedback - for alerts
- */
-export function hapticWarning(): boolean {
-  return haptic("warning");
-}
-
-/**
- * Error feedback - for errors
- */
-export function hapticError(): boolean {
-  return haptic("error");
-}
-
-/**
- * Selection feedback - for list selections
- */
-export function hapticSelection(): boolean {
-  return haptic("selection");
-}
-
-/**
- * Custom vibration pattern
- * @param pattern - Array of durations (vibrate, pause, vibrate, ...) in milliseconds
- */
-export function hapticCustom(pattern: number | readonly number[]): boolean {
-  if (!isHapticsSupported()) {
-    return false;
-  }
-
-  try {
-    return navigator.vibrate(isVibrationSequence(pattern) ? [...pattern] : pattern);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Stop any ongoing vibration
- */
-export function hapticStop(): boolean {
-  if (!isHapticsSupported()) {
-    return false;
-  }
-
-  try {
-    return navigator.vibrate(0);
-  } catch {
-    return false;
-  }
 }

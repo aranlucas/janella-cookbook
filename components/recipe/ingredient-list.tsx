@@ -25,7 +25,6 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
     setChecked(newChecked);
   };
 
-  // Group ingredients by their group field; ungrouped ingredients get no heading
   const groupedIngredients = ingredients.reduce<Record<string, Ingredient[]>>((acc, ing) => {
     const group = ing.group?.trim() ?? "";
 

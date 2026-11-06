@@ -1,11 +1,6 @@
-/**
- * Custom error classes for the cookbook application
- */
-
 import { AppError } from "./app-errors/app-error";
 import { DatabaseUnavailableError } from "./app-errors/database-unavailable-error";
 import { z } from "zod";
-import type { JsonObject } from "@/types/json";
 
 export { AppError };
 
@@ -130,15 +125,6 @@ export function isTransientDatabaseError(error: ThrownValue): boolean {
   return TRANSIENT_MESSAGE_FRAGMENTS.some((frag) => combined.includes(frag));
 }
 
-export function isDatabaseUnavailableError(error: ThrownValue): boolean {
-  return (
-    (isAppError(error) && error.code === "DATABASE_UNAVAILABLE") || isTransientDatabaseError(error)
-  );
-}
-
-/**
- * Type guard to check if an error is an AppError
- */
 export function isAppError(error: ThrownValue): error is AppError {
   return error instanceof AppError;
 }
@@ -191,23 +177,4 @@ export function toAppError(thrownValue: ThrownValue): AppError {
     "UNKNOWN_ERROR",
     500,
   );
-}
-
-/**
- * Format error for client response
- */
-interface ErrorResponse {
-  readonly error: string;
-  readonly code: string;
-  readonly details?: JsonObject;
-}
-
-export function formatErrorResponse(error: ThrownValue): ErrorResponse {
-  const appError = toAppError(error);
-
-  return {
-    error: appError.message,
-    code: appError.code,
-    details: appError.details,
-  };
 }

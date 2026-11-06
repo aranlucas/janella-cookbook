@@ -9,10 +9,8 @@ import type {
   SourceType,
 } from "@prisma/client";
 
-// Re-export Prisma types
 export type { Difficulty, Course, SourceType };
 
-// Base types from Prisma
 export type Recipe = Readonly<PrismaRecipe>;
 
 export type Ingredient = Readonly<PrismaIngredient>;
@@ -23,7 +21,6 @@ export type Tag = Readonly<PrismaTag>;
 
 export type RecipeImage = Readonly<PrismaRecipeImage>;
 
-// Extended recipe with relations
 export interface RecipeWithRelations extends Omit<Recipe, "embedding" | "saveKey"> {
   readonly ingredients: readonly Ingredient[];
   readonly instructions: readonly Instruction[];
@@ -31,7 +28,6 @@ export interface RecipeWithRelations extends Omit<Recipe, "embedding" | "saveKey
   readonly images: readonly RecipeImage[];
 }
 
-// Input types for creating/updating
 export interface IngredientInput {
   readonly quantity?: string;
   readonly unit?: string;
@@ -69,7 +65,6 @@ export interface RecipeInput {
   readonly rating?: number;
 }
 
-// Search types
 export interface SearchFilters {
   readonly cuisine?: readonly string[];
   readonly course?: readonly Course[];
@@ -79,48 +74,10 @@ export interface SearchFilters {
   readonly isFavorite?: boolean;
 }
 
-export interface SearchRequest {
-  readonly query: string;
-  readonly filters?: SearchFilters;
-  readonly limit?: number;
-  readonly offset?: number;
-}
-
 export interface SearchResult {
   readonly recipe: RecipeWithRelations;
   readonly score: number;
   readonly highlights?: readonly string[];
-}
-
-export interface SearchResponse {
-  readonly results: readonly SearchResult[];
-  readonly total: number;
-  readonly query: string;
-  readonly suggestedFilters?: readonly string[];
-}
-
-// API response types
-export interface ApiResponse<T> {
-  readonly data?: T;
-  readonly error?: string;
-  readonly message?: string;
-}
-
-export interface PaginatedResponse<T> {
-  readonly data: readonly T[];
-  readonly total: number;
-  readonly page: number;
-  readonly pageSize: number;
-  readonly hasMore: boolean;
-}
-
-// Import types
-export interface UrlImportRequest {
-  readonly url: string;
-}
-
-export interface TextImportRequest {
-  text: string;
 }
 
 export interface ParsedRecipe {
@@ -138,7 +95,6 @@ export interface ParsedRecipe {
   readonly imageUrl?: string;
 }
 
-// Filter options for UI
 export interface FilterOptions {
   readonly cuisines: readonly { value: string; count: number }[];
   readonly courses: readonly { value: Course; count: number }[];

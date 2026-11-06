@@ -21,7 +21,6 @@ export function ShoppingListDrawer() {
 
   const checkedCount = items.filter((i) => i.checked).length;
 
-  // Group items by recipe
   const grouped = items.reduce<Record<string, (typeof items)[number][]>>((acc, item) => {
     const key = item.recipeTitle ?? "Other";
 

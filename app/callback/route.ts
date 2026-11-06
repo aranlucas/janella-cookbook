@@ -42,7 +42,6 @@ export async function GET(request: NextRequest) {
     });
 
     if (result === "AUTHORIZED") {
-      // Success - redirect back to the chat
       return NextResponse.redirect(new URL("/chat?auth=success", request.url));
     }
 

@@ -51,7 +51,7 @@ export function RecipeEngagementActions({
 
   const handleMarkCooked = () => {
     startCookTransition(async () => {
-      const result = await markAsCooked(recipe.id, recipe.cookCount || 0);
+      const result = await markAsCooked(recipe.id);
 
       if (!result.success) {
         toast.error(result.error);

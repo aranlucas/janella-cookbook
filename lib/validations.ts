@@ -1,9 +1,5 @@
 import { z } from "zod";
-import type { JsonValue } from "@/types/json";
 
-/**
- * Ingredient schema for form validation
- */
 export const ingredientSchema = z.object({
   quantity: z.string().optional(),
   unit: z.string().optional(),
@@ -13,9 +9,6 @@ export const ingredientSchema = z.object({
   sortOrder: z.number().optional(),
 });
 
-/**
- * Instruction schema for form validation
- */
 export const instructionSchema = z.object({
   text: z.string().trim().min(1, "Instruction text is required"),
   group: z.string().optional(),
@@ -24,16 +17,10 @@ export const instructionSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal("")),
 });
 
-/**
- * Difficulty enum values
- */
 export const difficultyValues = ["EASY", "MEDIUM", "HARD", "EXPERT"] as const;
 
 export type DifficultyValue = (typeof difficultyValues)[number];
 
-/**
- * Course enum values
- */
 export const courseValues = [
   "BREAKFAST",
   "LUNCH",
@@ -49,9 +36,6 @@ export const courseValues = [
 
 export type CourseValue = (typeof courseValues)[number];
 
-/**
- * Source type enum values
- */
 export const sourceTypeValues = [
   "URL_IMPORT",
   "MANUAL",
@@ -62,9 +46,6 @@ export const sourceTypeValues = [
 
 export type SourceTypeValue = (typeof sourceTypeValues)[number];
 
-/**
- * Main recipe input schema for form validation
- */
 export const recipeInputSchema = z.object({
   title: z
     .string()
@@ -140,9 +121,6 @@ export const mcpGetRecipeSchema = z.object({
     .describe("Recipe slug returned by list_recipes or add_recipe"),
 });
 
-/**
- * URL import schema
- */
 export const urlImportSchema = z.object({
   url: z
     .string()
@@ -153,18 +131,12 @@ export const urlImportSchema = z.object({
 
 export type UrlImportSchema = z.infer<typeof urlImportSchema>;
 
-/**
- * Text import schema
- */
 export const textImportSchema = z.object({
   text: z.string().min(20, "Please enter more recipe text").max(50000, "Text is too long"),
 });
 
 export type TextImportSchema = z.infer<typeof textImportSchema>;
 
-/**
- * YouTube import schema
- */
 export const youtubeImportSchema = z.object({
   url: z
     .string()
@@ -190,9 +162,6 @@ export const youtubeImportSchema = z.object({
 
 export type YouTubeImportSchema = z.infer<typeof youtubeImportSchema>;
 
-/**
- * Search filters schema
- */
 export const searchFiltersSchema = z.object({
   cuisine: z.array(z.string()).optional(),
   course: z.array(z.enum(courseValues)).optional(),
@@ -204,9 +173,6 @@ export const searchFiltersSchema = z.object({
 
 export type SearchFiltersSchema = z.infer<typeof searchFiltersSchema>;
 
-/**
- * Search request schema
- */
 export const searchRequestSchema = z.object({
   query: z.string().min(1, "Search query is required").max(500),
   filters: searchFiltersSchema.optional(),
@@ -215,102 +181,6 @@ export const searchRequestSchema = z.object({
 });
 
 export type SearchRequestSchema = z.infer<typeof searchRequestSchema>;
-
-/**
- * Validate recipe input and return typed result
- */
-type RecipeInputValidationResult =
-  | {
-      success: true;
-      data: RecipeInputSchema;
-    }
-  | {
-      success: false;
-      errors: Record<string, string[]>;
-    };
-
-type ImportValidationResult<T> =
-  | {
-      success: true;
-      data: T;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
-export function validateRecipeInput(data: JsonValue): RecipeInputValidationResult {
-  const result = recipeInputSchema.safeParse(data);
-
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-
-  // Format Zod errors into a simple object
-  const errors: Record<string, string[]> = {};
-
-  for (const issue of result.error.issues) {
-    const path = issue.path.join(".");
-
-    if (!errors[path]) {
-      errors[path] = [];
-    }
-
-    errors[path].push(issue.message);
-  }
-
-  return { success: false, errors };
-}
-
-/**
- * Validate URL import input
- */
-export function validateUrlImport(data: JsonValue): ImportValidationResult<UrlImportSchema> {
-  const result = urlImportSchema.safeParse(data);
-
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-
-  return {
-    success: false,
-    error: result.error.issues[0]?.message || "Invalid input",
-  };
-}
-
-/**
- * Validate text import input
- */
-export function validateTextImport(data: JsonValue): ImportValidationResult<TextImportSchema> {
-  const result = textImportSchema.safeParse(data);
-
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-
-  return {
-    success: false,
-    error: result.error.issues[0]?.message || "Invalid input",
-  };
-}
-
-/**
- * Validate YouTube import input
- */
-export function validateYouTubeImport(
-  data: JsonValue,
-): ImportValidationResult<YouTubeImportSchema> {
-  const result = youtubeImportSchema.safeParse(data);
-
-  if (result.success) {
-    return { success: true, data: result.data };
-  }
-
-  return {
-    success: false,
-    error: result.error.issues[0]?.message || "Invalid input",
-  };
-}
 
 // Drafts may be incomplete; saving still requires recipeInputSchema.
 export const recipeDraftSchema = recipeInputSchema.extend({

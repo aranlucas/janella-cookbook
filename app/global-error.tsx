@@ -1,43 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useDatabaseRetry } from "@/hooks/use-database-retry";
 
 type GlobalErrorProps = {
   readonly error: Error & { digest?: string };
   readonly reset: () => void;
 };
 
-function isWakingUp(error: Error): boolean {
-  const msg = (error.message || "").toLowerCase();
-
-  return (
-    msg.includes("starting up") ||
-    msg.includes("57p03") ||
-    msg.includes("database_unavailable") ||
-    msg.includes("p2039") ||
-    msg.includes("p1001")
-  );
-}
-
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
-  const wakingUp = useMemo(() => isWakingUp(error), [error]);
-  const [countdown, setCountdown] = useState(3);
-
-  useEffect(() => {
-    if (wakingUp && countdown <= 0) {
-      reset();
-    }
-  }, [countdown, reset, wakingUp]);
-
-  useEffect(() => {
-    if (!wakingUp || countdown <= 0) {
-      return () => {};
-    }
-
-    const timer = setTimeout(() => setCountdown((value) => value - 1), 1000);
-
-    return () => clearTimeout(timer);
-  }, [wakingUp, countdown]);
+  const { wakingUp, countdown } = useDatabaseRetry(error, reset);
 
   if (wakingUp) {
     return (

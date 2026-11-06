@@ -126,7 +126,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   const hasInitializedRef = useRef(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768 || "ontouchstart" in window);
@@ -331,15 +330,12 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
       return;
     }
 
-    // Build message parts
     const parts: MessagePart[] = [];
 
-    // Add text part
     if (message.text?.trim()) {
       parts.push({ type: "text", text: message.text });
     }
 
-    // Add file parts (images)
     if (hasFiles) {
       for (const file of message.files) {
         if (file.url && file.mediaType) {
@@ -372,13 +368,11 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     }).catch(() => {});
   };
 
-  // Voice input handler
   const handleVoiceTranscript = useCallback((transcript: string) => {
     setText((prev) => prev + transcript);
     hapticSuccess();
   }, []);
 
-  // Quick action handler (from FAB)
   const handleQuickAction = useCallback(
     (prompt: string) => {
       if (isLoading) {
@@ -395,7 +389,6 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
     [isLoading, sendMessage],
   );
 
-  // Camera capture handler
   const handleCameraCapture = useCallback(() => {
     hapticLight();
     const input = document.createElement("input");

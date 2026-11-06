@@ -3,10 +3,6 @@ import { ResultAsync } from "neverthrow";
 import { prisma } from "./prisma";
 import { AppError } from "./errors";
 
-/**
- * Generate a unique slug for a recipe.
- * Returns a Result instead of throwing on failure.
- */
 export function generateUniqueSlug(
   title: string,
   existingId?: string,
@@ -23,15 +19,12 @@ export function generateUniqueSlug(
       select: { id: true },
     });
 
-    // If no recipe exists with this slug, or it's the same recipe we're updating
     if (!existing || existing.id === existingId) {
       return slug;
     }
 
-    // Try with counter suffix
     const nextCounter = counter + 1;
 
-    // Safety limit
     if (nextCounter > 100) {
       throw new AppError("Could not generate unique slug", "SLUG_ERROR");
     }
@@ -49,9 +42,6 @@ export function generateUniqueSlug(
   );
 }
 
-/**
- * Generate a slug for a tag
- */
 export function generateTagSlug(name: string): string {
   return slugify(name, {
     lower: true,

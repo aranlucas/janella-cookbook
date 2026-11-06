@@ -18,7 +18,10 @@ const timestamp = new Date("2026-01-01T00:00:00Z");
 
 const publicRecipePayloadSchema = z.object({ recipe: z.record(z.string(), z.unknown()) });
 
+const privateFields = { saveKey: "private-retry-key", embedding: [0.25] };
+
 const recipe = {
+  ...privateFields,
   id: "test-recipe",
   slug: "test-soup",
   title: "Test soup",
@@ -221,7 +224,7 @@ test("add_recipe normalizes optional values, sets API provenance, and keeps the 
   expect(parsedPayload.recipe).not.toHaveProperty("saveKey");
 });
 
-test("invalid tool input fails schema parsing before any service call", () => {
+test("tool schemas reject out-of-range and incomplete inputs", () => {
   const invalidArguments = [
     tools.list_recipes.config.inputSchema.safeParse({ limit: 101 }),
     tools.list_recipes.config.inputSchema.safeParse({ offset: -1 }),
@@ -231,9 +234,6 @@ test("invalid tool input fails schema parsing before any service call", () => {
   ];
 
   expect(invalidArguments.every((result) => !result.success)).toBe(true);
-  expect(listRecipes).not.toHaveBeenCalled();
-  expect(getRecipeBySlug).not.toHaveBeenCalled();
-  expect(createRecipe).not.toHaveBeenCalled();
 });
 
 test("missing recipes and database errors are returned as sanitized tool errors", async () => {

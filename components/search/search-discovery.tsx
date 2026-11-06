@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { z } from "zod";
+import { readRecentSearches } from "@/components/search/recent-searches";
 
 const DEFAULT_SUGGESTIONS = [
   "quick weeknight dinner",
@@ -13,34 +13,8 @@ const DEFAULT_SUGGESTIONS = [
   "vegetarian pasta",
 ] as const;
 
-const STORAGE_KEY = "janella_recent_searches";
-
 export function SearchDiscovery() {
-  const [recentSearches] = useState<string[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    try {
-      const value = window.localStorage.getItem(STORAGE_KEY);
-
-      if (!value) {
-        return [];
-      }
-
-      const parsed: unknown = JSON.parse(value);
-      const searchQueries = z.array(z.string()).safeParse(parsed);
-
-      if (searchQueries.success) {
-        return searchQueries.data.slice(0, 6);
-      }
-    } catch {
-      // Ignore malformed storage values.
-      return [];
-    }
-
-    return [];
-  });
+  const [recentSearches] = useState(() => readRecentSearches().slice(0, 6));
 
   const rows = [
     { label: "Recent", queries: recentSearches },

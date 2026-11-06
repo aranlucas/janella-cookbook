@@ -108,7 +108,6 @@ export function VoiceInput({
     recognition.onstart = () => {
       setIsListening(true);
 
-      // Haptic feedback when starting
       if (navigator.vibrate) {
         navigator.vibrate([50, 50, 50]);
       }

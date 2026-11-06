@@ -5,6 +5,7 @@ import { z } from "zod";
 import sharp from "sharp";
 import { extractYouTubeVideoId } from "@/lib/youtube";
 import { prisma } from "@/lib/prisma";
+import { recipeRelations } from "@/lib/recipe-queries";
 import {
   parseRecipeFromUrl,
   parseRecipeFromYouTube,
@@ -119,12 +120,7 @@ export async function previewRecipe(form: FormData): Promise<ActionResult<Import
     const existing = sourceUrl
       ? await prisma.recipe.findFirst({
           where: { sourceUrl },
-          include: {
-            ingredients: { orderBy: { sortOrder: "asc" } },
-            instructions: { orderBy: { sortOrder: "asc" } },
-            tags: true,
-            images: true,
-          },
+          include: recipeRelations,
         })
       : null;
 
@@ -158,7 +154,7 @@ export async function restoreRecipePreview(value: JsonValue): Promise<ActionResu
     const existing = saved.data.existingId
       ? await prisma.recipe.findUnique({
           where: { id: saved.data.existingId },
-          include: { ingredients: true, instructions: true, tags: true, images: true },
+          include: recipeRelations,
         })
       : null;
 
