@@ -89,17 +89,11 @@ type RecipeUpdateInput = Readonly<
   }
 >;
 
-/**
- * Revalidate all recipe-related caches
- * This triggers regeneration of static pages on-demand
- */
 function revalidateRecipes(slug?: string) {
-  // Revalidate home page (recipe list)
   for (const path of ["/", "/recipes", "/favorites", "/categories", "/dashboard", "/search"]) {
     revalidatePath(path);
   }
 
-  // Revalidate specific recipe pages if slug provided
   if (slug) {
     revalidatePath(`/recipe/${slug}`);
     revalidatePath(`/recipe/${slug}/edit`);
@@ -131,7 +125,6 @@ function deferEmbeddingGeneration(recipeId: string, searchText: string) {
   after(searchProjection.embeddingJob(recipeId, searchText));
 }
 
-// Helper to create recipe in DB with embedding
 function createRecipeInDb(data: CreateRecipeInDbInput) {
   return prisma.$transaction(async (tx) => {
     const recipe = await tx.recipe.create({
@@ -243,7 +236,6 @@ export async function createRecipe(input: RecipeInput, saveKey?: string): Promis
   }
 }
 
-// Update an existing recipe
 export async function updateRecipe(
   id: string,
   input: RecipeUpdateInput,
@@ -258,7 +250,6 @@ export async function updateRecipe(
   input = validated.data;
 
   const actionResult = await safeTry(async function* () {
-    // Find existing recipe
     const existing = yield* ResultAsync.fromPromise(
       prisma.recipe.findUnique({ where: { id } }),
       (error) => toAppError(thrownValueSchema.parse(error)),
@@ -268,7 +259,6 @@ export async function updateRecipe(
       )
       .safeUnwrap();
 
-    // Generate new slug if title changed
     let slug = existing.slug;
 
     if (input.title && input.title !== existing.title) {
@@ -287,7 +277,6 @@ export async function updateRecipe(
       );
     }
 
-    // Prepare update data, stripping undefined fields
     const updateData: Prisma.RecipeUpdateInput = {
       title: input.title,
       slug,
@@ -382,12 +371,7 @@ export async function updateRecipe(
               },
             }),
           },
-          include: {
-            ingredients: { orderBy: { sortOrder: "asc" } },
-            instructions: { orderBy: { sortOrder: "asc" } },
-            tags: true,
-            images: true,
-          },
+          include: recipeRelations,
         });
 
         return searchProjection.update(tx, updated);
@@ -395,7 +379,6 @@ export async function updateRecipe(
       (error) => toAppError(thrownValueSchema.parse(error)),
     ).safeUnwrap();
 
-    // Side effects
     if (searchTextChanged) {
       deferEmbeddingGeneration(id, recipe.searchText);
     }
@@ -416,18 +399,12 @@ export async function updateRecipe(
   return actionResult;
 }
 
-// Toggle favorite status
 export async function toggleFavorite(id: string, isFavorite: boolean): Promise<ActionResult> {
   const actionResult = await ResultAsync.fromPromise(
     prisma.recipe.update({
       where: { id },
       data: { isFavorite },
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
+      include: recipeRelations,
     }),
     (error) => toAppError(thrownValueSchema.parse(error)),
   )
@@ -448,8 +425,7 @@ export async function toggleFavorite(id: string, isFavorite: boolean): Promise<A
   return actionResult;
 }
 
-// Mark recipe as cooked
-export async function markAsCooked(id: string, _currentCount: number): Promise<ActionResult> {
+export async function markAsCooked(id: string): Promise<ActionResult> {
   const actionResult = await ResultAsync.fromPromise(
     prisma.recipe.update({
       where: { id },
@@ -457,12 +433,7 @@ export async function markAsCooked(id: string, _currentCount: number): Promise<A
         cookCount: { increment: 1 },
         lastCooked: new Date(),
       },
-      include: {
-        ingredients: { orderBy: { sortOrder: "asc" } },
-        instructions: { orderBy: { sortOrder: "asc" } },
-        tags: true,
-        images: true,
-      },
+      include: recipeRelations,
     }),
     (error) => toAppError(thrownValueSchema.parse(error)),
   )
@@ -483,7 +454,6 @@ export async function markAsCooked(id: string, _currentCount: number): Promise<A
   return actionResult;
 }
 
-// Delete a recipe
 export async function deleteRecipe(id: string): Promise<ActionResult<null>> {
   const actionResult = await ResultAsync.fromPromise(
     prisma.recipe.findUnique({ where: { id } }),
@@ -512,5 +482,3 @@ export async function deleteRecipe(id: string): Promise<ActionResult<null>> {
 
   return actionResult;
 }
-
-// Regenerate recipe from its source URL

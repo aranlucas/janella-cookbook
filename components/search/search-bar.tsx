@@ -6,14 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { z } from "zod";
+import { rememberSearch } from "@/components/search/recent-searches";
 
 interface SearchBarProps {
   readonly className?: string;
   readonly placeholder?: string;
   readonly size?: "default" | "large";
   readonly redirectTo?: string;
-  readonly storageKey?: string;
 }
 
 export function SearchBar({
@@ -21,7 +20,6 @@ export function SearchBar({
   placeholder = "Search recipes...",
   size = "default",
   redirectTo = "/search",
-  storageKey = "janella_recent_searches",
 }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,22 +37,13 @@ export function SearchBar({
         buttonRef.current?.classList.add("animate-squish");
         setTimeout(() => buttonRef.current?.classList.remove("animate-squish"), 400);
 
-        if (typeof window !== "undefined") {
-          try {
-            const existing = window.localStorage.getItem(storageKey);
-            const parsed = existing ? z.array(z.string()).parse(JSON.parse(existing)) : [];
-            const next = [trimmed, ...parsed.filter((item) => item !== trimmed)].slice(0, 8);
-            window.localStorage.setItem(storageKey, JSON.stringify(next));
-          } catch {
-            // Ignore storage parsing failures and continue search navigation.
-          }
-        }
+        rememberSearch(trimmed);
 
         const target = redirectTo || "/search";
         router.push(`${target}?q=${encodeURIComponent(trimmed)}`);
       }
     },
-    [query, router, redirectTo, storageKey],
+    [query, router, redirectTo],
   );
 
   const isLarge = size === "large";

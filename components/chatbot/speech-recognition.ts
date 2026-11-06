@@ -1,7 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-
 // Type declarations for Web Speech API
 export interface SpeechRecognitionEvent extends Event {
   readonly results: SpeechRecognitionResultList;
@@ -81,78 +79,4 @@ export function getSpeechRecognition(): (new () => SpeechRecognition) | null {
   }
 
   return window.SpeechRecognition || window.webkitSpeechRecognition || null;
-}
-
-// Hook for using voice input anywhere
-export function useVoiceInput() {
-  const isSupported = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-
-  useEffect(() => {
-    const SpeechRecognitionClass = getSpeechRecognition();
-
-    if (!SpeechRecognitionClass) {
-      return () => {};
-    }
-
-    const recognition = new SpeechRecognitionClass();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    recognition.onresult = (event: Readonly<SpeechRecognitionEvent>) => {
-      let finalTranscript = "";
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      if (finalTranscript) {
-        setTranscript((prev) => prev + finalTranscript);
-      }
-    };
-
-    recognition.onend = () => setIsListening(false);
-    recognition.onstart = () => setIsListening(true);
-    recognition.addEventListener("error", () => setIsListening(false));
-
-    recognitionRef.current = recognition;
-
-    return () => {
-      recognition.abort();
-    };
-  }, []);
-
-  const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListening) {
-      try {
-        recognitionRef.current.start();
-      } catch (error) {
-        console.error("Failed to start:", error);
-      }
-    }
-  }, [isListening]);
-
-  const stopListening = useCallback(() => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-    }
-  }, [isListening]);
-
-  const clearTranscript = useCallback(() => {
-    setTranscript("");
-  }, []);
-
-  return {
-    isSupported,
-    isListening,
-    transcript,
-    startListening,
-    stopListening,
-    clearTranscript,
-  };
 }

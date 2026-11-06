@@ -15,6 +15,7 @@ test.describe("Categories page", () => {
     const categoryCards = page.locator('a[href^="/recipes?category="]');
     const emptyState = page.getByText(/No categories/i);
 
+    await expect(categoryCards.first().or(page.getByText(/No categories/i))).toBeVisible();
     const hasCategories = (await categoryCards.count()) > 0;
     const hasEmpty = await emptyState.isVisible().catch(() => false);
 
@@ -25,6 +26,7 @@ test.describe("Categories page", () => {
     await page.goto("/categories");
 
     const firstCategory = page.locator('a[href^="/recipes?category="]').first();
+    await expect(firstCategory.or(page.getByText(/No categories/i))).toBeVisible();
     const hasCategories = (await firstCategory.count()) > 0;
 
     if (!hasCategories) {
@@ -48,6 +50,7 @@ test.describe("Categories page", () => {
     await page.goto("/categories");
 
     const categoryCards = page.locator('a[href^="/recipes?category="]');
+    await expect(categoryCards.first().or(page.getByText(/No categories/i))).toBeVisible();
     const hasCategories = (await categoryCards.count()) > 0;
 
     if (!hasCategories) {
@@ -56,7 +59,6 @@ test.describe("Categories page", () => {
       return;
     }
 
-    // Each card should display "N recipes"
     const firstCard = categoryCards.first();
     await expect(firstCard.getByText(/\d+ recipes?/)).toBeVisible();
   });

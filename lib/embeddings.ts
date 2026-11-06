@@ -64,14 +64,6 @@ export interface RecipeEmbeddingInput {
   readonly difficulty?: string | null;
 }
 
-interface RecipeEmbeddingResult {
-  searchText: string;
-  embedding: number[];
-}
-
-/**
- * Generate searchable text from a recipe for embedding
- */
 export function generateSearchText(recipe: RecipeEmbeddingInput): string {
   const parts: string[] = [
     recipe.title,
@@ -83,7 +75,6 @@ export function generateSearchText(recipe: RecipeEmbeddingInput): string {
     recipe.instructions?.map((i) => i.text).join(" ") ?? "",
   ];
 
-  // Add semantic hints based on attributes
   if (recipe.totalTime && recipe.totalTime < 30) {
     parts.push("quick fast easy");
   }
@@ -111,23 +102,6 @@ export function generateSearchText(recipe: RecipeEmbeddingInput): string {
   return parts.filter(Boolean).join(" ");
 }
 
-/**
- * Generate embedding for a recipe and return both the search text and embedding
- */
-export function generateRecipeEmbedding(
-  recipe: RecipeEmbeddingInput,
-): ResultAsync<RecipeEmbeddingResult, ExternalApiError> {
-  const searchText = generateSearchText(recipe);
-
-  return generateEmbedding(searchText).map((embedding) => ({
-    searchText,
-    embedding,
-  }));
-}
-
-/**
- * Enhance a search query with synonyms and related terms
- */
 export function enhanceSearchQuery(query: string): string {
   const expansions = {
     quick: "quick fast easy under 30 minutes",

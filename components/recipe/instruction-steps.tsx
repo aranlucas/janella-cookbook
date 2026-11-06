@@ -8,7 +8,6 @@ interface InstructionStepsProps {
 }
 
 export function InstructionSteps({ instructions, className }: InstructionStepsProps) {
-  // Group instructions by their group field, preserving order within each group
   const groupedInstructions = instructions.reduce<Record<string, Instruction[]>>(
     (acc, instruction) => {
       const group = instruction.group?.trim() ?? "";

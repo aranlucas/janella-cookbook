@@ -338,7 +338,6 @@ export function ManualRecipeForm({
   };
 
   const onSubmit = (data: RecipeSubmissionInput) => {
-    // Add sortOrder to ingredients and instructions
     const recipeData: RecipeInput = {
       ...data,
       prepTime: data.prepTime ?? undefined,

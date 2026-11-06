@@ -94,4 +94,24 @@ export function setSessionState(state: SessionState): void {
   cachedState = state;
   cachedRaw = JSON.stringify(state);
   write(state);
+
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+const listeners = new Set<() => void>();
+
+export function subscribeSession(listener: () => void) {
+  listeners.add(listener);
+
+  return () => listeners.delete(listener);
+}
+
+export function getServerSessionState(): SessionState {
+  return DEFAULT_STATE;
+}
+
+export function updateSessionState(updater: (previous: SessionState) => SessionState): void {
+  setSessionState(updater(getSessionState()));
 }
