@@ -64,6 +64,7 @@ model Recipe {
   @@index([cuisine])
   @@index([course])
   @@index([isFavorite])
+  @@index([createdAt(sort: Desc), id(sort: Desc)], map: "Recipe_createdAt_id_idx")
 }
 
 model Ingredient {
@@ -109,6 +110,8 @@ model RecipeImage {
   url       String
   alt       String?
   isPrimary Boolean @default(false)
+
+  @@index([recipeId], map: "RecipeImage_recipeId_idx")
 }
 
 enum Difficulty {
