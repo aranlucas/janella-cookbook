@@ -24,7 +24,7 @@ test("save, reopen and alphabetically browse matching recipes", async ({
   await saveRecipe("Zebra");
   await saveRecipe("Apple");
   await app.open(`/recipes?q=${marker}&sort=title`);
-  const titles = browser.locator("h3");
+  const titles = browser.locator("main h3");
   await expect(titles).toHaveText([`Apple ${marker}`, `Zebra ${marker}`]);
   await screen.getByRole("heading", { name: `Apple ${marker}`, exact: true }).click();
   await expect(screen.getByText("Toast gently.", { exact: true })).toBeVisible();
