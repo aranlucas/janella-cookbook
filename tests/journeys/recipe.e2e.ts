@@ -11,7 +11,7 @@ test("save, reopen and alphabetically browse matching recipes", async ({
   async function saveRecipe(prefix: string) {
     await app.open("/recipes/new");
     await screen.getByRole("button", { name: /Manual Write/ }).click();
-    await screen.getByLabel("Recipe Title").fill(`${prefix} ${marker}`);
+    await screen.getByLabel("Recipe Title *").fill(`${prefix} ${marker}`);
     await screen.getByLabel("Ingredient 1 name", { exact: true }).fill("cardamom");
     await screen.getByLabel("Step 1 text").fill("Toast gently.");
     await screen.getByRole("button", { name: "Save recipe", exact: true }).click();
@@ -39,7 +39,7 @@ test("cleared preparation time stays cleared after editing and reopening", async
   const title = `Timing audit${Date.now()}`;
   await app.open("/recipes/new");
   await screen.getByRole("button", { name: /Manual Write/ }).click();
-  await screen.getByLabel("Recipe Title").fill(title);
+  await screen.getByLabel("Recipe Title *").fill(title);
   await screen.getByLabel("Ingredient 1 name", { exact: true }).fill("cardamom");
   await screen.getByLabel("Step 1 text").fill("Toast gently.");
   await screen.getByLabel("Prep Time (min)").fill("10");

@@ -80,13 +80,19 @@ jobs:
               failed=1
             fi
           done
+          baseline=0
+          mkdir -p .e2e/baseline
           for behavior in "save, reopen" "cleared preparation"; do
             result=0
             pnpm exec e2e run --grep "$behavior" || result=$?
             if [[ "$result" != "1" ]]; then
               echo "Expected assertion failure (exit 1), got $result: $behavior"
               failed=1
+            else
+              node --input-type=module -e 'import fs from "node:fs"; import assert from "node:assert/strict"; const report = JSON.parse(fs.readFileSync(".e2e/report.json", "utf8")); const selected = report.run.results.filter(result => result.selected); assert.equal(selected.length, 1); assert.equal(selected[0].status, "failed"); assert.equal(selected[0].attempts[0].error.code, "ASSERTION_FAILED");' || failed=1
             fi
+            baseline=$((baseline + 1))
+            cp .e2e/report.json ".e2e/baseline/$baseline.json"
           done
           cp "$RUNNER_TEMP/manual-recipe-form.tsx" components/forms/manual-recipe-form.tsx
           cp "$RUNNER_TEMP/recipes-page.tsx" app/recipes/page.tsx
