@@ -1,0 +1,14 @@
+-- Forty server EXPLAIN ANALYZE samples per source query.
+SET search_path TO scale_bench,public;
+
+-- lib/recipe-queries.ts#listRecipes
+SELECT $query$EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT id,title,slug,description,"totalTime",servings,cuisine,course,difficulty,"isFavorite",rating FROM "Recipe" ORDER BY "createdAt" DESC,id DESC LIMIT 20 OFFSET 0;$query$ FROM generate_series(1,40)
+\gexec
+
+-- lib/search.ts#batchFetchRecipeRelations.ingredients
+SELECT $query$EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT * FROM "Ingredient" WHERE "recipeId" IN ('r1','r2','r3','r4','r5') ORDER BY "sortOrder" ASC;$query$ FROM generate_series(1,40)
+\gexec
+
+-- lib/search.ts#batchFetchRecipeRelations.images
+SELECT $query$EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT * FROM "RecipeImage" WHERE "recipeId" IN ('r1','r2','r3','r4','r5');$query$ FROM generate_series(1,40)
+\gexec

@@ -1,0 +1,9 @@
+-- Parameters: -v roots=5000 -v children=5 (1000x breadth).
+SET search_path TO scale_bench,public;
+INSERT INTO "Recipe"(id,"updatedAt",title,slug,"sourceType",cuisine,"createdAt") SELECT 'r'||i,TIMESTAMP '2026-10-01 12:00:00','Recipe '||i,'recipe-'||i,'MANUAL',CASE WHEN i%5=0 THEN 'Italian' ELSE 'Thai' END,TIMESTAMP '2026-10-01 12:00:00'-i*interval '1 minute' FROM generate_series(1,:roots) i;
+ INSERT INTO "Ingredient"(id,"recipeId",name,"sortOrder") SELECT 'i'||i||'-'||j,'r'||i,'ingredient '||j,j FROM generate_series(1,:roots) i CROSS JOIN generate_series(1,:children) j;
+ INSERT INTO "Instruction"(id,"recipeId",text,"sortOrder") SELECT 's'||i||'-'||j,'r'||i,'Step '||j,j FROM generate_series(1,:roots) i CROSS JOIN generate_series(1,:children) j;
+ INSERT INTO "Tag"(id,name,slug) SELECT 't'||j,'Tag '||j,'tag-'||j FROM generate_series(1,:children) j;
+ INSERT INTO "_RecipeToTag"("A","B") SELECT 'r'||i,'t'||j FROM generate_series(1,:roots) i CROSS JOIN generate_series(1,:children) j;
+ INSERT INTO "RecipeImage"(id,"recipeId",url) SELECT 'img'||i||'-'||j,'r'||i,'https://example.invalid/image/'||j FROM generate_series(1,:roots) i CROSS JOIN generate_series(1,:children) j;
+ANALYZE;
