@@ -25,19 +25,16 @@ export function IngredientList({ ingredients, className }: IngredientListProps) 
     setChecked(newChecked);
   };
 
-  const groupedIngredients = ingredients.reduce<Record<string, Ingredient[]>>((acc, ing) => {
+  const groupedIngredients = new Map<string, Ingredient[]>();
+
+  for (const ing of ingredients) {
     const group = ing.group?.trim() ?? "";
+    const items = groupedIngredients.get(group) ?? [];
+    items.push(ing);
+    groupedIngredients.set(group, items);
+  }
 
-    if (!acc[group]) {
-      acc[group] = [];
-    }
-
-    acc[group].push(ing);
-
-    return acc;
-  }, {});
-
-  const groups = Object.entries(groupedIngredients);
+  const groups = [...groupedIngredients.entries()];
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>

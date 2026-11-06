@@ -8,27 +8,20 @@ interface InstructionStepsProps {
 }
 
 export function InstructionSteps({ instructions, className }: InstructionStepsProps) {
-  const groupedInstructions = instructions.reduce<Record<string, Instruction[]>>(
-    (acc, instruction) => {
-      const group = instruction.group?.trim() ?? "";
+  const groupedInstructions = new Map<string, Instruction[]>();
 
-      if (!acc[group]) {
-        acc[group] = [];
-      }
+  for (const instruction of instructions) {
+    const group = instruction.group?.trim() ?? "";
+    const items = groupedInstructions.get(group) ?? [];
+    items.push(instruction);
+    groupedInstructions.set(group, items);
+  }
 
-      acc[group].push(instruction);
-
-      return acc;
-    },
-    {},
-  );
-
-  // Sort instructions within each group by sortOrder
-  for (const group of Object.values(groupedInstructions)) {
+  for (const group of groupedInstructions.values()) {
     group.sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
-  const groups = Object.entries(groupedInstructions);
+  const groups = [...groupedInstructions.entries()];
 
   return (
     <div className={cn("flex flex-col gap-8", className)}>

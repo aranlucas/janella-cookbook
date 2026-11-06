@@ -359,7 +359,15 @@ export function ManualRecipeForm({
     startTransition(async () => {
       try {
         const result = isEditing
-          ? await updateRecipe(initialData.id, recipeData, expectedUpdatedAt.current)
+          ? await updateRecipe(
+              initialData.id,
+              {
+                ...recipeData,
+                prepTime: data.prepTime ?? null,
+                cookTime: data.cookTime ?? null,
+              },
+              expectedUpdatedAt.current,
+            )
           : await createRecipe(recipeData, saveKey.current);
 
         if (!result.success) {

@@ -43,3 +43,6 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# tester-army/e2e reports, browser evidence and cache
+/.e2e/

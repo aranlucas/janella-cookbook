@@ -269,7 +269,8 @@ export async function updateRecipe(
       totalTime = input.totalTime;
     } else if (input.prepTime !== undefined || input.cookTime !== undefined) {
       totalTime = zeroToNull(
-        (input.prepTime ?? existing.prepTime ?? 0) + (input.cookTime ?? existing.cookTime ?? 0),
+        (input.prepTime !== undefined ? (input.prepTime ?? 0) : (existing.prepTime ?? 0)) +
+          (input.cookTime !== undefined ? (input.cookTime ?? 0) : (existing.cookTime ?? 0)),
       );
     }
 

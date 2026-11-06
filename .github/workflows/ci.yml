@@ -43,12 +43,31 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
 
       - name: Set up pnpm, Node.js, and dependencies
         uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
         with:
           cache: true
           require-lockfile: true
+
+      - name: Prove regressions fail on pre-fix source
+        run: |
+          for file in lib/search.ts lib/actions.ts components/recipe/ingredient-list.tsx components/recipe/instruction-steps.tsx; do
+            cp "$file" "$RUNNER_TEMP/$(basename "$file")"
+            git show 88a692b:"$file" > "$file"
+          done
+          failed=0
+          for suite in tests/search-pagination.test.ts tests/recipe-timing.test.ts tests/components/recipe-groups.test.tsx; do
+            if pnpm exec vitest run "$suite"; then
+              echo "Regression unexpectedly passed on baseline: $suite"
+              failed=1
+            fi
+          done
+          for file in lib/search.ts lib/actions.ts components/recipe/ingredient-list.tsx components/recipe/instruction-steps.tsx; do
+            cp "$RUNNER_TEMP/$(basename "$file")" "$file"
+          done
+          exit "$failed"
 
       - name: Sync database schema
         run: pnpm run db:push

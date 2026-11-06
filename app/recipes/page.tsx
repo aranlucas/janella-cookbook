@@ -74,7 +74,7 @@ function sortRecipesInMemory(
         return a.isFavorite ? -1 : 1;
 
       case "title": {
-        throw new Error('Not implemented yet: "title" case');
+        return a.title.localeCompare(b.title);
       }
 
       default:
