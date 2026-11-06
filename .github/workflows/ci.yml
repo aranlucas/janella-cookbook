@@ -36,6 +36,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/janella?schema=public
       NODE_ENV: test
+      RUN_EMBEDDING_DB_TESTS: "1"
+      RUN_EMBEDDING_CONCURRENCY_TESTS: "1"
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

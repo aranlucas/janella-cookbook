@@ -15,8 +15,8 @@ export const env = createEnv({
       .default("auto:fast")
       // Existing deployments use "auto"; prioritize speed for recipe extraction there too.
       .transform((model) => (model === "auto" ? "auto:fast" : model)),
-    // Keep existing vectors in the same model space; other families require reindexing.
-    FREELLM_EMBEDDING_MODEL: z.literal("embeddinggemma-300m").default("embeddinggemma-300m"),
+    // Every supported family has its own versioned index. Keep the legacy option for staged rollback.
+    FREELLM_EMBEDDING_MODEL: z.enum(["bge-m3", "embeddinggemma-300m"]).default("bge-m3"),
     MCP_API_TOKEN: z.string().min(1).optional(),
     R2_ACCOUNT_ID: z.string().min(1).optional(),
     R2_ACCESS_KEY_ID: z.string().min(1).optional(),

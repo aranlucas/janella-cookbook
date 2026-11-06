@@ -3,11 +3,22 @@ import { ok, err, errAsync, ResultAsync } from "neverthrow";
 import { z } from "zod";
 import { ExternalApiError, thrownValueSchema } from "./errors";
 import { embeddingModel } from "./ai";
+import { env } from "./env";
 
-const embeddingSchema = z.array(z.number().finite()).length(768);
+export const embeddingDimensions = env.FREELLM_EMBEDDING_MODEL === "bge-m3" ? 1024 : 768;
+
+// Bump the version if input preprocessing or provider pooling changes.
+export const embeddingSpace = `${env.FREELLM_EMBEDDING_MODEL}:v1`;
+
+const embeddingSchema = z
+  .array(z.number().finite())
+  .length(embeddingDimensions)
+  .refine((vector) => vector.some((value) => value !== 0));
+
+const responseModelSchema = z.object({ model: z.literal(env.FREELLM_EMBEDDING_MODEL) });
 
 /**
- * Generate a 768-dimensional EmbeddingGemma vector through the Railway router.
+ * Generate a vector in the configured model space through the Railway router.
  * Pin the model family so provider routing cannot change the vector space.
  *
  * Returns Result instead of throwing.
@@ -23,14 +34,20 @@ export function generateEmbedding(text: string): ResultAsync<number[], ExternalA
       value: text.slice(0, 8000),
       maxRetries: 0,
       abortSignal: AbortSignal.timeout(5000),
-    }).then(({ embedding }) => embedding),
+    }),
     (error) => {
       const message = error instanceof Error ? error.message : "Unknown embedding error";
 
       return new ExternalApiError("FreeLLMAPI", message, thrownValueSchema.parse(error));
     },
   ).andThen((result) => {
-    const parsed = embeddingSchema.safeParse(result);
+    // The router returns the resolved family, including after same-family provider fallback.
+    // Dimensions alone cannot detect a wrong model that happens to have the same width.
+    if (!responseModelSchema.safeParse(result.response?.body).success) {
+      return err(new ExternalApiError("FreeLLMAPI", "Unexpected embedding model in response"));
+    }
+
+    const parsed = embeddingSchema.safeParse(result.embedding);
 
     if (!parsed.success) {
       return err(new ExternalApiError("FreeLLMAPI", "Invalid embedding dimensions or values"));

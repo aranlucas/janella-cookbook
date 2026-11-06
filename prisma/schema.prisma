@@ -41,6 +41,7 @@ model Recipe {
 
   embedding  Unsupported("vector(768)")?
   searchText String? // Concatenated searchable text
+  embeddings RecipeEmbedding[]
 
   notes      String?
   rating     Int? // 1-5
@@ -53,6 +54,17 @@ model Recipe {
   @@index([course])
   @@index([isFavorite])
   @@index([createdAt(sort: Desc), id(sort: Desc)], map: "Recipe_createdAt_id_idx")
+}
+
+// Separate from the unversioned legacy Recipe.embedding column for safe rolling deployment.
+model RecipeEmbedding {
+  recipeId   String
+  space      String
+  searchText String
+  embedding  Unsupported("vector")
+  recipe     Recipe                @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([recipeId, space])
 }
 
 model Ingredient {
