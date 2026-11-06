@@ -47,3 +47,7 @@ Rejected: unused PullToRefresh idle throw has no mounted callsite and is outside
 Nutrition protocol mismatch rejected: published @ai-sdk/react 4.0.163 and ai 7.0.159 completion parser accept UI-message SSE text deltas.
 
 Independent implementation review caught the editor converting cleared times to omitted fields. Edit submission now sends explicit null; an additional published-e2e journey saves 10/20 minutes, clears prep, verifies total 20 and reopens the editor. Browser baseline proofs cover A–Z, editor clearing, chat metadata and location independently.
+
+### First CI evidence and corrections
+
+At `de67602`, CI typecheck, Vitest and build passed; lint rejected module-mock test scaffolding and style/exhaustiveness issues. Replaced whole-module mocks with spies at existing dependency boundaries and typed fixtures, kept all regression assertions, and made metadata cases explicitly exhaustive. The isolated Playwright suite passed 38 tests. The new e2e app failed startup because the runner filters child environment variables; config now explicitly inherits only `DATABASE_URL` and retains app logs. Baseline e2e proofs now require assertion-failure exit 1, rejecting infrastructure/usage errors rather than counting them as reproduced bugs. These first e2e baseline attempts are not accepted as evidence.

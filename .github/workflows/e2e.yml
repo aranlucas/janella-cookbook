@@ -81,8 +81,10 @@ jobs:
             fi
           done
           for behavior in "save, reopen" "cleared preparation"; do
-            if pnpm exec e2e run --grep "$behavior"; then
-              echo "Recipe regression unexpectedly passed on baseline: $behavior"
+            result=0
+            pnpm exec e2e run --grep "$behavior" || result=$?
+            if [[ "$result" != "1" ]]; then
+              echo "Expected assertion failure (exit 1), got $result: $behavior"
               failed=1
             fi
           done

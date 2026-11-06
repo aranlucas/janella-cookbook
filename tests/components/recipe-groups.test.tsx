@@ -4,6 +4,7 @@ import { IngredientList } from "@/components/recipe/ingredient-list";
 import { InstructionSteps } from "@/components/recipe/instruction-steps";
 
 afterEach(cleanup);
+
 // Accepted recipe text must remain renderable even when it matches object property names.
 test.each(["__proto__", "constructor", "toString"])("renders literal group %s", (group) => {
   render(

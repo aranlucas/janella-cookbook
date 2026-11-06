@@ -248,11 +248,15 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
   });
 
   const sendMessage: typeof sendChatMessage = useCallback(
-    (message, options) =>
-      sendChatMessage(message, {
-        ...options,
-        body: { ...options?.body, ...(location ? { location } : {}) },
-      }),
+    (message, options) => {
+      const body = { ...options?.body };
+
+      if (location) {
+        body.location = location;
+      }
+
+      return sendChatMessage(message, { ...options, body });
+    },
     [sendChatMessage, location],
   );
 
@@ -514,7 +518,12 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                                     width={512}
                                   />
                                 );
-                              default:
+                              case "custom":
+                              case "reasoning":
+                              case "reasoning-file":
+                              case "source-document":
+                              case "source-url":
+                              case "step-start":
                                 return null;
                             }
                           })}

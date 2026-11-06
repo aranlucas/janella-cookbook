@@ -9,7 +9,12 @@ export default {
       engine: web(),
       app: {
         url: "http://localhost:3000",
-        command: { executable: "node", args: ["node_modules/next/dist/bin/next", "start"] },
+        command: {
+          executable: "node",
+          args: ["node_modules/next/dist/bin/next", "start"],
+          inheritEnv: ["DATABASE_URL"],
+          log: ".e2e/logs/app.log",
+        },
       },
     },
   ],

@@ -7,7 +7,8 @@ test("save, reopen and alphabetically browse matching recipes", async ({
   screen,
 }) => {
   const marker = `audit${Date.now()}`;
-  for (const prefix of ["Zebra", "Apple"]) {
+
+  async function saveRecipe(prefix: string) {
     await app.open("/recipes/new");
     await screen.getByRole("button", { name: /Manual Write/ }).click();
     await screen.getByLabel("Recipe Title").fill(`${prefix} ${marker}`);
@@ -19,6 +20,9 @@ test("save, reopen and alphabetically browse matching recipes", async ({
     ).toBeVisible();
     await expect(screen.getByText("Toast gently.", { exact: true })).toBeVisible();
   }
+
+  await saveRecipe("Zebra");
+  await saveRecipe("Apple");
   await app.open(`/recipes?q=${marker}&sort=title`);
   const titles = browser.locator("h3");
   await expect(titles).toHaveText([`Apple ${marker}`, `Zebra ${marker}`]);

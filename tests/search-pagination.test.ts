@@ -1,42 +1,52 @@
 // @vitest-environment node
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { errAsync } from "neverthrow";
 import { ExternalApiError } from "@/lib/errors";
-
-const db = vi.hoisted(() => ({ findMany: vi.fn(), count: vi.fn() }));
-vi.mock("@/lib/prisma", () => ({ prisma: { recipe: db } }));
-vi.mock("@/lib/embeddings", () => ({
-  enhanceSearchQuery: (query: string) => query,
-  generateEmbedding: () => errAsync(new ExternalApiError("fixture", "offline")),
-}));
+import { prisma } from "@/lib/prisma";
+import * as embeddings from "@/lib/embeddings";
 import { hybridSearch } from "@/lib/search";
+import { makeRecipe } from "./fixtures/recipe";
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  const recipes = Array.from({ length: 7 }, (_, index) => ({
-    id: String(index),
-    title: `Soup ${index}`,
-    description: null,
-    ingredients: [],
-  }));
-  db.findMany.mockImplementation(async ({ skip, take }: { skip: number; take: number }) =>
-    recipes.slice(skip, skip + take),
-  );
-  db.count.mockResolvedValue(7);
-});
+afterEach(() => vi.restoreAllMocks());
 
-// Seven ordered matches: page two of size two must contain positions 2 and 3.
-test("provider failure preserves keyword page size, offset and full total", async () => {
-  const result = await hybridSearch("Soup", {}, 2, 2);
-  expect(result.isOk()).toBe(true);
-  if (result.isErr()) throw result.error;
-  expect(result.value.results.map(({ recipe }) => recipe.id)).toEqual(["2", "3"]);
-  expect(result.value.total).toBe(7);
-});
+interface PageCase {
+  readonly offset: number;
+  readonly expectedIds: readonly string[];
+}
 
-test("provider failure preserves an empty page beyond the collection", async () => {
-  const result = await hybridSearch("Soup", {}, 2, 10);
-  if (result.isErr()) throw result.error;
-  expect(result.value.results).toEqual([]);
-  expect(result.value.total).toBe(7);
-});
+// Seven ordered matches: page two contains positions 2 and 3; offset 10 is empty.
+const pages: readonly PageCase[] = [
+  { offset: 2, expectedIds: ["2", "3"] },
+  { offset: 10, expectedIds: [] },
+];
+
+test.each(pages)(
+  "provider failure preserves keyword page at offset $offset",
+  async ({ offset, expectedIds }) => {
+    const recipes = Array.from({ length: 7 }, (_, index) =>
+      makeRecipe({ id: String(index), title: `Soup ${index}` }),
+    );
+
+    vi.spyOn(embeddings, "generateEmbedding").mockImplementation(() =>
+      errAsync(new ExternalApiError("fixture", "offline")),
+    );
+    vi.spyOn(prisma.recipe, "findMany")
+      .mockResolvedValueOnce(recipes.slice(0, 4))
+      .mockResolvedValueOnce(recipes.slice(offset, offset + 2));
+    vi.spyOn(prisma.recipe, "count").mockResolvedValue(7);
+
+    const result = await hybridSearch("Soup", {}, 2, offset);
+
+    expect(result.isOk()).toBe(true);
+
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    expect(result.value.results.map(({ recipe }) => recipe.id)).toEqual(expectedIds);
+    expect(result.value.total).toBe(7);
+    expect(prisma.recipe.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ take: 2, skip: offset }),
+    );
+  },
+);
