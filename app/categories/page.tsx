@@ -57,15 +57,22 @@ async function getCategories() {
           type: "course",
         };
       }),
-      ...cuisines.map((cuisine) => {
+      // Older edits stored blank cuisines; they have no name and no filterable link.
+      ...cuisines.flatMap((cuisine) => {
+        if (!cuisine.cuisine?.trim()) {
+          return [];
+        }
+
         const { _count: count } = cuisine;
 
-        return {
-          name: formatCategoryName(cuisine.cuisine ?? ""),
-          value: cuisine.cuisine,
-          count,
-          type: "cuisine",
-        };
+        return [
+          {
+            name: formatCategoryName(cuisine.cuisine),
+            value: cuisine.cuisine,
+            count,
+            type: "cuisine",
+          },
+        ];
       }),
     ].toSorted((a, b) => b.count - a.count);
   } catch (error) {

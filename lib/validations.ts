@@ -112,6 +112,23 @@ export type RecipeListInput = Readonly<z.infer<typeof recipeListSchema>>;
 
 export const mcpListRecipesSchema = recipeListSchema;
 
+/**
+ * `/recipes?category=` links carry a lowercased course enum or cuisine value.
+ * Resolve them to structured filters so browsing matches category counts.
+ */
+export const recipeCategorySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(100)
+  .transform((value) => {
+    const course = courseValues.find((candidate) => candidate === value.toUpperCase());
+
+    return course ? { course } : { cuisine: value };
+  });
+
+export type RecipeCategoryFilter = z.infer<typeof recipeCategorySchema>;
+
 export const mcpGetRecipeSchema = z.object({
   slug: z
     .string()
