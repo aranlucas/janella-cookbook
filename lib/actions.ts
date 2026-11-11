@@ -25,6 +25,11 @@ function trimToNull(value: string | null | undefined) {
   return trimmed && trimmed.length > 0 ? trimmed : null;
 }
 
+// Updates distinguish omitted (preserve) from submitted; blank submitted text clears.
+function trimToNullIfProvided(value: string | null | undefined) {
+  return value === undefined ? undefined : trimToNull(value);
+}
+
 function zeroToNull(value: number) {
   if (value === 0) {
     return null;
@@ -277,17 +282,17 @@ export async function updateRecipe(
     const updateData: Prisma.RecipeUpdateInput = {
       title: input.title,
       slug,
-      description: input.description,
+      description: trimToNullIfProvided(input.description),
       prepTime: input.prepTime,
       cookTime: input.cookTime,
       totalTime,
-      servings: input.servings,
+      servings: trimToNullIfProvided(input.servings),
       difficulty: input.difficulty,
-      cuisine: input.cuisine,
+      cuisine: trimToNullIfProvided(input.cuisine),
       course: input.course,
-      sourceUrl: input.sourceUrl,
-      imageUrl: input.imageUrl,
-      notes: input.notes,
+      sourceUrl: trimToNullIfProvided(input.sourceUrl),
+      imageUrl: trimToNullIfProvided(input.imageUrl),
+      notes: trimToNullIfProvided(input.notes),
       rating: input.rating,
       isFavorite: input.isFavorite,
       cookCount: input.cookCount,
