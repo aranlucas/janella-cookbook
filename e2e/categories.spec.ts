@@ -41,9 +41,21 @@ test.describe("Categories page", () => {
       throw new Error("Category card is missing its destination");
     }
 
+    const cardCount = (await firstCategory.textContent())?.match(/(\d+) recipes?/)?.[1];
+
+    if (!cardCount) {
+      throw new Error("Category card is missing its recipe count");
+    }
+
     await firstCategory.click();
     await page.waitForURL(`**${href}`);
     await expect(page).toHaveURL(/\/recipes\?category=/);
+    // The destination lists the same recipes the card counted, not text matches.
+    await expect(
+      page.getByText(
+        new RegExp(`^(${cardCount} recipes?|Showing \\d+–\\d+ of ${cardCount} recipes)$`),
+      ),
+    ).toBeVisible();
   });
 
   test("category cards show recipe counts", async ({ page }) => {

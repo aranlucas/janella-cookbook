@@ -1,15 +1,18 @@
 import { Suspense } from "react";
 import { Search } from "lucide-react";
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
-import { listRecipes } from "@/lib/recipe-queries";
-import { hybridSearch } from "@/lib/search";
+import {
+  browseRecipes,
+  isSortOption,
+  RECIPES_PER_PAGE,
+  SORT_OPTIONS,
+  type SortOption,
+} from "@/lib/recipe-browse";
 import { SearchBar } from "@/components/search/search-bar";
 import { RecipeGrid } from "@/components/recipe/recipe-grid";
 import { ButtonLink } from "@/components/recipe/button-link";
 import { PaginationControls } from "@/components/recipe/pagination-controls";
 import { EmptyState, RecipeGridSkeleton } from "@/components/layout/page-state";
-import type { RecipeWithRelations } from "@/types/recipe";
 import { AppLayout } from "@/components/layout/app-layout";
 import type { Metadata } from "next";
 import { createPageMetadata } from "@/lib/metadata";
@@ -26,62 +29,12 @@ interface RecipesPageProps {
   }>;
 }
 
-const ITEMS_PER_PAGE = 20;
-
-type RecipeQueryResult = {
-  readonly recipes: readonly RecipeWithRelations[];
-  readonly total: number;
-};
-
 type RecipeListProps = {
   readonly query?: string;
   readonly category?: string;
   readonly page: number;
   readonly sort: SortOption;
 };
-
-const SORT_OPTIONS = [
-  { value: "recent", label: "Recently Updated" },
-  { value: "newest", label: "Newest" },
-  { value: "title", label: "A-Z" },
-  { value: "quick", label: "Quickest" },
-  { value: "favorites", label: "Favorites First" },
-] as const;
-
-type SortOption = (typeof SORT_OPTIONS)[number]["value"];
-
-function isSortOption(value?: string): value is SortOption {
-  return Boolean(SORT_OPTIONS.find((option) => option.value === value));
-}
-
-function sortRecipesInMemory(
-  recipes: readonly RecipeWithRelations[],
-  sort: SortOption,
-): RecipeWithRelations[] {
-  return [...recipes].toSorted((a, b) => {
-    switch (sort) {
-      case "recent":
-        return b.updatedAt.getTime() - a.updatedAt.getTime();
-      case "newest":
-        return b.createdAt.getTime() - a.createdAt.getTime();
-      case "quick":
-        return (a.totalTime ?? Number.MAX_SAFE_INTEGER) - (b.totalTime ?? Number.MAX_SAFE_INTEGER);
-      case "favorites":
-        if (a.isFavorite === b.isFavorite) {
-          return b.updatedAt.getTime() - a.updatedAt.getTime();
-        }
-
-        return a.isFavorite ? -1 : 1;
-
-      case "title": {
-        return a.title.localeCompare(b.title);
-      }
-
-      default:
-        return a.title.localeCompare(b.title);
-    }
-  });
-}
 
 export async function generateMetadata({ searchParams }: RecipesPageProps): Promise<Metadata> {
   const { q, category, sort } = await searchParams;
@@ -122,59 +75,8 @@ export async function generateMetadata({ searchParams }: RecipesPageProps): Prom
   });
 }
 
-async function getAllRecipes(
-  query?: string,
-  category?: string,
-  page: number = 1,
-  sort: SortOption = "recent",
-): Promise<RecipeQueryResult> {
-  try {
-    // Use hybridSearch for sophisticated search capabilities
-    if (query || category) {
-      const searchQuery = query ?? category ?? "";
-      const offset = (page - 1) * ITEMS_PER_PAGE;
-      const searchResult = await hybridSearch(searchQuery, {}, ITEMS_PER_PAGE, offset);
-
-      if (searchResult.isErr()) {
-        console.error("Search error:", searchResult.error);
-
-        return { recipes: [], total: 0 };
-      }
-
-      return {
-        recipes: sortRecipesInMemory(
-          searchResult.value.results.map((r) => r.recipe),
-          sort,
-        ),
-        total: searchResult.value.total,
-      };
-    }
-
-    const orderByMap: Record<
-      SortOption,
-      Prisma.RecipeOrderByWithRelationInput | Prisma.RecipeOrderByWithRelationInput[]
-    > = {
-      recent: { updatedAt: "desc" },
-      newest: { createdAt: "desc" },
-      title: { title: "asc" },
-      quick: { totalTime: "asc" },
-      favorites: [{ isFavorite: "desc" }, { updatedAt: "desc" }],
-    };
-
-    return await listRecipes({
-      orderBy: orderByMap[sort],
-      limit: ITEMS_PER_PAGE,
-      offset: (page - 1) * ITEMS_PER_PAGE,
-    });
-  } catch (error) {
-    console.error("Error fetching recipes:", error);
-
-    return { recipes: [], total: 0 };
-  }
-}
-
 async function RecipeList({ query, category, page, sort }: RecipeListProps) {
-  const { recipes, total } = await getAllRecipes(query, category, page, sort);
+  const { recipes, total } = await browseRecipes({ query, category, page, sort });
 
   if (recipes.length === 0) {
     return (
@@ -195,7 +97,7 @@ async function RecipeList({ query, category, page, sort }: RecipeListProps) {
     );
   }
 
-  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(total / RECIPES_PER_PAGE);
   const baseParams = new URLSearchParams();
 
   if (query) {
@@ -213,13 +115,13 @@ async function RecipeList({ query, category, page, sort }: RecipeListProps) {
   const baseQuery = baseParams.toString();
   const baseUrl = baseQuery ? `/recipes?${baseQuery}` : "/recipes";
 
-  const firstShown = (page - 1) * ITEMS_PER_PAGE + 1;
+  const firstShown = (page - 1) * RECIPES_PER_PAGE + 1;
   const lastShown = firstShown + recipes.length - 1;
 
   return (
     <div>
       <p className="mbe-4 text-sm text-muted-foreground">
-        {total <= ITEMS_PER_PAGE
+        {total <= RECIPES_PER_PAGE
           ? `${total} ${total === 1 ? "recipe" : "recipes"}`
           : `Showing ${firstShown}–${lastShown} of ${total} recipes`}
       </p>
