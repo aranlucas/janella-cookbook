@@ -525,6 +525,7 @@ export function ChatInterface({ recipeContext }: ChatInterfaceProps) {
                               case "source-document":
                               case "source-url":
                               case "step-start":
+                              case "steering-message":
                                 return null;
                             }
 
