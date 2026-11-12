@@ -1,9 +1,7 @@
 {
   "name": "janella-cookbook",
   "path": ".",
-  "evidence": [
-    "prisma/migrations/20260104052847_setup/migration.sql"
-  ],
+  "evidence": ["prisma/migrations/20260104052847_setup/migration.sql"],
   "ddl": [
     {
       "source": "prisma/migrations/20260104052847_setup/migration.sql",
@@ -16,14 +14,8 @@
   ],
   "queries": [],
   "schema_errors": [
-    [
-      "prisma/migrations/20260104052847_setup/migration.sql",
-      "near \"EXTENSION\": syntax error"
-    ],
-    [
-      "prisma/migrations/20260907000000_recipe_save_key/migration.sql",
-      "no such table: Recipe"
-    ]
+    ["prisma/migrations/20260104052847_setup/migration.sql", "near \"EXTENSION\": syntax error"],
+    ["prisma/migrations/20260907000000_recipe_save_key/migration.sql", "no such table: Recipe"]
   ],
   "executable_queries": [],
   "query_errors": [],

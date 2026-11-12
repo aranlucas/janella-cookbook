@@ -26,17 +26,17 @@ Keep bounded synchronous extraction while it fits deployment timeouts. Persisted
 
 ## Acceptance criteria
 
-| Area | Required behavior evidence |
-| --- | --- |
-| Website import | Extract, review without a recipe write, change a quantity, save and reopen persisted content. Timeout, blocked source and non-recipe failures retain input. |
-| YouTube | A valid video yields a draft; unavailable transcripts give an actionable error; equivalent video URLs identify the same source. |
-| Photo and text files | Real fixtures yield draft fields; unsupported, oversized, empty and unreadable inputs fail before saving. Pasted and file text produce equivalent fields. |
-| Manual and review recovery | Required fields have reachable errors. Source switching, back navigation, refresh and failed-save retry preserve drafts where storage is available. |
-| Duplicates and edits | Double submission and lost-response retry create one recipe. Re-import/regeneration requires review; atomic updates preserve ordering, provenance and personal metadata. |
-| Collection and search | Newly saved recipes appear in browsing and ingredient-only keyword search without embedding credentials. Filters and pagination compose correctly. Mutations update affected counts and views. |
-| Cooking and printing | Ingredient checks and steps work on mobile; cooked count persists; print output excludes app controls. |
-| Shopping | Add, adjust, check and remove ingredients, then reopen the drawer to verify intended persistence. |
-| Assistant and nutrition | Stream/tool errors, grocery OAuth failure and microphone denial are recoverable. Nutrition distinguishes stored, estimated and missing values; failures leave cooking usable. |
-| Accessibility and navigation | Verify 390 px and desktop layouts, keyboard-only intake/review/save, status announcements and errors, no nested controls, reachable routes and legible light/dark themes. |
+| Area                         | Required behavior evidence                                                                                                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Website import               | Extract, review without a recipe write, change a quantity, save and reopen persisted content. Timeout, blocked source and non-recipe failures retain input.                                    |
+| YouTube                      | A valid video yields a draft; unavailable transcripts give an actionable error; equivalent video URLs identify the same source.                                                                |
+| Photo and text files         | Real fixtures yield draft fields; unsupported, oversized, empty and unreadable inputs fail before saving. Pasted and file text produce equivalent fields.                                      |
+| Manual and review recovery   | Required fields have reachable errors. Source switching, back navigation, refresh and failed-save retry preserve drafts where storage is available.                                            |
+| Duplicates and edits         | Double submission and lost-response retry create one recipe. Re-import/regeneration requires review; atomic updates preserve ordering, provenance and personal metadata.                       |
+| Collection and search        | Newly saved recipes appear in browsing and ingredient-only keyword search without embedding credentials. Filters and pagination compose correctly. Mutations update affected counts and views. |
+| Cooking and printing         | Ingredient checks and steps work on mobile; cooked count persists; print output excludes app controls.                                                                                         |
+| Shopping                     | Add, adjust, check and remove ingredients, then reopen the drawer to verify intended persistence.                                                                                              |
+| Assistant and nutrition      | Stream/tool errors, grocery OAuth failure and microphone denial are recoverable. Nutrition distinguishes stored, estimated and missing values; failures leave cooking usable.                  |
+| Accessibility and navigation | Verify 390 px and desktop layouts, keyboard-only intake/review/save, status announcements and errors, no nested controls, reachable routes and legible light/dark themes.                      |
 
 Use deterministic fixtures and an isolated test database for required CI. Live-provider checks are opt-in and establish provider availability separately from application correctness. See [local checks](../../README.md#checks) and the [deployment test procedure](../deployment-e2e.md).
