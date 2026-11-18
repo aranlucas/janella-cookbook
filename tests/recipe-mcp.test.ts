@@ -7,10 +7,7 @@ import type { RecipeWithRelations } from "@/types/recipe";
 import type { JsonObject } from "@/types/json";
 import { z } from "zod";
 
-const [{ createRecipeTools }, { GET: protectedResource }] = await Promise.all([
-  import("@/lib/recipe-mcp"),
-  import("@/app/.well-known/oauth-protected-resource/route"),
-]);
+const { createRecipeTools } = await import("@/lib/recipe-mcp");
 
 const token = "synthetic-mcp-token";
 
@@ -279,48 +276,58 @@ function request(
   });
 }
 
-test("the HTTP endpoint rejects missing and invalid credentials before recipe access", async () => {
-  vi.stubEnv("MCP_API_TOKEN", token);
-  vi.resetModules();
+test.each([
+  { authorization: null, challenge: 'Bearer realm="Janella Cookbook"' },
+  {
+    authorization: "Basic synthetic-mcp-token",
+    challenge: 'Bearer realm="Janella Cookbook"',
+  },
+  {
+    authorization: "Bearer previous-cookbook-token",
+    challenge:
+      'Bearer realm="Janella Cookbook", error="invalid_token", error_description="Update the client Authorization header with the current cookbook token"',
+  },
+])(
+  "the HTTP endpoint challenges $authorization before handling the MCP request",
+  async ({ authorization, challenge }) => {
+    vi.stubEnv("MCP_API_TOKEN", token);
+    vi.resetModules();
 
-  const { POST } = await import("@/app/api/mcp/route");
+    const { POST } = await import("@/app/api/mcp/route");
+    const response = await POST(request("tools/list", {}, authorization));
 
-  const responses = await Promise.all(
-    [null, "Bearer incorrect-token", "Basic synthetic-mcp-token"].map((authorization) =>
-      Promise.resolve(POST(request("tools/list", {}, authorization))),
-    ),
-  );
-
-  for (const response of responses) {
     expect(response.status).toBe(401);
-    expect(response.headers.get("www-authenticate")).toContain(
-      "https://cookbook.example/.well-known/oauth-protected-resource",
-    );
-  }
+    expect(response.headers.get("WWW-Authenticate")).toBe(challenge);
+  },
+);
 
-  expect(listRecipes).not.toHaveBeenCalled();
-  expect(createRecipe).not.toHaveBeenCalled();
-});
-
-test("the endpoint fails closed when its token is missing and advertises proxy metadata", async () => {
+test("the endpoint fails closed even with a client token when its server token is missing", async () => {
   vi.stubEnv("MCP_API_TOKEN", "");
   vi.resetModules();
 
   const { POST } = await import("@/app/api/mcp/route");
 
-  expect((await POST(request("tools/list", {}))).status).toBe(503);
+  const response = await POST(request("tools/list", {}));
+  expect(response.status).toBe(503);
+  expect(response.headers.has("WWW-Authenticate")).toBe(false);
+});
 
-  const response = protectedResource(
-    new Request("http://localhost:3000/.well-known/oauth-protected-resource", {
-      headers: { "x-forwarded-host": "cookbook.example", "x-forwarded-proto": "https" },
+test("the current bearer token can initialize an MCP connection", async () => {
+  vi.stubEnv("MCP_API_TOKEN", token);
+  vi.resetModules();
+
+  const { POST } = await import("@/app/api/mcp/route");
+
+  const response = await POST(
+    request("initialize", {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "test-client", version: "1.0.0" },
     }),
   );
 
-  expect(await response.json()).toMatchObject({
-    resource: "https://cookbook.example/api/mcp",
-    authorization_servers: [],
-    scopes_supported: ["recipes:read", "recipes:write"],
-  });
+  expect(response.status).toBe(200);
+  expect(await response.text()).toContain('"name":"janella-cookbook"');
 });
 
 test("stateless GET returns 405 after authentication", async () => {

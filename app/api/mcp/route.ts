@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { AuthInfo } from "@modelcontextprotocol/server";
-import { createMcpHandler, withMcpAuth } from "mcp-handler";
+import { createMcpHandler } from "mcp-handler";
 import { registerRecipeTools } from "@/lib/recipe-mcp";
 import { env } from "@/lib/env";
 
@@ -19,29 +19,43 @@ const mcpHandler = createMcpHandler(registerRecipeTools, {
   maxSubscriptions: 0,
 });
 
-function verifyToken(_request: Request, token?: string): AuthInfo | undefined {
-  const expected = env.MCP_API_TOKEN;
-
-  if (!token || !expected) {
-    return undefined;
-  }
-
-  if (!timingSafeEqual(digest(token), digest(expected))) {
-    return undefined;
-  }
-
-  return { token, clientId: "cookbook", scopes: ["recipes:read", "recipes:write"] };
-}
-
-const authenticatedHandler = withMcpAuth(mcpHandler, verifyToken, { required: true });
+const bearerChallenge = 'Bearer realm="Janella Cookbook"';
 
 function handler(request: Request) {
+  const expected = env.MCP_API_TOKEN;
+
   // Never expose a writable public endpoint when deployment configuration is missing.
-  if (!env.MCP_API_TOKEN) {
+  if (!expected) {
     return Response.json({ error: "Recipe MCP is not configured." }, { status: 503 });
   }
 
-  return authenticatedHandler(request);
+  const authorization = request.headers.get("Authorization") ?? "";
+  const token = /^Bearer +(\S+)$/i.exec(authorization)?.[1];
+
+  if (!token) {
+    return new Response(null, {
+      status: 401,
+      headers: { "WWW-Authenticate": bearerChallenge },
+    });
+  }
+
+  if (!timingSafeEqual(digest(token), digest(expected))) {
+    const description = "Update the client Authorization header with the current cookbook token";
+
+    return Response.json(
+      { error: "invalid_token", error_description: description },
+      {
+        status: 401,
+        headers: {
+          "WWW-Authenticate": `${bearerChallenge}, error="invalid_token", error_description="${description}"`,
+        },
+      },
+    );
+  }
+
+  const auth: AuthInfo = { token, clientId: "cookbook", scopes: ["recipes:read", "recipes:write"] };
+
+  return mcpHandler(Object.assign(request, { auth }));
 }
 
 export { handler as GET, handler as POST };
