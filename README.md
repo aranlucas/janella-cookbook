@@ -52,7 +52,7 @@ Set `MCP_API_TOKEN` to a random secret in your local environment or the Vercel p
 openssl rand -hex 32
 ```
 
-All MCP requests require `Authorization: Bearer <your token>`. A missing server token disables the endpoint with HTTP 503; missing or invalid client credentials return HTTP 401. This setup uses a shared token; clients must support an explicit Authorization header. Interactive OAuth sign-in is not implemented.
+All MCP requests require `Authorization: Bearer <your token>`. A missing server token disables the endpoint with HTTP 503. Missing client credentials receive HTTP 401 with a Bearer challenge. A rejected bearer token receives HTTP 401 with `invalid_token`. If the token was rotated, update the client's Authorization header with the current token. The shared token grants access to all recipe tools and has no automatic expiry. Clients must support an explicit Authorization header. The endpoint has no OAuth discovery, sign-in, or refresh flow.
 
 For clients that accept a remote MCP URL and headers, add this entry to their `mcpServers` configuration:
 
